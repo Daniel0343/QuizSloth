@@ -2,7 +2,7 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: quizzsloth
+    container_name: quizzsloth_mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: 1234
@@ -13,6 +13,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./tmp/quizsloth.sql:/docker-entrypoint-initdb.d/quizsloth.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234"]
       interval: 10s
@@ -45,10 +46,31 @@ services:
     volumes:
       - odoo_data:/var/lib/odoo
 
+  backend:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    container_name: quizzsloth_backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/quizzsloth_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: administrador
+      SPRING_DATASOURCE_PASSWORD: 1234
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-placeholder}
+    volumes:
+      - uploads_data:/uploads
+
 volumes:
   mysql_data:
     driver: local
   postgres_data:
     driver: local
   odoo_data:
+    driver: local
+  uploads_data:
     driver: local
