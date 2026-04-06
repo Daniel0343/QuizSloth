@@ -1,13 +1,5 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import "./global.css"
+import { Redirect } from 'expo-router';
 
-const index = () => {
-  return (
-    <View className="p-5">
-      <Text className=' text-red-900'>App</Text>
-    </View>
-  )
+export default function Index() {
+  return <Redirect href="/auth/seleccion-rol" />;
 }
-
-export default index

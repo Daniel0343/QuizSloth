@@ -1,0 +1,65 @@
+package com.quizsloth.service;
+
+import com.quizsloth.dto.AuthResponse;
+import com.quizsloth.dto.LoginRequest;
+import com.quizsloth.dto.RegisterRequest;
+import com.quizsloth.model.Usuario;
+import com.quizsloth.repository.UsuarioRepository;
+import com.quizsloth.security.JwtUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
+    private final OdooService odooService;
+
+    public AuthResponse login(LoginRequest request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+
+        Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        String token = jwtUtil.generateToken(usuario.getEmail());
+        return AuthResponse.from(usuario, token);
+    }
+
+    public AuthResponse register(RegisterRequest request) {
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("El email ya está registrado");
+        }
+
+        Usuario usuario = new Usuario();
+        usuario.setNombre(request.getNombre());
+        usuario.setEmail(request.getEmail());
+        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+        usuario.setRol(request.getRol());
+
+        Usuario saved = usuarioRepository.save(usuario);
+
+        // Evidencia 2: registrar en Odoo si es alumno
+        if (saved.getRol() == Usuario.Rol.alumno) {
+            try {
+                Integer odooId = odooService.crearCliente(saved);
+                saved.setOdooId(odooId);
+                saved = usuarioRepository.save(saved);
+            } catch (Exception e) {
+                // El registro no debe fallar si Odoo no está disponible
+                System.err.println("Odoo no disponible: " + e.getMessage());
+            }
+        }
+
+        String token = jwtUtil.generateToken(saved.getEmail());
+        return AuthResponse.from(saved, token);
+    }
+}
