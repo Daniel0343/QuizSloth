@@ -13,6 +13,7 @@ export const API_URL =
 
 const quizslothApi = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
 });
 
 quizslothApi.interceptors.request.use(async (config) => {

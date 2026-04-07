@@ -47,10 +47,10 @@ public class OdooService {
         XmlRpcClient client = buildClient("/xmlrpc/2/common");
         Object uid = client.execute("authenticate",
                 List.of(odooDb, odooUser, odooPassword, new HashMap<>()));
-        if (uid == null || (int) uid == 0) {
-            throw new RuntimeException("Autenticación Odoo fallida");
+        if (uid == null || !(uid instanceof Integer) || (Integer) uid == 0) {
+            throw new RuntimeException("Autenticación Odoo fallida — credenciales incorrectas para BD: " + odooDb);
         }
-        return (int) uid;
+        return (Integer) uid;
     }
 
     // ----------------------------------------------------------------
@@ -178,8 +178,8 @@ public class OdooService {
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
         config.setServerURL(new URL(odooUrl + endpoint));
         config.setEnabledForExtensions(true);
-        config.setConnectionTimeout(10_000);
-        config.setReplyTimeout(10_000);
+        config.setConnectionTimeout(3_000);
+        config.setReplyTimeout(3_000);
         XmlRpcClient client = new XmlRpcClient();
         client.setConfig(config);
         return client;
