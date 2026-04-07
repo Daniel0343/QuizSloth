@@ -43,6 +43,7 @@ services:
       HOST: postgres
       USER: administrador
       PASSWORD: 1234
+      ODOO_MASTER_PASSWORD: admin
     volumes:
       - odoo_data:/var/lib/odoo
 
