@@ -18,7 +18,11 @@ public class QuizController {
     private final QuizService quizService;
 
     @GetMapping
-    public ResponseEntity<List<Quiz>> listar() {
+    public ResponseEntity<List<Quiz>> listar(
+            @RequestParam(required = false) Integer categoriaId) {
+        if (categoriaId != null) {
+            return ResponseEntity.ok(quizService.listarPorCategoria(categoriaId));
+        }
         return ResponseEntity.ok(quizService.listarTodos());
     }
 

@@ -7,7 +7,7 @@ export default function StackLayout() {
   const { status, checkStatus } = useAuthStore();
 
   useEffect(() => {
-    checkStatus();
+    if (status === 'checking') checkStatus();
   }, []);
 
   if (status === 'checking') {

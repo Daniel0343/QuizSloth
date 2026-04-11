@@ -1,5 +1,7 @@
 package com.quizsloth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +14,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Curso {
 
     @Id
@@ -24,10 +27,12 @@ public class Curso {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_profesor")
+    @JsonIgnoreProperties({"password", "cursos", "documentos", "hibernateLazyInitializer"})
     private Usuario profesor;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Documento> documentos;
 }
