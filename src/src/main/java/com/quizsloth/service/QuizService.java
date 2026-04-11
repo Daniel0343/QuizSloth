@@ -24,6 +24,10 @@ public class QuizService {
         return quizRepository.findAll();
     }
 
+    public List<Quiz> listarPorCategoria(Integer categoriaId) {
+        return quizRepository.findByCategoriaId(categoriaId);
+    }
+
     public Quiz obtener(Integer id) {
         return quizRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Quiz no encontrado"));

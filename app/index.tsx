@@ -66,7 +66,7 @@ export default function LoadingScreen() {
 
       {/* Logo central */}
       <Image
-        source={require('@/assets/7b2ed70e2887a80e4a3eb3aa74369d73cfaeade5.png')}
+        source={require('@/assets/sloth-texto.png')}
         style={{ width: 280, height: 210 }}
         resizeMode="contain"
       />

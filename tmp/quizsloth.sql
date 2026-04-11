@@ -35,7 +35,18 @@ CREATE TABLE cursos (
 );
 
 -- ------------------------------------------------------------
--- 3. Categorías
+-- 3. Matrículas (alumno ↔ curso, many-to-many)
+-- ------------------------------------------------------------
+CREATE TABLE curso_alumno (
+    id_curso  INT NOT NULL,
+    id_alumno INT NOT NULL,
+    PRIMARY KEY (id_curso, id_alumno),
+    FOREIGN KEY (id_curso)  REFERENCES cursos(id)   ON DELETE CASCADE,
+    FOREIGN KEY (id_alumno) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- 4. Categorías
 -- ------------------------------------------------------------
 CREATE TABLE categorias (
     id     INT AUTO_INCREMENT PRIMARY KEY,

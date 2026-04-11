@@ -16,4 +16,6 @@ public interface QuizRepository extends JpaRepository<Quiz, Integer> {
     List<Quiz> findByDocumento(Documento documento);
 
     List<Quiz> findByDificultad(Quiz.Dificultad dificultad);
+
+    List<Quiz> findByCategoriaId(Integer categoriaId);
 }
