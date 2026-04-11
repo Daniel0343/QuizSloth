@@ -91,13 +91,14 @@ export default function TabsLayout() {
             tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={28} color={color} />,
           }}
         />
-        {/* Pantallas ocultas del tab bar */}
+      
         <Tabs.Screen name="home/[id]" options={{ href: null }} />
         <Tabs.Screen name="home/HomeInvitado" options={{ href: null }} />
         <Tabs.Screen name="home/HomePrincipal" options={{ href: null }} />
         <Tabs.Screen name="biblioteca/favoritas" options={{ href: null }} />
       </Tabs>
 
+  {/* Mano del perezoso */}
       <Modal
         visible={modalVisible}
         transparent
