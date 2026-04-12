@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View, Text, TextInput, Pressable, Image,
-  KeyboardAvoidingView, ScrollView, Platform, Alert,
+  KeyboardAvoidingView, ScrollView, Platform, Alert, Animated,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 export default function Login() {
   const { login, loginAsGuest } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
-  const [isPosting, setIsPosting] = useState(false);
+  const [isPosting, setIsPosting]       = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
 
   const handleLogin = async () => {
@@ -31,10 +31,7 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView className="flex-1 bg-white" contentContainerStyle={{ flexGrow: 1 }}>
         <View className="bg-[#571D11] h-40 items-center justify-center relative">
           <Pressable onPress={() => router.back()} className="absolute left-4 top-10 p-2">
@@ -82,11 +79,7 @@ export default function Login() {
               onChangeText={(v) => setForm({ ...form, password: v })}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color="#9ca3af"
-              />
+              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9ca3af" />
             </Pressable>
           </View>
 
@@ -94,7 +87,7 @@ export default function Login() {
             <Text className="text-[#844A31] text-xs font-medium">¿Olvidaste tu contraseña?</Text>
           </Pressable>
 
-          <Pressable
+          <AnimatedBtn
             onPress={handleLogin}
             disabled={isPosting}
             className={`w-full rounded-xl py-4 items-center mb-4 ${isPosting ? 'bg-gray-400' : 'bg-[#53b55e]'}`}
@@ -102,7 +95,7 @@ export default function Login() {
             <Text className="text-white text-base font-semibold">
               {isPosting ? 'Iniciando...' : 'Iniciar sesión'}
             </Text>
-          </Pressable>
+          </AnimatedBtn>
 
           <View className="flex-row items-center gap-4 my-4">
             <View className="flex-1 h-px bg-[#844A31] opacity-20" />
@@ -110,20 +103,17 @@ export default function Login() {
             <View className="flex-1 h-px bg-[#844A31] opacity-20" />
           </View>
 
-          <Pressable
+          <AnimatedBtn
             onPress={handleGuest}
             className="w-full border-2 border-[#844A31] rounded-xl py-4 items-center mb-6"
           >
             <Text className="text-[#844A31] text-base font-semibold">Continuar sin cuenta</Text>
-          </Pressable>
+          </AnimatedBtn>
 
           <View className="items-center">
             <Text className="text-gray-600 text-xs">
               ¿No tienes cuenta?{' '}
-              <Text
-                className="text-[#844A31] font-medium"
-                onPress={() => router.push('/auth/seleccion-rol')}
-              >
+              <Text className="text-[#844A31] font-medium" onPress={() => router.push('/auth/seleccion-rol')}>
                 Regístrate aquí
               </Text>
             </Text>
@@ -131,5 +121,23 @@ export default function Login() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function AnimatedBtn({ onPress, disabled, className, children }: {
+  onPress: () => void;
+  disabled?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const onPressIn  = () => Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 30 }).start();
+  const onPressOut = () => Animated.spring(scale, { toValue: 1,    useNativeDriver: true, speed: 20 }).start();
+  return (
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} disabled={disabled}>
+      <Animated.View style={{ transform: [{ scale }] }} className={className}>
+        {children}
+      </Animated.View>
+    </Pressable>
   );
 }
