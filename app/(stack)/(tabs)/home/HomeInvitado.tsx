@@ -12,7 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { getCategorias, type Categoria } from '@/core/categorias/actions/get-categorias';
+import { getCategorias } from '@/core/categorias/actions/get-categorias';
+import { Categoria } from '@/core/auth/interface/categoria';
 
 export default function HomeInvitado() {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -22,7 +23,7 @@ export default function HomeInvitado() {
   useEffect(() => {
     getCategorias()
       .then(setCategories)
-      .catch(() => {}); // si falla (sin backend) simplemente no muestra categorías
+      .catch(() => {});
   }, []);
 
   return (

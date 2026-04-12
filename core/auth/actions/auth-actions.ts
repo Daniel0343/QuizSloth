@@ -1,17 +1,8 @@
 import { quizslothApi } from '../api/quizslothApi';
-import { Rol, User } from '../interface/user';
+import { Rol } from '../interface/user';
+import { AuthResponse } from '../interface/auth';
 
-export interface AuthResponse {
-  user: {
-    id: number;
-    nombre: string;
-    email: string;
-    rol: Rol;
-    odoo_id?: number | null;
-    fecha_registro?: string;
-  };
-  token: string;
-}
+export type { AuthResponse };
 
 export const authLogin = async (email: string, password: string) => {
   email = email.toLowerCase().trim();
@@ -19,7 +10,6 @@ export const authLogin = async (email: string, password: string) => {
     const { data } = await quizslothApi.post<AuthResponse>('/auth/login', { email, password });
     return data;
   } catch (error) {
-    console.log('authLogin error:', error);
     return null;
   }
 };
@@ -41,7 +31,6 @@ export const authRegister = async (
     });
     return data;
   } catch (error) {
-    console.log('authRegister error:', error);
     return null;
   }
 };

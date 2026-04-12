@@ -1,10 +1,7 @@
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
+import { CursoResumen } from '@/core/auth/interface/curso';
 
-export interface CursoResumen {
-  id: number;
-  nombre: string;
-  descripcion?: string;
-}
+export type { CursoResumen };
 
 export async function getCursos(): Promise<CursoResumen[]> {
   const { data } = await quizslothApi.get<CursoResumen[]>('/cursos');

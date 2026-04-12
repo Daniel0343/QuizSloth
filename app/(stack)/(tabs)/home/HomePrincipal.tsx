@@ -6,9 +6,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { getCategorias, type Categoria } from '@/core/categorias/actions/get-categorias';
-import { getQuizzes, type QuizResumen } from '@/core/quizzes/actions/get-quizzes';
-import { getCursos, getCursosByProfesor, type CursoResumen } from '@/core/cursos/actions/get-cursos';
+import { getCategorias } from '@/core/categorias/actions/get-categorias';
+import { getQuizzes } from '@/core/quizzes/actions/get-quizzes';
+import { getCursos, getCursosByProfesor } from '@/core/cursos/actions/get-cursos';
+import { Categoria } from '@/core/auth/interface/categoria';
+import { QuizResumen } from '@/core/auth/interface/quiz';
+import { CursoResumen } from '@/core/auth/interface/curso';
 
 const ACCENT_COLORS = ['#53B55E', '#844A31', '#571D11', '#2D7A3A', '#6B2A1A'];
 const ACCENT_BG    = [
@@ -96,7 +99,6 @@ export default function HomePrincipal() {
       imageStyle={{ opacity: 0.55 }}
     >
       <SafeAreaView style={styles.safe} edges={['top']}>
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={styles.avatar}>
@@ -115,7 +117,6 @@ export default function HomePrincipal() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Buscador */}
           <View style={styles.searchBar}>
             <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.7)" />
             <TextInput
@@ -127,7 +128,6 @@ export default function HomePrincipal() {
             />
           </View>
 
-          {/* Categorías + Quizzes */}
           <View style={styles.quizzesSection}>
             <Text style={styles.catsTitle}>Categorías</Text>
             <ScrollView
@@ -165,7 +165,6 @@ export default function HomePrincipal() {
             </ScrollView>
           </View>
 
-          {/* Código de participación */}
           <View style={styles.codeSection}>
             <View style={styles.codeInputRow}>
               <TextInput
@@ -182,7 +181,6 @@ export default function HomePrincipal() {
             </Pressable>
           </View>
 
-          {/* Tus clases — al final */}
           <View style={styles.classesSection}>
             <Text style={styles.classesSectionTitle}>Tus clases</Text>
             {cursos.length === 0 ? (
