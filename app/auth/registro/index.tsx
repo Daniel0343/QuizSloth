@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View, Text, TextInput, Pressable, Image,
-  KeyboardAvoidingView, ScrollView, Platform, StyleSheet,
+  KeyboardAvoidingView, ScrollView, Platform, StyleSheet, Animated,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -163,17 +163,15 @@ export default function Registro() {
           </View>
           {errors.confirmPassword && <ErrorMsg text={errors.confirmPassword} />}
 
-          <Pressable
+          <AnimatedBtn
             onPress={handleRegister}
             disabled={isPosting}
-            style={({ pressed }) => pressed ? { opacity: 0.75 } : undefined}
             className={`w-full rounded-xl py-4 items-center mt-4 mb-2 ${isPosting ? 'bg-gray-400' : 'bg-[#53b55e]'}`}
           >
             <Text className="text-white text-base font-bold tracking-wide">
               {isPosting ? 'Creando cuenta...' : 'Inscribirse'}
             </Text>
-          </Pressable>
-
+          </AnimatedBtn>
 
           <View className="flex-row items-center gap-4 my-4">
             <View className="flex-1 h-px bg-[#844A31] opacity-20" />
@@ -181,13 +179,12 @@ export default function Registro() {
             <View className="flex-1 h-px bg-[#844A31] opacity-20" />
           </View>
 
-          <Pressable
+          <AnimatedBtn
             onPress={handleGuest}
-            style={({ pressed }) => pressed ? { opacity: 0.75 } : undefined}
             className="w-full border-2 border-[#844A31] rounded-xl py-4 items-center mb-6"
           >
             <Text className="text-[#844A31] text-base font-semibold">Continuar sin cuenta</Text>
-          </Pressable>
+          </AnimatedBtn>
 
           <View className="items-center">
             <Text className="text-[#844A31] text-xs opacity-80">
@@ -204,6 +201,24 @@ export default function Registro() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function AnimatedBtn({ onPress, disabled, className, children }: {
+  onPress: () => void;
+  disabled?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const onPressIn  = () => Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 30 }).start();
+  const onPressOut = () => Animated.spring(scale, { toValue: 1,    useNativeDriver: true, speed: 20 }).start();
+  return (
+    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} disabled={disabled}>
+      <Animated.View style={{ transform: [{ scale }] }} className={className}>
+        {children}
+      </Animated.View>
+    </Pressable>
   );
 }
 

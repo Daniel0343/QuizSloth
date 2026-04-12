@@ -323,8 +323,8 @@ const styles = StyleSheet.create({
     rowGap: 10,
   },
   sloth: {
-    width: 200,
-    height: 150,
+    width: 220,
+    height: 165,
   },
   emptyTitle: {
     color: '#412E2E',
