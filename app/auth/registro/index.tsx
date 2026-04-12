@@ -1,34 +1,51 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, Pressable, Image,
-  KeyboardAvoidingView, ScrollView, Platform, Alert,
+  KeyboardAvoidingView, ScrollView, Platform, StyleSheet,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Rol } from '@/core/auth/interface/user';
 
+interface FormErrors {
+  nombre?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
 export default function Registro() {
   const { role } = useLocalSearchParams<{ role: string }>();
   const { register, loginAsGuest } = useAuthStore();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isPosting, setIsPosting] = useState(false);
+  const [showConfirm,  setShowConfirm]  = useState(false);
+  const [isPosting,    setIsPosting]    = useState(false);
+  const [errors,       setErrors]       = useState<FormErrors>({});
   const [form, setForm] = useState({
-    nombre: '',
-    apellidos: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    nombre: '', apellidos: '', email: '', password: '', confirmPassword: '',
   });
 
+  const clearError = (field: keyof FormErrors) =>
+    setErrors(prev => ({ ...prev, [field]: undefined }));
+
+  const validate = (): boolean => {
+    const e: FormErrors = {};
+    if (!form.nombre.trim())   e.nombre   = 'El nombre es obligatorio';
+    if (!form.email.trim())    e.email    = 'El email es obligatorio';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Email no válido';
+    if (!form.password)        e.password = 'La contraseña es obligatoria';
+    else if (form.password.length < 6) e.password = 'Mínimo 6 caracteres';
+    if (!form.confirmPassword) e.confirmPassword = 'Repite la contraseña';
+    else if (form.password !== form.confirmPassword)
+      e.confirmPassword = 'Las contraseñas no coinciden';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleRegister = async () => {
-    if (!form.nombre || !form.email || !form.password) return;
-    if (form.password !== form.confirmPassword) {
-      Alert.alert('Error', 'Las contraseñas no coinciden.');
-      return;
-    }
+    if (!validate()) return;
     setIsPosting(true);
     const nombreCompleto = `${form.nombre.trim()} ${form.apellidos.trim()}`.trim();
     const rol: Rol = role === 'teacher' ? 'profesor' : 'alumno';
@@ -37,7 +54,7 @@ export default function Registro() {
     if (ok) {
       router.replace('/(stack)/(tabs)/home');
     } else {
-      Alert.alert('Error', 'No se pudo completar el registro. Inténtalo de nuevo.');
+      setErrors({ email: 'No se pudo completar el registro. Inténtalo de nuevo.' });
     }
   };
 
@@ -51,117 +68,112 @@ export default function Registro() {
       className="flex-1"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView className="flex-1 bg-white" contentContainerStyle={{ flexGrow: 1 }}>
-        {/* Header */}
+      <ScrollView className="flex-1 bg-[#571D11]" contentContainerStyle={{ flexGrow: 1 }}>
+
         <View className="bg-[#571D11] h-40 items-center justify-center relative">
-          <Pressable onPress={() => router.back()} className="absolute left-4 top-8 p-2">
+          <Pressable
+            onPress={() => router.back()}
+            className="absolute left-4 top-10 p-2"
+          >
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </Pressable>
           <Text className="text-white text-base font-semibold">Paso 2 de 2</Text>
-          <View className="absolute -bottom-12 items-center">
+        </View>
+
+        <View className="flex-1 bg-[#d7b59f] rounded-t-3xl mt-[-16px] px-6 pb-10">
+
+          <View className="items-center -mt-12 mb-4">
             <Image
-              source={require('@/assets/images/icon.png')}
-              style={{ width: 96, height: 96, borderRadius: 48 }}
+              source={require('@/assets/sloth-sintexto.png')}
+              style={{ width: 96, height: 96 }}
               resizeMode="contain"
             />
           </View>
-        </View>
 
-        {/* Contenido */}
-        <View className="flex-1 bg-[#d7b59f] rounded-t-3xl mt-[-16px] px-6 pt-20 pb-8">
-          <View className="mb-6">
-            <Text className="text-[#412E2E] text-3xl font-bold">Crea tu cuenta</Text>
-            <Text className="text-gray-600 text-sm mt-1">
-              Como {role === 'teacher' ? 'profesor' : 'estudiante'}
-            </Text>
-          </View>
+          <Text className="text-[#412E2E] text-3xl font-bold mb-1">Crea tu cuenta</Text>
+          <Text className="text-[#844A31] text-sm font-medium mb-5">
+            Como {role === 'teacher' ? 'profesor' : 'estudiante'}
+          </Text>
 
-          {/* Nombre */}
-          <Text className="text-[#412E2E] text-xs font-medium mb-2">Nombre</Text>
-          <View className="flex-row items-center bg-white rounded-xl px-4 mb-4">
-            <Ionicons name="person-outline" size={20} color="#9ca3af" />
+          <Text className="text-[#412E2E] text-xs font-semibold mb-1.5">Nombre</Text>
+          <View className={`flex-row items-center bg-white rounded-xl px-4 mb-1 ${errors.nombre ? 'border-2 border-red-500' : ''}`}>
+            <Ionicons name="person-outline" size={20} color={errors.nombre ? '#dc2626' : '#9ca3af'} />
             <TextInput
               className="flex-1 py-4 px-3 text-[14px] text-[#412E2E]"
-              placeholder="Tu nombre"
-              placeholderTextColor="#9ca3af"
+              placeholder="Tu nombre" placeholderTextColor="#9ca3af"
               value={form.nombre}
-              onChangeText={(v) => setForm({ ...form, nombre: v })}
+              onChangeText={v => { setForm({ ...form, nombre: v }); clearError('nombre'); }}
             />
           </View>
+          {errors.nombre && <ErrorMsg text={errors.nombre} />}
 
-          {/* Apellidos */}
-          <Text className="text-[#412E2E] text-xs font-medium mb-2">Apellidos</Text>
-          <View className="flex-row items-center bg-white rounded-xl px-4 mb-4">
+          <Text className="text-[#412E2E] text-xs font-semibold mb-1.5 mt-2">Apellidos</Text>
+          <View className="flex-row items-center bg-white rounded-xl px-4 mb-1">
             <Ionicons name="person-outline" size={20} color="#9ca3af" />
             <TextInput
               className="flex-1 py-4 px-3 text-[14px] text-[#412E2E]"
-              placeholder="Tus apellidos"
-              placeholderTextColor="#9ca3af"
+              placeholder="Tus apellidos" placeholderTextColor="#9ca3af"
               value={form.apellidos}
-              onChangeText={(v) => setForm({ ...form, apellidos: v })}
+              onChangeText={v => setForm({ ...form, apellidos: v })}
             />
           </View>
 
-          {/* Email */}
-          <Text className="text-[#412E2E] text-xs font-medium mb-2">Email</Text>
-          <View className="flex-row items-center bg-white rounded-xl px-4 mb-4">
-            <Ionicons name="mail-outline" size={20} color="#9ca3af" />
+          <Text className="text-[#412E2E] text-xs font-semibold mb-1.5 mt-2">Email</Text>
+          <View className={`flex-row items-center bg-white rounded-xl px-4 mb-1 ${errors.email ? 'border-2 border-red-500' : ''}`}>
+            <Ionicons name="mail-outline" size={20} color={errors.email ? '#dc2626' : '#9ca3af'} />
             <TextInput
               className="flex-1 py-4 px-3 text-[14px] text-[#412E2E]"
-              placeholder="tu@email.com"
-              placeholderTextColor="#9ca3af"
-              keyboardType="email-address"
-              autoCapitalize="none"
+              placeholder="tu@email.com" placeholderTextColor="#9ca3af"
+              keyboardType="email-address" autoCapitalize="none"
               value={form.email}
-              onChangeText={(v) => setForm({ ...form, email: v })}
+              onChangeText={v => { setForm({ ...form, email: v }); clearError('email'); }}
             />
           </View>
+          {errors.email && <ErrorMsg text={errors.email} />}
 
-          {/* Contraseña */}
-          <Text className="text-[#412E2E] text-xs font-medium mb-2">Contraseña</Text>
-          <View className="flex-row items-center bg-white rounded-xl px-4 mb-4">
-            <Ionicons name="lock-closed-outline" size={20} color="#9ca3af" />
+          <Text className="text-[#412E2E] text-xs font-semibold mb-1.5 mt-2">Contraseña</Text>
+          <View className={`flex-row items-center bg-white rounded-xl px-4 mb-1 ${errors.password ? 'border-2 border-red-500' : ''}`}>
+            <Ionicons name="lock-closed-outline" size={20} color={errors.password ? '#dc2626' : '#9ca3af'} />
             <TextInput
               className="flex-1 py-4 px-3 text-[14px] text-[#412E2E]"
-              placeholder="Crea tu contraseña"
-              placeholderTextColor="#9ca3af"
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
+              placeholder="Crea tu contraseña" placeholderTextColor="#9ca3af"
+              secureTextEntry={!showPassword} autoCapitalize="none"
               value={form.password}
-              onChangeText={(v) => setForm({ ...form, password: v })}
+              onChangeText={v => { setForm({ ...form, password: v }); clearError('password'); }}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)}>
               <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9ca3af" />
             </Pressable>
           </View>
+          {errors.password && <ErrorMsg text={errors.password} />}
 
-          {/* Confirmar contraseña */}
-          <Text className="text-[#412E2E] text-xs font-medium mb-2">Confirmar contraseña</Text>
-          <View className="flex-row items-center bg-white rounded-xl px-4 mb-6">
-            <Ionicons name="lock-closed-outline" size={20} color="#9ca3af" />
+          <Text className="text-[#412E2E] text-xs font-semibold mb-1.5 mt-2">Confirmar contraseña</Text>
+          <View className={`flex-row items-center bg-white rounded-xl px-4 mb-1 ${errors.confirmPassword ? 'border-2 border-red-500' : ''}`}>
+            <Ionicons name="lock-closed-outline" size={20} color={errors.confirmPassword ? '#dc2626' : '#9ca3af'} />
             <TextInput
               className="flex-1 py-4 px-3 text-[14px] text-[#412E2E]"
-              placeholder="Repite tu contraseña"
-              placeholderTextColor="#9ca3af"
-              secureTextEntry={!showConfirm}
-              autoCapitalize="none"
+              placeholder="Repite tu contraseña" placeholderTextColor="#9ca3af"
+              secureTextEntry={!showConfirm} autoCapitalize="none"
               value={form.confirmPassword}
-              onChangeText={(v) => setForm({ ...form, confirmPassword: v })}
+              onChangeText={v => { setForm({ ...form, confirmPassword: v }); clearError('confirmPassword'); }}
             />
             <Pressable onPress={() => setShowConfirm(!showConfirm)}>
               <Ionicons name={showConfirm ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9ca3af" />
             </Pressable>
           </View>
+          {errors.confirmPassword && <ErrorMsg text={errors.confirmPassword} />}
 
           <Pressable
             onPress={handleRegister}
             disabled={isPosting}
-            className={`w-full rounded-xl py-4 items-center mb-4 ${isPosting ? 'bg-gray-400' : 'bg-[#53b55e]'}`}
+            style={({ pressed }) => pressed ? { opacity: 0.75 } : undefined}
+            className={`w-full rounded-xl py-4 items-center mt-4 mb-2 ${isPosting ? 'bg-gray-400' : 'bg-[#53b55e]'}`}
           >
-            <Text className="text-white text-base font-semibold">
+            <Text className="text-white text-base font-bold tracking-wide">
               {isPosting ? 'Creando cuenta...' : 'Inscribirse'}
             </Text>
           </Pressable>
+
 
           <View className="flex-row items-center gap-4 my-4">
             <View className="flex-1 h-px bg-[#844A31] opacity-20" />
@@ -171,24 +183,50 @@ export default function Registro() {
 
           <Pressable
             onPress={handleGuest}
+            style={({ pressed }) => pressed ? { opacity: 0.75 } : undefined}
             className="w-full border-2 border-[#844A31] rounded-xl py-4 items-center mb-6"
           >
             <Text className="text-[#844A31] text-base font-semibold">Continuar sin cuenta</Text>
           </Pressable>
 
           <View className="items-center">
-            <Text className="text-gray-600 text-xs">
+            <Text className="text-[#844A31] text-xs opacity-80">
               ¿Ya tienes cuenta?{' '}
               <Text
-                className="text-[#844A31] font-medium"
+                className="text-[#571D11] font-bold underline"
                 onPress={() => router.push('/auth/login')}
               >
                 Inicia sesión aquí
               </Text>
             </Text>
           </View>
+
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+function ErrorMsg({ text }: { text: string }) {
+  return (
+    <View style={styles.errorRow}>
+      <Ionicons name="alert-circle-outline" size={13} color="#dc2626" />
+      <Text style={styles.errorText}>{text}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+});

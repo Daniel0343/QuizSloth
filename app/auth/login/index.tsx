@@ -36,25 +36,25 @@ export default function Login() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView className="flex-1 bg-white" contentContainerStyle={{ flexGrow: 1 }}>
-        {/* Header */}
         <View className="bg-[#571D11] h-40 items-center justify-center relative">
-          <View className="absolute -bottom-12 items-center">
+          <Pressable onPress={() => router.back()} className="absolute left-4 top-10 p-2">
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </Pressable>
+        </View>
+
+        <View className="flex-1 bg-[#d7b59f] rounded-t-3xl mt-[-16px] px-6 pb-8">
+          <View className="items-center -mt-12 mb-4">
             <Image
-              source={require('@/assets/images/icon.png')}
-              style={{ width: 96, height: 96, borderRadius: 48 }}
+              source={require('@/assets/sloth-sintexto.png')}
+              style={{ width: 96, height: 96 }}
               resizeMode="contain"
             />
           </View>
-        </View>
-
-        {/* Contenido */}
-        <View className="flex-1 bg-[#d7b59f] rounded-t-3xl mt-[-16px] px-6 pt-20 pb-8">
           <View className="mb-6">
             <Text className="text-[#412E2E] text-3xl font-bold">Inicia sesión</Text>
             <Text className="text-gray-600 text-sm mt-1">Accede a tu cuenta de QuizzSloth</Text>
           </View>
 
-          {/* Email */}
           <Text className="text-[#412E2E] text-xs font-medium mb-2">Email</Text>
           <View className="flex-row items-center bg-white rounded-xl px-4 mb-4">
             <Ionicons name="mail-outline" size={20} color="#9ca3af" />
@@ -69,7 +69,6 @@ export default function Login() {
             />
           </View>
 
-          {/* Contraseña */}
           <Text className="text-[#412E2E] text-xs font-medium mb-2">Contraseña</Text>
           <View className="flex-row items-center bg-white rounded-xl px-4 mb-2">
             <Ionicons name="lock-closed-outline" size={20} color="#9ca3af" />

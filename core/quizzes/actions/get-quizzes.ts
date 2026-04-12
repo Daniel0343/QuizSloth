@@ -1,11 +1,7 @@
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
+import { QuizResumen } from '@/core/auth/interface/quiz';
 
-export interface QuizResumen {
-  id: number;
-  titulo: string;
-  dificultad: string;
-  categoria?: { id: number; nombre: string };
-}
+export type { QuizResumen };
 
 export async function getQuizzes(categoriaId?: number): Promise<QuizResumen[]> {
   const params = categoriaId ? { categoriaId } : {};

@@ -96,9 +96,9 @@ export default function TabsLayout() {
         <Tabs.Screen name="home/HomeInvitado" options={{ href: null }} />
         <Tabs.Screen name="home/HomePrincipal" options={{ href: null }} />
         <Tabs.Screen name="biblioteca/favoritas" options={{ href: null }} />
+
       </Tabs>
 
-  {/* Mano del perezoso */}
       <Modal
         visible={modalVisible}
         transparent
