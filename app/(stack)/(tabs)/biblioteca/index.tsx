@@ -316,14 +316,14 @@ const styles = StyleSheet.create({
   // Estado vacío
   emptyState: {
     alignItems: 'center',
-    paddingTop: 32,
+    paddingTop: 30,
     paddingHorizontal: 32,
-    gap: 12,
+    gap: 10,
   },
   sloth: {
-    width: 180,
-    height: 135,
-    marginBottom: 8,
+    width: 220,
+    height: 165,
+
   },
   emptyTitle: {
     color: '#412E2E',
