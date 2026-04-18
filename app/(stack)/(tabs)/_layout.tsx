@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Text, Pressable, Image, TouchableOpacity } from 'react-native';
+import { Image, TouchableOpacity } from 'react-native';
+import CrearModal from '@/components/CrearModal';
 
 function CenterButton({ onPress }: { onPress: () => void }) {
   return (
@@ -99,48 +100,7 @@ export default function TabsLayout() {
 
       </Tabs>
 
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
-          onPress={() => setModalVisible(false)}
-        >
-          <Pressable
-            style={{
-              backgroundColor: '#d7b59f',
-              borderRadius: 24,
-              padding: 32,
-              width: '80%',
-              alignItems: 'center',
-              gap: 16,
-            }}
-            onPress={() => {}}
-          >
-            <Text style={{ color: '#412E2E', fontSize: 22, fontWeight: 'bold' }}>
-              Modal futuro
-            </Text>
-            <Text style={{ color: '#571D11', fontSize: 14, textAlign: 'center' }}>
-              Aquí irá el contenido que se decida más adelante.
-            </Text>
-            <Pressable
-              onPress={() => setModalVisible(false)}
-              style={{
-                marginTop: 8,
-                backgroundColor: '#571D11',
-                borderRadius: 12,
-                paddingVertical: 12,
-                paddingHorizontal: 32,
-              }}
-            >
-              <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>Cerrar</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <CrearModal visible={modalVisible} onClose={() => setModalVisible(false)} />
     </>
   );
 }

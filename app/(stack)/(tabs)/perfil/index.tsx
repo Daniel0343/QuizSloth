@@ -51,9 +51,11 @@ export default function PerfilScreen() {
             <Text style={styles.profileName}>{user?.nombre ?? 'Invitado'}</Text>
             <Text style={styles.profileEmail}>{user?.email ?? ''}</Text>
           </View>
-          <Pressable style={styles.editBtn}>
-            <Text style={styles.editBtnText}>Editar</Text>
-          </Pressable>
+          {user && (
+            <Pressable style={styles.editBtn}>
+              <Text style={styles.editBtnText}>Editar</Text>
+            </Pressable>
+          )}
         </View>
 
         {esProfesor && (
