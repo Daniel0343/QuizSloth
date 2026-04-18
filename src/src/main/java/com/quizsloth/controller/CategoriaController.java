@@ -19,4 +19,16 @@ public class CategoriaController {
     public ResponseEntity<List<Categoria>> getAll() {
         return ResponseEntity.ok(categoriaRepository.findAll());
     }
+
+    @PostMapping
+    public ResponseEntity<Categoria> crear(@RequestBody Categoria categoria) {
+        if (categoria.getNombre() == null || categoria.getNombre().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (categoriaRepository.findByNombre(categoria.getNombre().trim()).isPresent()) {
+            return ResponseEntity.status(409).build();
+        }
+        categoria.setNombre(categoria.getNombre().trim());
+        return ResponseEntity.ok(categoriaRepository.save(categoria));
+    }
 }

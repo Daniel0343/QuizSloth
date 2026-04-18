@@ -47,7 +47,6 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   loginAsGuest: () => {
-    // El invitado entra sin persistir sesión
     set({ status: 'authenticated', user: undefined, token: undefined });
   },
 

@@ -7,13 +7,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-/**
- * DAO de Cursos — Evidencia 1
- */
 @Repository
 public interface CursoRepository extends JpaRepository<Curso, Integer> {
 
     List<Curso> findByProfesor(Usuario profesor);
 
     List<Curso> findByNombreContainingIgnoreCase(String nombre);
+
+    List<Curso> findByAlumnosContaining(Usuario alumno);
 }

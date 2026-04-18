@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   TextInput, Pressable, Image, ImageBackground,
+  Modal, Alert, ActivityIndicator,
 } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { getCategorias } from '@/core/categorias/actions/get-categorias';
+import { getCategorias, crearCategoria } from '@/core/categorias/actions/get-categorias';
 import { getQuizzes } from '@/core/quizzes/actions/get-quizzes';
-import { getCursos, getCursosByProfesor } from '@/core/cursos/actions/get-cursos';
+import { getMisCursos } from '@/core/cursos/actions/get-cursos';
 import { Categoria } from '@/core/auth/interface/categoria';
 import { QuizResumen } from '@/core/auth/interface/quiz';
 import { CursoResumen } from '@/core/auth/interface/curso';
@@ -66,22 +68,37 @@ export default function HomePrincipal() {
   const { user } = useAuthStore();
   const esProfesor = user?.rol === 'profesor';
 
-  const [search,      setSearch]      = useState('');
-  const [code,        setCode]        = useState('');
-  const [selectedCat, setSelectedCat] = useState<number | null>(null);
-  const [categories,  setCategories]  = useState<Categoria[]>([]);
-  const [cursos,      setCursos]      = useState<CursoResumen[]>([]);
-  const [quizzes,     setQuizzes]     = useState<QuizResumen[]>([]);
+  const [search,        setSearch]        = useState('');
+  const [code,          setCode]          = useState('');
+  const [selectedCat,   setSelectedCat]   = useState<number | null>(null);
+  const [categories,    setCategories]    = useState<Categoria[]>([]);
+  const [cursos,        setCursos]        = useState<CursoResumen[]>([]);
+  const [quizzes,       setQuizzes]       = useState<QuizResumen[]>([]);
+  const [modalCat,      setModalCat]      = useState(false);
+  const [nuevaCat,      setNuevaCat]      = useState('');
+  const [guardandoCat,  setGuardandoCat]  = useState(false);
 
   useEffect(() => {
     getCategorias().then(setCategories).catch(() => {});
-    if (esProfesor && user?.id) {
-      getCursosByProfesor(user.id).then(setCursos).catch(() => {});
-    } else {
-      getCursos().then(setCursos).catch(() => {});
+    if (user) {
+      getMisCursos().then(setCursos).catch(() => {});
     }
     getQuizzes().then(setQuizzes).catch(() => {});
   }, []);
+
+  const handleCrearCategoria = async () => {
+    if (!nuevaCat.trim()) return;
+    setGuardandoCat(true);
+    const cat = await crearCategoria(nuevaCat.trim());
+    setGuardandoCat(false);
+    if (cat) {
+      setCategories(prev => [...prev, cat]);
+      setNuevaCat('');
+      setModalCat(false);
+    } else {
+      Alert.alert('Error', 'No se pudo crear la categoría. Puede que ya exista.');
+    }
+  };
 
   const handleCatSelect = (id: number | null) => {
     setSelectedCat(id);
@@ -92,6 +109,7 @@ export default function HomePrincipal() {
   const rolLabel    = esProfesor ? 'Profesor' : 'Alumno';
 
   return (
+    <>
     <ImageBackground
       source={require('@/assets/sloth.png')}
       style={styles.background}
@@ -129,7 +147,14 @@ export default function HomePrincipal() {
           </View>
 
           <View style={styles.quizzesSection}>
-            <Text style={styles.catsTitle}>Categorías</Text>
+            <View style={styles.catsTitleRow}>
+              <Text style={styles.catsTitle}>Categorías</Text>
+              {esProfesor && (
+                <Pressable style={styles.catsAddBtn} onPress={() => setModalCat(true)}>
+                  <Ionicons name="add" size={16} color="#412E2E" />
+                </Pressable>
+              )}
+            </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -184,7 +209,18 @@ export default function HomePrincipal() {
           <View style={styles.classesSection}>
             <Text style={styles.classesSectionTitle}>Tus clases</Text>
             {cursos.length === 0 ? (
-              <Text style={styles.emptyDark}>Sin clases asignadas</Text>
+              <View style={styles.emptyClases}>
+                <Text style={styles.emptyDark}>Sin clases asignadas</Text>
+                <Pressable
+                  style={styles.emptyClasesBtn}
+                  onPress={() => router.push('/(stack)/(tabs)/clase')}
+                >
+                  <Ionicons name="add" size={15} color="white" />
+                  <Text style={styles.emptyClasesBtnText}>
+                    {esProfesor ? 'Crear una clase' : 'Unirse a una clase'}
+                  </Text>
+                </Pressable>
+              </View>
             ) : (
               <View style={styles.classGrid}>
                 {cursos.slice(0, 4).map((c, i) => (
@@ -196,6 +232,38 @@ export default function HomePrincipal() {
         </ScrollView>
       </SafeAreaView>
     </ImageBackground>
+
+    <Modal visible={modalCat} transparent animationType="fade" onRequestClose={() => setModalCat(false)}>
+      <Pressable style={styles.modalBackdrop} onPress={() => setModalCat(false)}>
+        <Pressable style={styles.modalCard} onPress={() => {}}>
+          <Text style={styles.modalTitle}>Nueva categoría</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Nombre de la categoría"
+            placeholderTextColor="#9ca3af"
+            value={nuevaCat}
+            onChangeText={setNuevaCat}
+            autoFocus
+          />
+          <View style={styles.modalBtns}>
+            <Pressable style={styles.modalCancelBtn} onPress={() => { setModalCat(false); setNuevaCat(''); }}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.modalConfirmBtn, !nuevaCat.trim() && { opacity: 0.5 }]}
+              onPress={handleCrearCategoria}
+              disabled={guardandoCat || !nuevaCat.trim()}
+            >
+              {guardandoCat
+                ? <ActivityIndicator size="small" color="white" />
+                : <Text style={styles.modalConfirmText}>Crear</Text>
+              }
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+    </>
   );
 }
 
@@ -272,6 +340,20 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
+  },
+  catsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  catsAddBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   catsTitle: {
     color: 'white',
@@ -477,7 +559,88 @@ const styles = StyleSheet.create({
     color: '#844A31',
     fontSize: 12,
     textAlign: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
     opacity: 0.7,
+  },
+  emptyClases: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    gap: 10,
+  },
+  emptyClasesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#571D11',
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  emptyClasesBtnText: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(65,46,46,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  modalCard: {
+    backgroundColor: '#fdfaf7',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(87,29,17,0.08)',
+  },
+  modalTitle: {
+    color: '#412E2E',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  modalInput: {
+    borderWidth: 1.5,
+    borderColor: 'rgba(87,29,17,0.15)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: '#412E2E',
+    marginBottom: 16,
+  },
+  modalBtns: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: 'rgba(87,29,17,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    color: '#844A31',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: '#53b55e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalConfirmText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

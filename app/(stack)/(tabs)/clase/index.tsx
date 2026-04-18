@@ -1,20 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TextInput, Pressable, Image,
+  TextInput, Pressable, Image, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { ClaseProfesor, ClaseAlumno } from '@/core/auth/interface/clase';
-
-const CLASES_PROFESOR: ClaseProfesor[] = [];
-const CLASES_ALUMNO: ClaseAlumno[] = [];
+import { getMisCursos, CursoResumen } from '@/core/cursos/actions/get-cursos';
 
 export default function ClaseScreen() {
   const { user } = useAuthStore();
   const esProfesor = user?.rol === 'profesor';
   const [search, setSearch] = useState('');
+  const [clases, setClases] = useState<CursoResumen[]>([]);
+  const [cargando, setCargando] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setCargando(true);
+    getMisCursos()
+      .then(setClases)
+      .catch(() => setClases([]))
+      .finally(() => setCargando(false));
+  }, [user]);
+
+  const clasesFiltradas = clases.filter(c =>
+    c.nombre.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -34,23 +46,25 @@ export default function ClaseScreen() {
       </View>
 
       <View style={styles.contentArea}>
-        {esProfesor
-          ? <VistaProfesor clases={CLASES_PROFESOR} />
-          : <VistaAlumno clases={CLASES_ALUMNO} />
-        }
+        {cargando ? (
+          <ActivityIndicator style={{ marginTop: 60 }} color="#844A31" size="large" />
+        ) : esProfesor ? (
+          <VistaProfesor clases={clasesFiltradas} />
+        ) : (
+          <VistaAlumno clases={clasesFiltradas} />
+        )}
       </View>
     </SafeAreaView>
   );
 }
 
-function VistaProfesor({ clases }: { clases: ClaseProfesor[] }) {
+function VistaProfesor({ clases }: { clases: CursoResumen[] }) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
       <View style={styles.actionBtn}>
         <Ionicons name="add-outline" size={16} color="#412E2E" />
         <Text style={styles.actionBtnText}>Crear una clase nueva</Text>
       </View>
-
 
       {clases.length === 0 ? (
         <EmptyState mensaje="No tienes ninguna clase creada" sub="Crea tu primera clase para empezar" />
@@ -63,7 +77,7 @@ function VistaProfesor({ clases }: { clases: ClaseProfesor[] }) {
   );
 }
 
-function VistaAlumno({ clases }: { clases: ClaseAlumno[] }) {
+function VistaAlumno({ clases }: { clases: CursoResumen[] }) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
       <View style={styles.actionBtn}>
@@ -82,7 +96,7 @@ function VistaAlumno({ clases }: { clases: ClaseAlumno[] }) {
   );
 }
 
-function TarjetaProfesor({ clase }: { clase: ClaseProfesor }) {
+function TarjetaProfesor({ clase }: { clase: CursoResumen }) {
   return (
     <View style={styles.cardProfesor}>
       <View style={styles.cardProfesorTop}>
@@ -92,34 +106,26 @@ function TarjetaProfesor({ clase }: { clase: ClaseProfesor }) {
       </View>
       <View style={styles.cardProfesorBody}>
         <Text style={styles.cardNombre} numberOfLines={1}>{clase.nombre}</Text>
-        <Text style={styles.cardDescripcion} numberOfLines={1}>{clase.descripcion}</Text>
+        <Text style={styles.cardDescripcion} numberOfLines={1}>{clase.descripcion ?? ''}</Text>
         <View style={styles.cardEstudiantes}>
           <Ionicons name="people-outline" size={13} color="#6a7282" />
-          <Text style={styles.cardEstudiantesText}>{clase.numEstudiantes} estudiantes</Text>
+          <Text style={styles.cardEstudiantesText}>0 estudiantes</Text>
         </View>
       </View>
     </View>
   );
 }
 
-function TarjetaAlumno({ clase }: { clase: ClaseAlumno }) {
+function TarjetaAlumno({ clase }: { clase: CursoResumen }) {
   return (
     <View style={styles.cardAlumno}>
       <View style={styles.cardAlumnoLeft} />
       <View style={styles.cardAlumnoBody}>
         <Text style={styles.cardNombreAlumno} numberOfLines={1}>{clase.nombre}</Text>
-        <Text style={styles.cardProfesorNombre}>Profesor: {clase.nombreProfesor}</Text>
+        <Text style={styles.cardProfesorNombre}>
+          Profesor: {clase.profesor?.nombre ?? 'Desconocido'}
+        </Text>
       </View>
-      {clase.quizzesPendientes > 0 && (
-        <View style={styles.cardAlumnoFooter}>
-          <Pressable style={styles.cardMenuAlumno}>
-            <Ionicons name="ellipsis-vertical" size={16} color="white" />
-          </Pressable>
-          <View style={styles.badgePendientes}>
-            <Text style={styles.badgeText}>{clase.quizzesPendientes} Quizz pendientes</Text>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
@@ -260,6 +266,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     overflow: 'hidden',
     marginBottom: 12,
+    alignSelf: 'stretch',
   },
   cardAlumnoLeft: {
     position: 'absolute',
@@ -286,34 +293,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '400',
     lineHeight: 20,
-  },
-  cardAlumnoFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 10,
-    backgroundColor: '#24833D',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  cardMenuAlumno: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgePendientes: {
-    backgroundColor: '#fb2c36',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  badgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: '700',
   },
   emptyState: {
     alignSelf: 'stretch',

@@ -6,9 +6,17 @@ import com.quizsloth.model.Documento;
 import com.quizsloth.model.Pregunta;
 import com.quizsloth.model.Quiz;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFShape;
+import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -20,15 +28,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Evidencia 4: Cliente HTTP para la API de IA (OpenAI).
- *
- * Flujo:
- *  1. Lee el texto del documento desde disco.
- *  2. Construye el prompt con el texto extraído.
- *  3. Envía la petición REST a OpenAI con autenticación Bearer.
- *  4. Deserializa el JSON resultante y extrae las preguntas.
- */
 @Slf4j
 @Service
 public class IAService {
@@ -51,27 +50,48 @@ public class IAService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Genera preguntas de tipo test a partir de un documento.
-     * @param documento El documento cuyo contenido se usará como contexto.
-     * @param numPreguntas Número de preguntas a generar.
-     * @return Lista de Pregunta (sin id_quiz asignado aún).
-     */
     public List<Pregunta> generarPreguntas(Documento documento, int numPreguntas) {
         try {
-            String textoDocumento = leerTextoDocumento(documento.getRutaAlmacenamiento());
-            String prompt = construirPrompt(textoDocumento, numPreguntas);
-            String respuestaJson = llamarOpenAI(prompt);
-            return parsearPreguntas(respuestaJson);
+            String texto = leerTextoDocumento(documento.getRutaAlmacenamiento());
+            return generarPreguntasDesdeTexto(texto, numPreguntas);
         } catch (Exception e) {
-            log.error("Error generando preguntas con IA para documento {}: {}", documento.getId(), e.getMessage());
+            log.error("Error generando preguntas para documento {}: {}", documento.getId(), e.getMessage());
             throw new RuntimeException("Error al generar preguntas con IA: " + e.getMessage(), e);
         }
     }
 
-    // ----------------------------------------------------------------
-    // Lectura del documento
-    // ----------------------------------------------------------------
+    public List<Pregunta> generarPreguntasDesdeTexto(String texto, int numPreguntas) {
+        try {
+            String textoLimitado = texto.length() > 12000 ? texto.substring(0, 12000) : texto;
+            String prompt = construirPrompt(textoLimitado, numPreguntas);
+            String respuestaJson = llamarOpenAI(prompt);
+            return parsearPreguntas(respuestaJson);
+        } catch (Exception e) {
+            log.error("Error generando preguntas desde texto: {}", e.getMessage());
+            throw new RuntimeException("Error al generar preguntas con IA: " + e.getMessage(), e);
+        }
+    }
+
+    public String extraerTextoPDF(byte[] bytes) throws Exception {
+        try (PDDocument doc = Loader.loadPDF(bytes)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            return stripper.getText(doc);
+        }
+    }
+
+    public String extraerTextoPPTX(byte[] bytes) throws Exception {
+        try (XMLSlideShow ppt = new XMLSlideShow(new ByteArrayInputStream(bytes))) {
+            StringBuilder sb = new StringBuilder();
+            for (XSLFSlide slide : ppt.getSlides()) {
+                for (XSLFShape shape : slide.getShapes()) {
+                    if (shape instanceof XSLFTextShape textShape) {
+                        sb.append(textShape.getText()).append("\n");
+                    }
+                }
+            }
+            return sb.toString();
+        }
+    }
 
     private String leerTextoDocumento(String ruta) throws Exception {
         Path path = Path.of(uploadDir + ruta);
@@ -80,13 +100,8 @@ public class IAService {
         }
         byte[] bytes = Files.readAllBytes(path);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
-        // Limitar a 12000 caracteres para no exceder el contexto del modelo
         return contenido.length() > 12000 ? contenido.substring(0, 12000) : contenido;
     }
-
-    // ----------------------------------------------------------------
-    // Construcción del prompt
-    // ----------------------------------------------------------------
 
     private String construirPrompt(String texto, int numPreguntas) {
         return String.format("""
@@ -115,10 +130,6 @@ public class IAService {
             """, numPreguntas, texto);
     }
 
-    // ----------------------------------------------------------------
-    // Llamada HTTP a OpenAI (Evidencia 4)
-    // ----------------------------------------------------------------
-
     private String llamarOpenAI(String prompt) throws Exception {
         String requestBody = objectMapper.writeValueAsString(new java.util.LinkedHashMap<>() {{
             put("model", model);
@@ -137,7 +148,7 @@ public class IAService {
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
-                .timeout(Duration.ofSeconds(60))
+                .timeout(Duration.ofSeconds(90))
                 .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -146,17 +157,11 @@ public class IAService {
             throw new RuntimeException("OpenAI respondió con HTTP " + response.statusCode() + ": " + response.body());
         }
 
-        // Extraer el contenido del mensaje
         JsonNode root = objectMapper.readTree(response.body());
         return root.path("choices").get(0).path("message").path("content").asText();
     }
 
-    // ----------------------------------------------------------------
-    // Deserialización del JSON resultante
-    // ----------------------------------------------------------------
-
     private List<Pregunta> parsearPreguntas(String jsonRespuesta) throws Exception {
-        // Limpiar posibles bloques de código markdown
         String json = jsonRespuesta.trim()
                 .replaceAll("```json", "")
                 .replaceAll("```", "")
@@ -184,7 +189,7 @@ public class IAService {
             preguntas.add(pregunta);
         }
 
-        log.info("IA generó {} preguntas correctamente", preguntas.size());
+        log.info("IA generó {} preguntas", preguntas.size());
         return preguntas;
     }
 }

@@ -4,6 +4,7 @@ import {
   TextInput, Animated, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 type SubType = 'prediseñados' | 'texto-ia' | 'url' | 'texto-pdf' | 'sloth-ia' | null;
 
@@ -87,7 +88,18 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
 
           <View style={styles.cardRow}>
             {QUIZ_OPTIONS.map(opt => (
-              <OptionCard key={opt.key as string} opt={opt} onPress={() => setSub(opt.key)} />
+              <OptionCard
+                key={opt.key as string}
+                opt={opt}
+                onPress={() => {
+                  if (opt.key === 'texto-ia' || opt.key === 'url') {
+                    handleClose();
+                    router.push(`/crear-quiz?tipo=${opt.key}`);
+                  } else {
+                    setSub(opt.key);
+                  }
+                }}
+              />
             ))}
           </View>
 
@@ -102,7 +114,18 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
 
           <View style={styles.cardRowTwo}>
             {NOTES_OPTIONS.map(opt => (
-              <OptionCard key={opt.key as string} opt={opt} onPress={() => setSub(opt.key)} />
+              <OptionCard
+                key={opt.key as string}
+                opt={opt}
+                onPress={() => {
+                  if (opt.key === 'texto-pdf') {
+                    handleClose();
+                    router.push('/crear-quiz?tipo=archivo');
+                  } else {
+                    setSub(opt.key);
+                  }
+                }}
+              />
             ))}
           </View>
 

@@ -1,21 +1,27 @@
 package com.quizsloth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "preguntas")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Pregunta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_quiz")
     private Quiz quiz;
@@ -40,4 +46,10 @@ public class Pregunta {
 
     @Enumerated(EnumType.STRING)
     private Quiz.Dificultad dificultad = Quiz.Dificultad.normal;
+
+    @Column(name = "orden")
+    private Integer orden = 0;
+
+    @Column(name = "peso", precision = 5, scale = 2)
+    private BigDecimal peso = BigDecimal.ONE;
 }

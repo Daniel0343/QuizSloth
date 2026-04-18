@@ -33,6 +33,15 @@ public class Curso {
     private Usuario profesor;
 
     @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "curso_alumnos",
+        joinColumns = @JoinColumn(name = "id_curso"),
+        inverseJoinColumns = @JoinColumn(name = "id_alumno")
+    )
+    private List<Usuario> alumnos;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Documento> documentos;
 }

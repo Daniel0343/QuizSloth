@@ -4,6 +4,7 @@ import com.quizsloth.model.Curso;
 import com.quizsloth.service.CursoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,11 @@ public class CursoController {
     @GetMapping
     public ResponseEntity<List<Curso>> listar() {
         return ResponseEntity.ok(cursoService.listarTodos());
+    }
+
+    @GetMapping("/mis-cursos")
+    public ResponseEntity<List<Curso>> misCursos(Authentication authentication) {
+        return ResponseEntity.ok(cursoService.listarMisCursos(authentication.getName()));
     }
 
     @GetMapping("/{id}")

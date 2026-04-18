@@ -14,4 +14,6 @@ import java.util.List;
 public interface PreguntaRepository extends JpaRepository<Pregunta, Integer> {
 
     List<Pregunta> findByQuiz(Quiz quiz);
+
+    List<Pregunta> findByQuizOrderByOrden(Quiz quiz);
 }

@@ -30,6 +30,11 @@ public class Quiz {
     @JoinColumn(name = "id_documento")
     private Documento documento;
 
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_creador")
+    private Usuario creador;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_categoria")
     private Categoria categoria;

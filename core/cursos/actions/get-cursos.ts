@@ -8,6 +8,11 @@ export async function getCursos(): Promise<CursoResumen[]> {
   return data;
 }
 
+export async function getMisCursos(): Promise<CursoResumen[]> {
+  const { data } = await quizslothApi.get<CursoResumen[]>('/cursos/mis-cursos');
+  return data;
+}
+
 export async function getCursosByProfesor(profesorId: number): Promise<CursoResumen[]> {
   const { data } = await quizslothApi.get<CursoResumen[]>(`/cursos/profesor/${profesorId}`);
   return data;

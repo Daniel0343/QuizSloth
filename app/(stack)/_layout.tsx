@@ -25,6 +25,8 @@ export default function StackLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="crear-quiz/index" />
+      <Stack.Screen name="crear-quiz/editar" />
     </Stack>
   );
 }

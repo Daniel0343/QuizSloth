@@ -26,6 +26,15 @@ public class CursoService {
         return cursoRepository.findByProfesor(profesor);
     }
 
+    public List<Curso> listarMisCursos(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        if (usuario.getRol() == Usuario.Rol.profesor) {
+            return cursoRepository.findByProfesor(usuario);
+        }
+        return cursoRepository.findByAlumnosContaining(usuario);
+    }
+
     public Curso obtener(Integer id) {
         return cursoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
