@@ -4,6 +4,7 @@ services:
     image: mysql:8.0
     container_name: quizzsloth_mysql
     restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: quizzsloth_db
@@ -59,7 +60,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/quizzsloth_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/quizzsloth_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
       SPRING_DATASOURCE_USERNAME: administrador
       SPRING_DATASOURCE_PASSWORD: 1234
       OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-placeholder}

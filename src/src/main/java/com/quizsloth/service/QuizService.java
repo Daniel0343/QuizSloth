@@ -41,6 +41,43 @@ public class QuizService {
         return quizRepository.findByCreador(usuario);
     }
 
+    public List<QuizResumenDTO> listarPorCreadorDTO(String email) {
+        return listarPorCreador(email).stream()
+                .map(q -> new QuizResumenDTO(
+                        q.getId(),
+                        q.getTitulo(),
+                        q.getDificultad().name(),
+                        q.getCategoria(),
+                        preguntaRepository.countByQuiz(q)
+                ))
+                .toList();
+    }
+
+    public void eliminar(Integer id, String email) {
+        Quiz quiz = obtener(id);
+        preguntaRepository.findByQuiz(quiz).forEach(p -> preguntaRepository.deleteById(p.getId()));
+        quizRepository.deleteById(id);
+    }
+
+    public Pregunta crearPregunta(Integer quizId, Integer orden) {
+        Quiz quiz = obtener(quizId);
+        Pregunta p = new Pregunta();
+        p.setQuiz(quiz);
+        p.setEnunciado("Nueva pregunta");
+        p.setOpcionA("Opción A");
+        p.setOpcionB("Opción B");
+        p.setOpcionC("Opción C");
+        p.setOpcionD("Opción D");
+        p.setRespuestaCorrecta("A");
+        p.setDificultad(Quiz.Dificultad.normal);
+        p.setOrden(orden != null ? orden : 0);
+        return preguntaRepository.save(p);
+    }
+
+    public void eliminarPregunta(Integer id) {
+        preguntaRepository.deleteById(id);
+    }
+
     public Quiz obtener(Integer id) {
         return quizRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Quiz no encontrado"));
@@ -60,7 +97,7 @@ public class QuizService {
         quiz.setTitulo(titulo);
         quiz.setDocumento(documento);
         quiz.setDificultad(Quiz.Dificultad.normal);
-        usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
+        if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
         Quiz saved = quizRepository.save(quiz);
 
         for (int i = 0; i < generadas.size(); i++) {
@@ -83,7 +120,7 @@ public class QuizService {
         quiz.setDificultad(Quiz.Dificultad.normal);
         categoriaRepository.findById(categoriaId != null ? categoriaId : -1)
                 .ifPresent(quiz::setCategoria);
-        usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
+        if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
         Quiz saved = quizRepository.save(quiz);
 
         for (int i = 0; i < generadas.size(); i++) {
@@ -131,6 +168,14 @@ public class QuizService {
     }
 
     public record QuizConPreguntas(Quiz quiz, List<Pregunta> preguntas) {}
+
+    public record QuizResumenDTO(
+            Integer id,
+            String titulo,
+            String dificultad,
+            com.quizsloth.model.Categoria categoria,
+            int numPreguntas
+    ) {}
 
     public record PreguntaUpdate(
             String enunciado,

@@ -2,8 +2,10 @@ package com.quizsloth.controller;
 
 import com.quizsloth.model.Pregunta;
 import com.quizsloth.model.Quiz;
+import com.quizsloth.security.JwtUtil;
 import com.quizsloth.service.IAService;
 import com.quizsloth.service.QuizService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,15 @@ public class QuizController {
 
     private final QuizService quizService;
     private final IAService iaService;
+    private final JwtUtil jwtUtil;
+
+    private String emailFromRequest(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            try { return jwtUtil.extractEmail(header.substring(7)); } catch (Exception ignored) {}
+        }
+        return null;
+    }
 
     @GetMapping
     public ResponseEntity<List<Quiz>> listar(
@@ -29,8 +40,14 @@ public class QuizController {
     }
 
     @GetMapping("/mis-quizzes")
-    public ResponseEntity<List<Quiz>> misQuizzes(Authentication authentication) {
-        return ResponseEntity.ok(quizService.listarPorCreador(authentication.getName()));
+    public ResponseEntity<List<QuizService.QuizResumenDTO>> misQuizzes(Authentication authentication) {
+        return ResponseEntity.ok(quizService.listarPorCreadorDTO(authentication.getName()));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id, Authentication authentication) {
+        quizService.eliminar(id, authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
@@ -53,10 +70,10 @@ public class QuizController {
 
     @PostMapping("/generar-desde-texto")
     public ResponseEntity<QuizService.QuizConPreguntas> generarDesdeTexto(
-            @RequestBody GenerarDesdeTextoRequest req, Authentication authentication) {
+            @RequestBody GenerarDesdeTextoRequest req, HttpServletRequest request) {
         QuizService.QuizConPreguntas resultado = quizService.generarDesdeTexto(
                 req.getTitulo(), req.getTexto(), req.getNumPreguntas(), req.getCategoriaId(),
-                authentication.getName());
+                emailFromRequest(request));
         return ResponseEntity.ok(resultado);
     }
 
@@ -66,7 +83,7 @@ public class QuizController {
             @RequestParam("titulo") String titulo,
             @RequestParam("numPreguntas") int numPreguntas,
             @RequestParam(value = "categoriaId", required = false) Integer categoriaId,
-            Authentication authentication) throws Exception {
+            HttpServletRequest request) throws Exception {
 
         String nombre = archivo.getOriginalFilename() != null ? archivo.getOriginalFilename().toLowerCase() : "";
         byte[] bytes = archivo.getBytes();
@@ -81,7 +98,7 @@ public class QuizController {
         }
 
         QuizService.QuizConPreguntas resultado = quizService.generarDesdeTexto(
-                titulo, texto, numPreguntas, categoriaId, authentication.getName());
+                titulo, texto, numPreguntas, categoriaId, emailFromRequest(request));
         return ResponseEntity.ok(resultado);
     }
 

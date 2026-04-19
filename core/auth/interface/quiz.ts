@@ -3,6 +3,7 @@ export interface QuizResumen {
   titulo: string;
   dificultad: string;
   categoria?: { id: number; nombre: string };
+  numPreguntas?: number;
 }
 
 export interface QuizDetalle {
