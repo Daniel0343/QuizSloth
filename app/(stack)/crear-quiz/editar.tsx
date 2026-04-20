@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  Pressable, ActivityIndicator, Alert,
+  Pressable, ActivityIndicator, Alert, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,12 +12,15 @@ import {
 } from '@/core/quizzes/actions/crear-quiz';
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
 import { PreguntaDetalle, QuizDetalle } from '@/core/auth/interface/quiz';
+import {
+  getMisColecciones, crearColeccion, añadirQuizAColeccion, ColeccionDTO,
+} from '@/core/colecciones/actions/colecciones';
 
 const DIFICULTADES = ['facil', 'normal', 'dificil', 'extremo'] as const;
 const OPCIONES: ('A' | 'B' | 'C' | 'D')[] = ['A', 'B', 'C', 'D'];
 
 export default function EditarQuizScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, nuevo } = useLocalSearchParams<{ id: string; nuevo?: string }>();
   const quizId = Number(id);
 
   const [quiz, setQuiz] = useState<QuizDetalle | null>(null);
@@ -26,14 +29,22 @@ export default function EditarQuizScreen() {
   const [cargando, setCargando] = useState(true);
   const [expandida, setExpandida] = useState<number | null>(null);
 
+  const [modalColeccion, setModalColeccion] = useState(false);
+  const [colecciones, setColecciones] = useState<ColeccionDTO[]>([]);
+  const [nuevaColeccion, setNuevaColeccion] = useState('');
+  const [creandoColeccion, setCreandoColeccion] = useState(false);
+  const [guardandoColeccion, setGuardandoColeccion] = useState(false);
+
   useEffect(() => {
     const cargar = async () => {
-      const [q, ps] = await Promise.all([
+      const [q, ps, cols] = await Promise.all([
         quizslothApi.get<QuizDetalle>(`/quizzes/${quizId}`).then(r => r.data).catch(() => null),
         obtenerPreguntas(quizId),
+        getMisColecciones().catch(() => []),
       ]);
       if (q) setQuiz(q);
       setPreguntas(ps);
+      setColecciones(cols);
       setCargando(false);
     };
     cargar();
@@ -85,6 +96,40 @@ export default function EditarQuizScreen() {
     );
   };
 
+  const handleCrearColeccion = async () => {
+    if (!nuevaColeccion.trim()) return;
+    setCreandoColeccion(true);
+    try {
+      const col = await crearColeccion(nuevaColeccion.trim());
+      await añadirQuizAColeccion(col.id, quizId);
+      setNuevaColeccion('');
+      setModalColeccion(false);
+      router.replace('/(stack)/(tabs)/home');
+      Alert.alert('¡Listo!', `Quiz añadido a "${col.nombre}".`);
+    } catch {
+      Alert.alert('Error', 'No se pudo crear la colección.');
+    } finally {
+      setCreandoColeccion(false);
+    }
+  };
+
+  const handleAñadirAColeccion = async (coleccionId: number) => {
+    setGuardandoColeccion(true);
+    try {
+      await añadirQuizAColeccion(coleccionId, quizId);
+      setColecciones(prev => prev.map(c =>
+        c.id === coleccionId ? { ...c, cantidad: c.cantidad + 1 } : c
+      ));
+      setModalColeccion(false);
+      router.replace('/(stack)/(tabs)/home');
+      Alert.alert('¡Listo!', 'Quiz añadido a la colección.');
+    } catch {
+      Alert.alert('Error', 'No se pudo añadir el quiz a la colección.');
+    } finally {
+      setGuardandoColeccion(false);
+    }
+  };
+
   const handleGuardar = async () => {
     if (!quiz) return;
     setGuardando(true);
@@ -111,9 +156,13 @@ export default function EditarQuizScreen() {
       );
 
       setGuardando(false);
-      Alert.alert('¡Listo!', 'Quiz guardado correctamente.', [
-        { text: 'OK', onPress: () => router.replace('/(stack)/(tabs)/home') },
-      ]);
+      if (nuevo === 'true') {
+        setModalColeccion(true);
+      } else {
+        Alert.alert('¡Listo!', 'Quiz guardado correctamente.', [
+          { text: 'OK', onPress: () => router.replace('/(stack)/(tabs)/home') },
+        ]);
+      }
     } catch (e: any) {
       setGuardando(false);
       const status = e?.response?.status;
@@ -202,6 +251,67 @@ export default function EditarQuizScreen() {
           <Text style={styles.addBtnText}>Añadir pregunta manualmente</Text>
         </Pressable>
       </ScrollView>
+
+      <Modal
+        visible={modalColeccion}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalColeccion(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setModalColeccion(false)}>
+          <Pressable style={styles.colSheet} onPress={() => {}}>
+            <View style={styles.colSheetHandle} />
+            <Text style={styles.colSheetTitle}>¿Añadir a una colección?</Text>
+            <Text style={styles.colSheetSub}>Elige una colección o crea una nueva</Text>
+
+            <View style={styles.colNuevaRow}>
+              <TextInput
+                style={styles.colNuevaInput}
+                placeholder="Nueva colección..."
+                placeholderTextColor="#9ca3af"
+                value={nuevaColeccion}
+                onChangeText={setNuevaColeccion}
+              />
+              <Pressable
+                style={[styles.colNuevaBtn, !nuevaColeccion.trim() && { opacity: 0.4 }]}
+                onPress={handleCrearColeccion}
+                disabled={!nuevaColeccion.trim() || creandoColeccion}
+              >
+                {creandoColeccion
+                  ? <ActivityIndicator size="small" color="white" />
+                  : <Ionicons name="add" size={20} color="white" />
+                }
+              </Pressable>
+            </View>
+
+            <ScrollView style={{ maxHeight: 240 }} showsVerticalScrollIndicator={false}>
+              {colecciones.length === 0 ? (
+                <Text style={styles.colVacia}>No tienes colecciones todavía</Text>
+              ) : (
+                colecciones.map(col => (
+                  <Pressable
+                    key={col.id}
+                    style={styles.colItem}
+                    onPress={() => handleAñadirAColeccion(col.id)}
+                    disabled={guardandoColeccion}
+                  >
+                    <View style={styles.colItemIcon}>
+                      <Ionicons name="folder-outline" size={20} color="#571D11" />
+                    </View>
+                    <Text style={styles.colItemNombre}>{col.nombre}</Text>
+                    <Text style={styles.colItemCount}>{col.cantidad}</Text>
+                    <Ionicons name="chevron-forward" size={16} color="rgba(65,46,46,0.4)" />
+                  </Pressable>
+                ))
+              )}
+            </ScrollView>
+
+            <Pressable style={styles.colSkip} onPress={() => { setModalColeccion(false); router.replace('/(stack)/(tabs)/home'); }}>
+              <Text style={styles.colSkipText}>Omitir por ahora</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -594,5 +704,108 @@ const styles = StyleSheet.create({
     color: '#844A31',
     fontSize: 14,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  colSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 32,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+  },
+  colSheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(65,46,46,0.2)',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  colSheetTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#412E2E',
+    marginBottom: 4,
+  },
+  colSheetSub: {
+    fontSize: 13,
+    color: '#844A31',
+    opacity: 0.8,
+    marginBottom: 16,
+  },
+  colNuevaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  colNuevaInput: {
+    flex: 1,
+    height: 42,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(65,46,46,0.2)',
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: '#412E2E',
+  },
+  colNuevaBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: '#571D11',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colVacia: {
+    textAlign: 'center',
+    color: '#844A31',
+    fontSize: 13,
+    opacity: 0.7,
+    paddingVertical: 20,
+  },
+  colItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(65,46,46,0.08)',
+  },
+  colItemIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#f0e8e3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colItemNombre: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#412E2E',
+  },
+  colItemCount: {
+    fontSize: 13,
+    color: '#844A31',
+    fontWeight: '500',
+  },
+  colSkip: {
+    marginTop: 16,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(65,46,46,0.07)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colSkipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#412E2E',
   },
 });

@@ -55,7 +55,7 @@ export default function CrearQuizScreen() {
         : await generarQuizDesdeArchivo(archivo!, titulo.trim(), numPreguntas, categoriaId);
 
       setGenerando(false);
-      router.replace(`/crear-quiz/editar?id=${(resultado as any).quiz.id}`);
+      router.replace(`/crear-quiz/editar?id=${(resultado as any).quiz.id}&nuevo=true`);
     } catch (e: any) {
       setGenerando(false);
       const status = e?.response?.status;

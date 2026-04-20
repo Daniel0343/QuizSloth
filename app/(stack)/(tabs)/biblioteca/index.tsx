@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView, Modal,
   TextInput, Pressable, Image, Alert, ActivityIndicator,
@@ -9,12 +10,10 @@ import { router } from 'expo-router';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { getMisQuizzes, eliminarQuiz } from '@/core/quizzes/actions/get-quizzes';
 import { QuizResumen } from '@/core/auth/interface/quiz';
-import { Coleccion } from '@/core/auth/interface/biblioteca';
+import { getMisColecciones, crearColeccion, añadirQuizAColeccion, ColeccionDTO } from '@/core/colecciones/actions/colecciones';
 
 type Tab = 'biblioteca' | 'colecciones';
 type Filtro = 'todos' | 'quizzes' | 'apuntes';
-
-const COLECCIONES: Coleccion[] = [];
 
 const DIFICULTAD_COLOR: Record<string, string> = {
   facil:   '#24833D',
@@ -31,6 +30,11 @@ export default function BibliotecaScreen() {
   const [quizzes, setQuizzes] = useState<QuizResumen[]>([]);
   const [cargando, setCargando] = useState(false);
   const [menuQuiz, setMenuQuiz] = useState<QuizResumen | null>(null);
+  const [colecciones, setColecciones] = useState<ColeccionDTO[]>([]);
+  const [modalNuevaCol, setModalNuevaCol] = useState(false);
+  const [nombreNuevaCol, setNombreNuevaCol] = useState('');
+  const [creandoCol, setCreandoCol] = useState(false);
+  const [modalAgregarCol, setModalAgregarCol] = useState(false);
 
   const cargarQuizzes = useCallback(() => {
     if (!user) return;
@@ -41,9 +45,33 @@ export default function BibliotecaScreen() {
       .finally(() => setCargando(false));
   }, [user]);
 
+  const cargarColecciones = useCallback(() => {
+    if (!user) return;
+    getMisColecciones().then(setColecciones).catch(() => {});
+  }, [user]);
+
   useEffect(() => {
     cargarQuizzes();
   }, [cargarQuizzes]);
+
+  useFocusEffect(useCallback(() => {
+    cargarColecciones();
+  }, [cargarColecciones]));
+
+  const handleCrearColeccion = async () => {
+    if (!nombreNuevaCol.trim()) return;
+    setCreandoCol(true);
+    try {
+      const col = await crearColeccion(nombreNuevaCol.trim());
+      setColecciones(prev => [...prev, col]);
+      setNombreNuevaCol('');
+      setModalNuevaCol(false);
+    } catch {
+      Alert.alert('Error', 'No se pudo crear la colección.');
+    } finally {
+      setCreandoCol(false);
+    }
+  };
 
   const handleOpciones = (quiz: QuizResumen) => setMenuQuiz(quiz);
 
@@ -51,6 +79,21 @@ export default function BibliotecaScreen() {
     if (!menuQuiz) return;
     setMenuQuiz(null);
     router.push(`/crear-quiz/editar?id=${menuQuiz.id}`);
+  };
+
+  const handleAgregarAColeccion = async (coleccionId: number) => {
+    if (!menuQuiz) return;
+    try {
+      await añadirQuizAColeccion(coleccionId, menuQuiz.id);
+      setColecciones(prev => prev.map(c =>
+        c.id === coleccionId ? { ...c, cantidad: c.cantidad + 1 } : c
+      ));
+      setModalAgregarCol(false);
+      setMenuQuiz(null);
+      Alert.alert('¡Listo!', 'Quiz añadido a la colección.');
+    } catch {
+      Alert.alert('Error', 'No se pudo añadir el quiz a la colección.');
+    }
   };
 
   const handleEliminar = () => {
@@ -121,7 +164,16 @@ export default function BibliotecaScreen() {
             onOpciones={handleOpciones}
           />
         ) : (
-          <TabColecciones colecciones={COLECCIONES} />
+          <TabColecciones
+            colecciones={colecciones}
+            modalVisible={modalNuevaCol}
+            onAbrirModal={() => setModalNuevaCol(true)}
+            onCerrarModal={() => setModalNuevaCol(false)}
+            nombre={nombreNuevaCol}
+            onNombre={setNombreNuevaCol}
+            onCrear={handleCrearColeccion}
+            creando={creandoCol}
+          />
         )}
       </View>
 
@@ -147,6 +199,14 @@ export default function BibliotecaScreen() {
               <Ionicons name="chevron-forward" size={16} color="rgba(65,46,46,0.4)" />
             </Pressable>
             <View style={styles.sheetDivider} />
+            <Pressable style={styles.sheetOption} onPress={() => { setMenuQuiz(menuQuiz); setModalAgregarCol(true); }}>
+              <View style={[styles.sheetIconCircle, { backgroundColor: '#e8f0e3' }]}>
+                <Ionicons name="folder-open-outline" size={20} color="#24833D" />
+              </View>
+              <Text style={styles.sheetOptionText}>Agregar a colección</Text>
+              <Ionicons name="chevron-forward" size={16} color="rgba(65,46,46,0.4)" />
+            </Pressable>
+            <View style={styles.sheetDivider} />
             <Pressable style={styles.sheetOption} onPress={handleEliminar}>
               <View style={[styles.sheetIconCircle, { backgroundColor: '#fdecea' }]}>
                 <Ionicons name="trash-outline" size={20} color="#c0392b" />
@@ -155,6 +215,40 @@ export default function BibliotecaScreen() {
               <Ionicons name="chevron-forward" size={16} color="rgba(192,57,43,0.4)" />
             </Pressable>
             <Pressable style={styles.sheetCancel} onPress={() => setMenuQuiz(null)}>
+              <Text style={styles.sheetCancelText}>Cancelar</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+      <Modal
+        visible={modalAgregarCol}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalAgregarCol(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setModalAgregarCol(false)}>
+          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Agregar a colección</Text>
+            <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
+              {colecciones.length === 0 ? (
+                <Text style={{ textAlign: 'center', color: '#844A31', opacity: 0.7, paddingVertical: 20 }}>
+                  No tienes colecciones. Créalas desde la pestaña Colecciones.
+                </Text>
+              ) : (
+                colecciones.map(col => (
+                  <Pressable key={col.id} style={styles.sheetOption} onPress={() => handleAgregarAColeccion(col.id)}>
+                    <View style={[styles.sheetIconCircle, { backgroundColor: '#e8f0e3' }]}>
+                      <Ionicons name="folder-outline" size={20} color="#24833D" />
+                    </View>
+                    <Text style={styles.sheetOptionText}>{col.nombre}</Text>
+                    <Text style={{ color: '#844A31', fontSize: 13 }}>{col.cantidad}</Text>
+                    <Ionicons name="chevron-forward" size={16} color="rgba(65,46,46,0.4)" />
+                  </Pressable>
+                ))
+              )}
+            </ScrollView>
+            <Pressable style={styles.sheetCancel} onPress={() => setModalAgregarCol(false)}>
               <Text style={styles.sheetCancelText}>Cancelar</Text>
             </Pressable>
           </Pressable>
@@ -254,32 +348,76 @@ function QuizCard({ quiz, onOpciones }: { quiz: QuizResumen; onOpciones: (q: Qui
   );
 }
 
-function TabColecciones({ colecciones }: { colecciones: Coleccion[] }) {
+function TabColecciones({
+  colecciones, modalVisible, onAbrirModal, onCerrarModal,
+  nombre, onNombre, onCrear, creando,
+}: {
+  colecciones: ColeccionDTO[];
+  modalVisible: boolean;
+  onAbrirModal: () => void;
+  onCerrarModal: () => void;
+  nombre: string;
+  onNombre: (v: string) => void;
+  onCrear: () => void;
+  creando: boolean;
+}) {
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
-      <Pressable style={styles.createRow}>
-        <View style={styles.createIcon}>
-          <Ionicons name="add-outline" size={20} color="#412E2E" />
-        </View>
-        <Text style={styles.createLabel}>Crear una nueva colección</Text>
-      </Pressable>
-      <View style={styles.divider} />
+    <>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Pressable style={styles.createRow} onPress={onAbrirModal}>
+          <View style={styles.createIcon}>
+            <Ionicons name="add-outline" size={20} color="#412E2E" />
+          </View>
+          <Text style={styles.createLabel}>Crear una nueva colección</Text>
+        </Pressable>
+        <View style={styles.divider} />
 
-      {colecciones.length === 0 ? (
-        <EmptyState
-          message="No tienes ninguna colección aún"
-          sub="Agrupa tus quizzes y apuntes para organizarlos mejor"
-        />
-      ) : (
-        colecciones.map(col => <ColeccionRow key={col.id} col={col} />)
-      )}
-    </ScrollView>
+        {colecciones.length === 0 ? (
+          <EmptyState
+            message="No tienes ninguna colección aún"
+            sub="Agrupa tus quizzes y apuntes para organizarlos mejor"
+          />
+        ) : (
+          colecciones.map(col => <ColeccionRow key={col.id} col={col} />)
+        )}
+      </ScrollView>
+
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={onCerrarModal}>
+        <Pressable style={styles.modalOverlay} onPress={onCerrarModal}>
+          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Nueva colección</Text>
+            <TextInput
+              style={styles.colInput}
+              placeholder="Nombre de la colección"
+              placeholderTextColor="#9ca3af"
+              value={nombre}
+              onChangeText={onNombre}
+              autoFocus
+            />
+            <Pressable
+              style={[styles.colCrearBtn, !nombre.trim() && { opacity: 0.4 }]}
+              onPress={onCrear}
+              disabled={!nombre.trim() || creando}
+            >
+              {creando
+                ? <ActivityIndicator size="small" color="white" />
+                : <Text style={styles.colCrearBtnText}>Crear colección</Text>
+              }
+            </Pressable>
+            <Pressable style={styles.sheetCancel} onPress={onCerrarModal}>
+              <Text style={styles.sheetCancelText}>Cancelar</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
-function ColeccionRow({ col }: { col: Coleccion }) {
+function ColeccionRow({ col }: { col: ColeccionDTO }) {
   return (
-    <Pressable style={styles.colRow}>
+    <Pressable style={styles.colRow} onPress={() => router.push({ pathname: '/(stack)/coleccion/[id]', params: { id: col.id, nombre: col.nombre } } as any)}>
       <Text style={styles.colNombre}>{col.nombre}</Text>
       <View style={styles.colRight}>
         <Text style={styles.colCount}>{col.cantidad}</Text>
@@ -539,6 +677,29 @@ const styles = StyleSheet.create({
     color: '#571D11',
     fontSize: 13,
     fontWeight: '600',
+  },
+  colInput: {
+    height: 46,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(65,46,46,0.2)',
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: '#412E2E',
+    marginBottom: 12,
+  },
+  colCrearBtn: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#571D11',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  colCrearBtnText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,

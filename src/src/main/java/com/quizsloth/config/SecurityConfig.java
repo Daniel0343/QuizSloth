@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .requestMatchers("/preguntas/**").permitAll()
                 .requestMatchers("/cursos/mis-cursos").authenticated()
                 .requestMatchers("/cursos/**").authenticated()
+                .requestMatchers("/colecciones/**").permitAll()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
