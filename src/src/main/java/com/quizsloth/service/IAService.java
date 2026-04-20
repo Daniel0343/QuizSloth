@@ -62,7 +62,7 @@ public class IAService {
 
     public List<Pregunta> generarPreguntasDesdeTexto(String texto, int numPreguntas) {
         try {
-            String textoLimitado = texto.length() > 12000 ? texto.substring(0, 12000) : texto;
+            String textoLimitado = texto.length() > 9000 ? texto.substring(0, 9000) : texto;
             String prompt = construirPrompt(textoLimitado, numPreguntas);
             String respuestaJson = llamarOpenAI(prompt);
             return parsearPreguntas(respuestaJson);
@@ -109,6 +109,10 @@ public class IAService {
             genera exactamente %d preguntas de tipo test con 4 opciones (A, B, C, D) y
             una sola respuesta correcta.
 
+            IMPORTANTE: distribuye las respuestas correctas aleatoriamente entre A, B, C y D.
+            No pongas todas las respuestas correctas en la misma opción.
+            Varía la posición correcta de forma que no haya un patrón predecible.
+
             Responde ÚNICAMENTE con un array JSON con esta estructura exacta, sin texto adicional:
             [
               {
@@ -117,13 +121,13 @@ public class IAService {
                 "opcion_b": "Segunda opción",
                 "opcion_c": "Tercera opción",
                 "opcion_d": "Cuarta opción",
-                "respuesta_correcta": "A",
+                "respuesta_correcta": "B",
                 "dificultad": "normal"
               }
             ]
 
             Los valores de "dificultad" pueden ser: facil, normal, dificil, extremo.
-            Los valores de "respuesta_correcta" deben ser: A, B, C o D.
+            Los valores de "respuesta_correcta" deben ser: A, B, C o D, variando entre preguntas.
 
             TEXTO:
             %s
