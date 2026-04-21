@@ -84,3 +84,13 @@ export const crearPregunta = async (quizId: number, orden: number): Promise<Preg
 export const eliminarPreguntaApi = async (id: number): Promise<void> => {
   await quizslothApi.delete(`/preguntas/${id}`);
 };
+
+export const getPlantillas = async (): Promise<any[]> => {
+  const { data } = await quizslothApi.get<any[]>('/plantillas');
+  return data;
+};
+
+export const clonarPlantilla = async (id: number): Promise<QuizConPreguntas> => {
+  const { data } = await quizslothApi.post<QuizConPreguntas>(`/plantillas/${id}/clonar`);
+  return data;
+};

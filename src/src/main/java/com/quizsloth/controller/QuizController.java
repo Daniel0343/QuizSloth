@@ -44,6 +44,17 @@ public class QuizController {
         return ResponseEntity.ok(quizService.listarPorCreadorDTO(authentication.getName()));
     }
 
+    @GetMapping("/plantillas")
+    public ResponseEntity<List<Quiz>> plantillas() {
+        return ResponseEntity.ok(quizService.listarPlantillas());
+    }
+
+    @PostMapping("/{id}/clonar")
+    public ResponseEntity<QuizService.QuizConPreguntas> clonar(
+            @PathVariable Integer id, HttpServletRequest request) {
+        return ResponseEntity.ok(quizService.clonarPlantilla(id, emailFromRequest(request)));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id, Authentication authentication) {
         quizService.eliminar(id, authentication.getName());

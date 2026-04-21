@@ -42,6 +42,9 @@ public class Quiz {
     @Enumerated(EnumType.STRING)
     private Dificultad dificultad = Dificultad.normal;
 
+    @Column(name = "es_plantilla", nullable = false)
+    private boolean esPlantilla = false;
+
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 

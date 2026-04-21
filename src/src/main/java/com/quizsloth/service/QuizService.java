@@ -134,6 +134,42 @@ public class QuizService {
         return new QuizConPreguntas(saved, preguntas);
     }
 
+    public List<Quiz> listarPlantillas() {
+        return quizRepository.findByEsPlantillaTrue();
+    }
+
+    @Transactional
+    public QuizConPreguntas clonarPlantilla(Integer plantillaId, String emailCreador) {
+        Quiz plantilla = obtener(plantillaId);
+        List<Pregunta> preguntasOriginales = preguntaRepository.findByQuizOrderByOrden(plantilla);
+
+        Quiz clon = new Quiz();
+        clon.setTitulo(plantilla.getTitulo());
+        clon.setDificultad(plantilla.getDificultad());
+        clon.setCategoria(plantilla.getCategoria());
+        clon.setEsPlantilla(false);
+        if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(clon::setCreador);
+        Quiz savedClon = quizRepository.save(clon);
+
+        for (int i = 0; i < preguntasOriginales.size(); i++) {
+            Pregunta orig = preguntasOriginales.get(i);
+            Pregunta copia = new Pregunta();
+            copia.setQuiz(savedClon);
+            copia.setEnunciado(orig.getEnunciado());
+            copia.setOpcionA(orig.getOpcionA());
+            copia.setOpcionB(orig.getOpcionB());
+            copia.setOpcionC(orig.getOpcionC());
+            copia.setOpcionD(orig.getOpcionD());
+            copia.setRespuestaCorrecta(orig.getRespuestaCorrecta());
+            copia.setDificultad(orig.getDificultad());
+            copia.setOrden(i);
+            preguntaRepository.save(copia);
+        }
+
+        List<Pregunta> preguntas = preguntaRepository.findByQuizOrderByOrden(savedClon);
+        return new QuizConPreguntas(savedClon, preguntas);
+    }
+
     public Quiz actualizarQuiz(Integer id, String titulo, String dificultad, Integer categoriaId) {
         Quiz quiz = obtener(id);
         if (titulo != null && !titulo.isBlank()) quiz.setTitulo(titulo);

@@ -27,6 +27,7 @@ export default function StackLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="crear-quiz/index" />
       <Stack.Screen name="crear-quiz/editar" />
+      <Stack.Screen name="plantillas/index" />
     </Stack>
   );
 }

@@ -11,7 +11,6 @@ type SubType = 'prediseñados' | 'texto-ia' | 'url' | 'texto-pdf' | 'sloth-ia' |
 const QUIZ_OPTIONS = [
   { key: 'prediseñados' as SubType, icon: 'grid-outline', label: 'Prediseñados', sub: 'Plantillas listas', color: '#53b55e', bg: 'rgba(83,181,94,0.10)' },
   { key: 'texto-ia' as SubType,    icon: 'document-text-outline', label: 'Con texto',     sub: 'Pega contenido', color: '#c1623e', bg: 'rgba(193,98,62,0.10)' },
-  { key: 'url' as SubType,         icon: 'link-outline',          label: 'Desde URL',     sub: 'Importar enlace', color: '#571D11', bg: 'rgba(87,29,17,0.07)' },
 ] as const;
 
 const NOTES_OPTIONS = [
@@ -92,9 +91,12 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
                 key={opt.key as string}
                 opt={opt}
                 onPress={() => {
-                  if (opt.key === 'texto-ia' || opt.key === 'url') {
+                  if (opt.key === 'texto-ia') {
                     handleClose();
                     router.push(`/crear-quiz?tipo=${opt.key}`);
+                  } else if (opt.key === 'prediseñados') {
+                    handleClose();
+                    router.push('/plantillas' as any);
                   } else {
                     setSub(opt.key);
                   }
