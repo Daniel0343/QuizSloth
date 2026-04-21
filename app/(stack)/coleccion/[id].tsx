@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert,
+  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,9 +68,7 @@ export default function ColeccionDetalleScreen() {
         <ScrollView showsVerticalScrollIndicator={false}>
           {quizzes.map(quiz => (
             <View key={quiz.id} style={styles.card}>
-              <View style={styles.cardThumb}>
-                <Ionicons name="help-circle-outline" size={28} color="rgba(255,255,255,0.6)" />
-              </View>
+              <Image source={require('@/assets/imagen-quizz-foto.png')} style={styles.cardThumb} />
               <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle} numberOfLines={2}>{quiz.titulo}</Text>
                 <View style={styles.cardMeta}>
@@ -110,8 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(217,217,217,1)',
   },
   cardThumb: {
-    width: 56, height: 56, borderRadius: 10,
-    backgroundColor: '#6b6b6b', alignItems: 'center', justifyContent: 'center',
+    width: 56, height: 56, borderRadius: 10, overflow: 'hidden',
   },
   cardInfo: { flex: 1, gap: 4 },
   cardTitle: { color: '#1a1a1a', fontSize: 15, fontWeight: '600' },

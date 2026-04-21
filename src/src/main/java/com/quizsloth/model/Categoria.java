@@ -18,4 +18,7 @@ public class Categoria {
 
     @Column(nullable = false, unique = true, length = 100)
     private String nombre;
+
+    @Column(name = "creado_por_email", length = 200)
+    private String creadoPorEmail;
 }

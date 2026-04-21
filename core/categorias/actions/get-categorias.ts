@@ -16,3 +16,12 @@ export async function crearCategoria(nombre: string): Promise<Categoria | null> 
     return null;
   }
 }
+
+export async function eliminarCategoria(id: number): Promise<boolean> {
+  try {
+    await quizslothApi.delete(`/categorias/${id}`);
+    return true;
+  } catch {
+    return false;
+  }
+}

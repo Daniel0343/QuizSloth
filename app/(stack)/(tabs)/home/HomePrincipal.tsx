@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   TextInput, Pressable, Image, ImageBackground,
-  Modal, Alert, ActivityIndicator,
+  Modal, Alert, ActivityIndicator, FlatList,
 } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { getCategorias, crearCategoria } from '@/core/categorias/actions/get-categorias';
+import { getCategorias, crearCategoria, eliminarCategoria } from '@/core/categorias/actions/get-categorias';
 import { getQuizzes } from '@/core/quizzes/actions/get-quizzes';
 import { getMisCursos } from '@/core/cursos/actions/get-cursos';
 import { Categoria } from '@/core/auth/interface/categoria';
@@ -77,6 +77,7 @@ export default function HomePrincipal() {
   const [modalCat,      setModalCat]      = useState(false);
   const [nuevaCat,      setNuevaCat]      = useState('');
   const [guardandoCat,  setGuardandoCat]  = useState(false);
+  const [eliminandoCat, setEliminandoCat] = useState<number | null>(null);
 
   useEffect(() => {
     getCategorias().then(setCategories).catch(() => {});
@@ -98,6 +99,30 @@ export default function HomePrincipal() {
     } else {
       Alert.alert('Error', 'No se pudo crear la categoría. Puede que ya exista.');
     }
+  };
+
+  const handleEliminarCategoria = (cat: Categoria) => {
+    Alert.alert(
+      'Eliminar categoría',
+      `¿Eliminar "${cat.nombre}"? Los quizzes que la usen quedarán sin categoría.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar', style: 'destructive',
+          onPress: async () => {
+            setEliminandoCat(cat.id);
+            const ok = await eliminarCategoria(cat.id);
+            setEliminandoCat(null);
+            if (ok) {
+              setCategories(prev => prev.filter(c => c.id !== cat.id));
+              if (selectedCat === cat.id) handleCatSelect(null);
+            } else {
+              Alert.alert('Error', 'No se pudo eliminar la categoría.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleCatSelect = (id: number | null) => {
@@ -158,6 +183,7 @@ export default function HomePrincipal() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
+              decelerationRate="fast"
               contentContainerStyle={styles.chipsContent}
             >
               <Pressable
@@ -236,30 +262,59 @@ export default function HomePrincipal() {
     <Modal visible={modalCat} transparent animationType="fade" onRequestClose={() => setModalCat(false)}>
       <Pressable style={styles.modalBackdrop} onPress={() => setModalCat(false)}>
         <Pressable style={styles.modalCard} onPress={() => {}}>
-          <Text style={styles.modalTitle}>Nueva categoría</Text>
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Nombre de la categoría"
-            placeholderTextColor="#9ca3af"
-            value={nuevaCat}
-            onChangeText={setNuevaCat}
-            autoFocus
-          />
-          <View style={styles.modalBtns}>
-            <Pressable style={styles.modalCancelBtn} onPress={() => { setModalCat(false); setNuevaCat(''); }}>
-              <Text style={styles.modalCancelText}>Cancelar</Text>
-            </Pressable>
+          <Text style={styles.modalTitle}>Categorías</Text>
+
+          {/* Nueva categoría */}
+          <View style={styles.newCatRow}>
+            <TextInput
+              style={styles.newCatInput}
+              placeholder="Nueva categoría..."
+              placeholderTextColor="#9ca3af"
+              value={nuevaCat}
+              onChangeText={setNuevaCat}
+            />
             <Pressable
-              style={[styles.modalConfirmBtn, !nuevaCat.trim() && { opacity: 0.5 }]}
+              style={[styles.newCatBtn, !nuevaCat.trim() && { opacity: 0.45 }]}
               onPress={handleCrearCategoria}
               disabled={guardandoCat || !nuevaCat.trim()}
             >
               {guardandoCat
                 ? <ActivityIndicator size="small" color="white" />
-                : <Text style={styles.modalConfirmText}>Crear</Text>
+                : <Ionicons name="add" size={20} color="white" />
               }
             </Pressable>
           </View>
+
+          {/* Lista de categorías existentes */}
+          {categories.length > 0 && (
+            <FlatList
+              data={categories}
+              keyExtractor={c => String(c.id)}
+              style={styles.catList}
+              scrollEnabled={categories.length > 4}
+              renderItem={({ item }) => (
+                <View style={styles.catRow}>
+                  <Text style={styles.catRowName} numberOfLines={1}>{item.nombre}</Text>
+                  {item.creadoPorEmail === user?.email && (
+                    <Pressable
+                      onPress={() => handleEliminarCategoria(item)}
+                      disabled={eliminandoCat === item.id}
+                      style={styles.catDeleteBtn}
+                    >
+                      {eliminandoCat === item.id
+                        ? <ActivityIndicator size="small" color="#c1623e" />
+                        : <Ionicons name="trash-outline" size={16} color="#c1623e" />
+                      }
+                    </Pressable>
+                  )}
+                </View>
+              )}
+            />
+          )}
+
+          <Pressable style={styles.modalCancelBtn} onPress={() => { setModalCat(false); setNuevaCat(''); }}>
+            <Text style={styles.modalCancelText}>Cerrar</Text>
+          </Pressable>
         </Pressable>
       </Pressable>
     </Modal>
@@ -345,13 +400,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 14,
     marginBottom: 10,
   },
   catsAddBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -360,14 +418,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.2,
-    paddingHorizontal: 14,
     marginBottom: 8,
   },
   chipsContent: {
     paddingHorizontal: 14,
     gap: 8,
     alignItems: 'center',
-    height: 34,
+    paddingVertical: 4,
     marginBottom: 10,
   },
   chip: {
@@ -612,12 +669,53 @@ const styles = StyleSheet.create({
     color: '#412E2E',
     marginBottom: 16,
   },
-  modalBtns: {
+  newCatRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
+    marginBottom: 12,
+  },
+  newCatInput: {
+    flex: 1,
+    height: 42,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(87,29,17,0.15)',
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: '#412E2E',
+  },
+  newCatBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: '#53b55e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catList: {
+    maxHeight: 200,
+    marginBottom: 12,
+  },
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(87,29,17,0.07)',
+  },
+  catRowName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#412E2E',
+    fontWeight: '500',
+  },
+  catDeleteBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalCancelBtn: {
-    flex: 1,
     height: 44,
     borderRadius: 999,
     borderWidth: 1.5,
@@ -627,19 +725,6 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     color: '#844A31',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalConfirmBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: 999,
-    backgroundColor: '#53b55e',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalConfirmText: {
-    color: 'white',
     fontSize: 14,
     fontWeight: '600',
   },

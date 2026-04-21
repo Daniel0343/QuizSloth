@@ -314,9 +314,7 @@ function QuizCard({ quiz, onOpciones }: { quiz: QuizResumen; onOpciones: (q: Qui
 
   return (
     <View style={styles.card}>
-      <View style={styles.cardThumb}>
-        <Ionicons name="help-circle-outline" size={28} color="rgba(255,255,255,0.6)" />
-      </View>
+      <Image source={require('@/assets/imagen-quizz-foto.png')} style={styles.cardThumb} />
 
       <View style={styles.cardInfo}>
         <Text style={styles.cardTitle} numberOfLines={2}>{quiz.titulo}</Text>
@@ -584,9 +582,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 10,
-    backgroundColor: '#6b6b6b',
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
   cardInfo: {
     flex: 1,

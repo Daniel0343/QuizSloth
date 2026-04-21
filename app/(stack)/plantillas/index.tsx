@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  ActivityIndicator, Modal, Alert, TextInput,
+  ActivityIndicator, Modal, Alert, TextInput, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -123,13 +123,7 @@ export default function PlantillasScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
           {plantillas.map(p => (
             <Pressable key={p.id} style={styles.card} onPress={() => handleSeleccionar(p)}>
-              <View style={[styles.cardIcon, { backgroundColor: '#53b55e18' }]}>
-                <Ionicons
-                  name={(CATEGORIA_ICON[p.categoria?.nombre ?? ''] ?? 'help-circle-outline') as any}
-                  size={26}
-                  color="#53b55e"
-                />
-              </View>
+              <Image source={require('@/assets/imagen-quizz-foto.png')} style={styles.cardIcon} />
               <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle}>{p.titulo}</Text>
                 <View style={styles.cardMeta}>
@@ -264,8 +258,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 14,
   },
   cardIcon: {
-    width: 52, height: 52, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center',
+    width: 52, height: 52, borderRadius: 12, overflow: 'hidden',
   },
   cardInfo: { flex: 1, gap: 4 },
   cardTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },

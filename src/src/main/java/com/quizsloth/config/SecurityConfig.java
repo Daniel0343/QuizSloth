@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/categorias").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/categorias").authenticated()
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/categorias/**").authenticated()
                 .requestMatchers("/quizzes/mis-quizzes").authenticated()
                 .requestMatchers("/quizzes/plantillas").permitAll()
                 .requestMatchers("/quizzes/**").permitAll()
