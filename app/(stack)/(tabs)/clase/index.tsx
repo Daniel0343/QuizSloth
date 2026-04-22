@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, Pressable,
   Image, ActivityIndicator, Modal,
@@ -290,12 +290,14 @@ function TarjetaProfesor({ clase, onMenu, onTap }: { clase: CursoResumen; onMenu
 function TarjetaAlumno({ clase, onTap }: { clase: CursoResumen; onTap: () => void }) {
   return (
     <Pressable style={styles.cardAlumno} onPress={onTap}>
-      <View style={[styles.cardAlumnoStripe, { backgroundColor: clase.color ?? '#24833D' }]} />
+      <View style={[styles.cardAlumnoTop, { backgroundColor: clase.color ?? '#24833D' }]} />
       <View style={styles.cardAlumnoBody}>
-        <Text style={styles.cardNombreAlumno} numberOfLines={1}>{clase.nombre}</Text>
+        <Text style={styles.cardAlumnoNombre} numberOfLines={1}>{clase.nombre}</Text>
         <Text style={styles.cardProfesorNombre}>Profesor: {clase.profesor?.nombre ?? 'Desconocido'}</Text>
+        {clase.descripcion ? (
+          <Text style={styles.cardDescripcion} numberOfLines={2}>{clase.descripcion}</Text>
+        ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color="rgba(65,46,46,0.4)" style={{ marginRight: 14 }} />
     </Pressable>
   );
 }
@@ -338,13 +340,10 @@ const styles = StyleSheet.create({
   cardDescripcion: { color: '#4a5565', fontSize: 12 },
   cardEstudiantes: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   cardEstudiantesText: { color: '#6a7282', fontSize: 12 },
-  cardAlumno: {
-    flexDirection: 'row', alignItems: 'center',
-    borderRadius: 10, backgroundColor: 'white', overflow: 'hidden',
-  },
-  cardAlumnoStripe: { width: 5, alignSelf: 'stretch' },
-  cardAlumnoBody: { flex: 1, paddingHorizontal: 14, paddingVertical: 14, gap: 4 },
-  cardNombreAlumno: { color: '#412E2E', fontSize: 16, fontWeight: '600' },
+  cardAlumno: { borderRadius: 12, backgroundColor: 'white', overflow: 'hidden', alignSelf: 'stretch' },
+  cardAlumnoTop: { height: 100 },
+  cardAlumnoBody: { padding: 14, gap: 4 },
+  cardAlumnoNombre: { color: '#412E2E', fontSize: 17, fontWeight: '700' },
   cardProfesorNombre: { color: '#4a5565', fontSize: 13 },
   emptyState: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 32, gap: 10 },
   sloth: { width: 220, height: 165 },
