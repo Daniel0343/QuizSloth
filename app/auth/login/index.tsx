@@ -1,17 +1,19 @@
 import { useState, useRef } from 'react';
 import {
   View, Text, TextInput, Pressable, Image,
-  KeyboardAvoidingView, ScrollView, Platform, Alert, Animated,
+  KeyboardAvoidingView, ScrollView, Platform, Animated,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import AppAlert from '@/components/AppAlert';
 
 export default function Login() {
   const { login, loginAsGuest } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isPosting, setIsPosting]       = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
+  const [alerta, setAlerta] = useState({ visible: false, titulo: '', mensaje: '' });
 
   const handleLogin = async () => {
     if (!form.email || !form.password) return;
@@ -21,7 +23,7 @@ export default function Login() {
     if (ok) {
       router.replace('/(stack)/(tabs)/home');
     } else {
-      Alert.alert('Error', 'Credenciales incorrectas. Verifica tu email y contraseña.');
+      setAlerta({ visible: true, titulo: 'Credenciales incorrectas', mensaje: 'Verifica tu email y contraseña.' });
     }
   };
 
@@ -120,6 +122,13 @@ export default function Login() {
           </View>
         </View>
       </ScrollView>
+      <AppAlert
+        visible={alerta.visible}
+        variante="peligro"
+        titulo={alerta.titulo}
+        mensaje={alerta.mensaje}
+        onClose={() => setAlerta(p => ({ ...p, visible: false }))}
+      />
     </KeyboardAvoidingView>
   );
 }

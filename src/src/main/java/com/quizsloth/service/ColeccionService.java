@@ -66,6 +66,15 @@ public class ColeccionService {
         return coleccion.getQuizzes();
     }
 
+    public List<Apunte> obtenerApuntes(Integer coleccionId, String email) {
+        Coleccion coleccion = coleccionRepository.findById(coleccionId)
+                .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
+        if (!coleccion.getUsuario().getEmail().equals(email)) {
+            throw new RuntimeException("No tienes permiso");
+        }
+        return coleccion.getApuntes();
+    }
+
     public ColeccionDTO añadirApunte(Integer coleccionId, Integer apunteId, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));

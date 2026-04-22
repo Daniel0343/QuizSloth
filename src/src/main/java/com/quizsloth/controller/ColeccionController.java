@@ -58,6 +58,14 @@ public class ColeccionController {
         return ResponseEntity.ok(coleccionService.obtenerQuizzes(id, email));
     }
 
+    @GetMapping("/{id}/apuntes")
+    public ResponseEntity<List<com.quizsloth.model.Apunte>> apuntesDeColeccion(
+            @PathVariable Integer id, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(coleccionService.obtenerApuntes(id, email));
+    }
+
     @DeleteMapping("/{id}/quizzes/{quizId}")
     public ResponseEntity<ColeccionService.ColeccionDTO> quitarQuiz(
             @PathVariable Integer id, @PathVariable Integer quizId, HttpServletRequest request) {

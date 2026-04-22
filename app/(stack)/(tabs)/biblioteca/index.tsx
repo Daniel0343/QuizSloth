@@ -4,6 +4,7 @@ import {
   View, Text, StyleSheet, ScrollView, Modal,
   TextInput, Pressable, Image, Alert, ActivityIndicator,
 } from 'react-native';
+import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -42,6 +43,8 @@ export default function BibliotecaScreen() {
   const [menuColeccion, setMenuColeccion] = useState<ColeccionDTO | null>(null);
   const [modalRenombrar, setModalRenombrar] = useState(false);
   const [nuevoNombreCol, setNuevoNombreCol] = useState('');
+  const [alerta, setAlerta] = useState<{ visible: boolean; titulo: string; mensaje?: string; botones?: any[] }>({ visible: false, titulo: '' });
+  const cerrarAlerta = () => setAlerta(p => ({ ...p, visible: false }));
 
   const cargarQuizzes = useCallback(() => {
     if (!user) return;
@@ -136,20 +139,21 @@ export default function BibliotecaScreen() {
     if (!menuColeccion) return;
     const col = menuColeccion;
     setMenuColeccion(null);
-    Alert.alert(
-      'Eliminar colección',
-      `¿Seguro que quieres eliminar "${col.nombre}"? Se eliminará la colección pero no su contenido.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
+    setAlerta({
+      visible: true,
+      titulo: 'Eliminar colección',
+      mensaje: `¿Seguro que quieres eliminar "${col.nombre}"? Se eliminará la colección pero no su contenido.`,
+      botones: [
+        { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrarAlerta },
         {
-          text: 'Eliminar', style: 'destructive',
-          onPress: async () => {
+          texto: 'Eliminar', estilo: 'destructivo', onPress: async () => {
+            cerrarAlerta();
             try { await eliminarColeccion(col.id); } catch { /* ignorar */ }
             setColecciones(prev => prev.filter(c => c.id !== col.id));
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const handleRenombrarColeccion = async () => {
@@ -383,6 +387,14 @@ export default function BibliotecaScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      <AppAlert
+        visible={alerta.visible}
+        variante="peligro"
+        titulo={alerta.titulo}
+        mensaje={alerta.mensaje}
+        botones={alerta.botones}
+        onClose={cerrarAlerta}
+      />
     </SafeAreaView>
   );
 }

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert, Image,
+  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image,
 } from 'react-native';
+import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { getQuizzesDeColeccion, quitarQuizDeColeccion } from '@/core/colecciones/actions/colecciones';
+import { getQuizzesDeColeccion, quitarQuizDeColeccion, getApuntesDeColeccion } from '@/core/colecciones/actions/colecciones';
+import { quizslothApi } from '@/core/auth/api/quizslothApi';
 
 const DIFICULTAD_COLOR: Record<string, string> = {
   facil: '#24833D', normal: '#844A31', dificil: '#c1623e', extremo: '#571D11',
@@ -16,35 +18,62 @@ export default function ColeccionDetalleScreen() {
   const coleccionId = Number(id);
 
   const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [apuntes, setApuntes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [alerta, setAlerta] = useState<{ visible: boolean; titulo: string; mensaje?: string; botones?: any[] }>({ visible: false, titulo: '' });
+  const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
 
   useEffect(() => {
-    getQuizzesDeColeccion(coleccionId)
-      .then(setQuizzes)
-      .catch(() => setQuizzes([]))
-      .finally(() => setCargando(false));
+    Promise.all([
+      getQuizzesDeColeccion(coleccionId).catch(() => []),
+      getApuntesDeColeccion(coleccionId).catch(() => []),
+    ]).then(([q, a]) => {
+      setQuizzes(q);
+      setApuntes(a);
+    }).finally(() => setCargando(false));
   }, [coleccionId]);
 
-  const handleQuitar = (quiz: any) => {
-    Alert.alert(
-      'Quitar de colección',
-      `¿Quitar "${quiz.titulo}" de esta colección?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Quitar', style: 'destructive',
-          onPress: async () => {
-            try {
-              await quitarQuizDeColeccion(coleccionId, quiz.id);
-              setQuizzes(prev => prev.filter(q => q.id !== quiz.id));
-            } catch {
-              Alert.alert('Error', 'No se pudo quitar el quiz.');
-            }
-          },
-        },
-      ]
-    );
+  const handleQuitarQuiz = (quiz: any) => {
+    setAlerta({
+      visible: true,
+      titulo: 'Quitar de colección',
+      mensaje: `¿Quitar "${quiz.titulo}" de esta colección?`,
+      botones: [
+        { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrar },
+        { texto: 'Quitar', estilo: 'destructivo', onPress: async () => {
+          cerrar();
+          try {
+            await quitarQuizDeColeccion(coleccionId, quiz.id);
+            setQuizzes(prev => prev.filter(q => q.id !== quiz.id));
+          } catch {
+            setAlerta({ visible: true, titulo: 'Error', mensaje: 'No se pudo quitar el quiz.' });
+          }
+        }},
+      ],
+    });
   };
+
+  const handleQuitarApunte = (apunte: any) => {
+    setAlerta({
+      visible: true,
+      titulo: 'Quitar de colección',
+      mensaje: `¿Quitar "${apunte.titulo}" de esta colección?`,
+      botones: [
+        { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrar },
+        { texto: 'Quitar', estilo: 'destructivo', onPress: async () => {
+          cerrar();
+          try {
+            await quizslothApi.delete(`/colecciones/${coleccionId}/apuntes/${apunte.id}`);
+            setApuntes(prev => prev.filter(a => a.id !== apunte.id));
+          } catch {
+            setAlerta({ visible: true, titulo: 'Error', mensaje: 'No se pudo quitar el apunte.' });
+          }
+        }},
+      ],
+    });
+  };
+
+  const total = quizzes.length + apuntes.length;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -58,34 +87,81 @@ export default function ColeccionDetalleScreen() {
 
       {cargando ? (
         <ActivityIndicator style={{ marginTop: 40 }} color="#844A31" />
-      ) : quizzes.length === 0 ? (
+      ) : total === 0 ? (
         <View style={styles.empty}>
           <Ionicons name="folder-open-outline" size={56} color="rgba(65,46,46,0.2)" />
           <Text style={styles.emptyTitle}>Esta colección está vacía</Text>
-          <Text style={styles.emptySub}>Añade quizzes desde tu biblioteca</Text>
+          <Text style={styles.emptySub}>Añade quizzes y apuntes desde tu biblioteca</Text>
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-          {quizzes.map(quiz => (
-            <View key={quiz.id} style={styles.card}>
-              <Image source={require('@/assets/imagen-quizz-foto.png')} style={styles.cardThumb} />
-              <View style={styles.cardInfo}>
-                <Text style={styles.cardTitle} numberOfLines={2}>{quiz.titulo}</Text>
-                <View style={styles.cardMeta}>
-                  <Text style={[styles.metaTag, { color: DIFICULTAD_COLOR[quiz.dificultad] ?? '#844A31' }]}>
-                    {quiz.dificultad}
-                  </Text>
-                  <Text style={styles.dot}>•</Text>
-                  <Text style={styles.metaTag}>{quiz.categoria?.nombre ?? 'Sin categoría'}</Text>
-                </View>
+          {quizzes.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="help-circle-outline" size={15} color="#844A31" />
+                <Text style={styles.sectionLabel}>Quizzes ({quizzes.length})</Text>
               </View>
-              <Pressable style={styles.removeBtn} onPress={() => handleQuitar(quiz)} hitSlop={8}>
-                <Ionicons name="remove-circle-outline" size={22} color="#c0392b" />
-              </Pressable>
-            </View>
-          ))}
+              {quizzes.map(quiz => (
+                <View key={`quiz-${quiz.id}`} style={styles.card}>
+                  <Image source={require('@/assets/imagen-quizz-foto.png')} style={styles.cardThumb} />
+                  <View style={styles.cardInfo}>
+                    <Text style={styles.cardTitle} numberOfLines={2}>{quiz.titulo}</Text>
+                    <View style={styles.cardMeta}>
+                      <Text style={[styles.metaTag, { color: DIFICULTAD_COLOR[quiz.dificultad] ?? '#844A31' }]}>
+                        {quiz.dificultad}
+                      </Text>
+                      <Text style={styles.dot}>•</Text>
+                      <Text style={styles.metaTag}>{quiz.categoria?.nombre ?? 'Sin categoría'}</Text>
+                    </View>
+                  </View>
+                  <Pressable style={styles.removeBtn} onPress={() => handleQuitarQuiz(quiz)} hitSlop={8}>
+                    <Ionicons name="remove-circle-outline" size={22} color="#c0392b" />
+                  </Pressable>
+                </View>
+              ))}
+            </>
+          )}
+
+          {apuntes.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="document-text-outline" size={15} color="#24833D" />
+                <Text style={[styles.sectionLabel, { color: '#24833D' }]}>Apuntes ({apuntes.length})</Text>
+              </View>
+              {apuntes.map(apunte => (
+                <Pressable
+                  key={`apunte-${apunte.id}`}
+                  style={styles.card}
+                  onPress={() => router.push(`/crear-apunte/editar?id=${apunte.id}` as any)}
+                >
+                  <View style={[styles.cardThumb, { backgroundColor: 'rgba(83,181,94,0.15)', alignItems: 'center', justifyContent: 'center' }]}>
+                    <Ionicons name="document-text-outline" size={28} color="#24833D" />
+                  </View>
+                  <View style={styles.cardInfo}>
+                    <Text style={styles.cardTitle} numberOfLines={2}>{apunte.titulo}</Text>
+                    <View style={styles.cardMeta}>
+                      <Ionicons name="sparkles-outline" size={11} color="#53b55e" />
+                      <Text style={[styles.metaTag, { color: '#24833D' }]}>Apuntes IA</Text>
+                    </View>
+                  </View>
+                  <Pressable style={styles.removeBtn} onPress={() => handleQuitarApunte(apunte)} hitSlop={8}>
+                    <Ionicons name="remove-circle-outline" size={22} color="#c0392b" />
+                  </Pressable>
+                </Pressable>
+              ))}
+            </>
+          )}
         </ScrollView>
       )}
+
+      <AppAlert
+        visible={alerta.visible}
+        variante="peligro"
+        titulo={alerta.titulo}
+        mensaje={alerta.mensaje}
+        botones={alerta.botones}
+        onClose={cerrar}
+      />
     </SafeAreaView>
   );
 }
@@ -101,6 +177,14 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
   emptyTitle: { fontSize: 15, fontWeight: '700', color: '#412E2E' },
   emptySub: { fontSize: 13, color: '#844A31', opacity: 0.8 },
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: 'rgba(65,46,46,0.05)',
+  },
+  sectionLabel: {
+    fontSize: 11, fontWeight: '700', color: '#844A31', textTransform: 'uppercase', letterSpacing: 0.5,
+  },
   card: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 14, gap: 14,

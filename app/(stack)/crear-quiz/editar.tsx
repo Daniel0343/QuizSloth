@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  Pressable, ActivityIndicator, Alert, Modal,
+  Pressable, ActivityIndicator, Modal,
 } from 'react-native';
+import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -34,6 +35,8 @@ export default function EditarQuizScreen() {
   const [nuevaColeccion, setNuevaColeccion] = useState('');
   const [creandoColeccion, setCreandoColeccion] = useState(false);
   const [guardandoColeccion, setGuardandoColeccion] = useState(false);
+  const [alerta, setAlerta] = useState<{ visible: boolean; variante?: 'peligro'|'exito'|'info'; titulo: string; mensaje?: string; botones?: any[] }>({ visible: false, titulo: '' });
+  const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
 
   useEffect(() => {
     const cargar = async () => {
@@ -70,30 +73,29 @@ export default function EditarQuizScreen() {
       setPreguntas(prev => [...prev, nueva]);
       setExpandida(preguntas.length);
     } catch {
-      Alert.alert('Error', 'No se pudo añadir la pregunta.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo añadir la pregunta.' });
     }
   };
 
   const handleEliminarPregunta = (pregunta: PreguntaDetalle, idx: number) => {
-    Alert.alert(
-      'Eliminar pregunta',
-      '¿Seguro que quieres eliminar esta pregunta?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive',
-          onPress: async () => {
-            try {
-              await eliminarPreguntaApi(pregunta.id);
-              setPreguntas(prev => prev.filter((_, i) => i !== idx).map((p, i) => ({ ...p, orden: i })));
-              if (expandida === idx) setExpandida(null);
-            } catch {
-              Alert.alert('Error', 'No se pudo eliminar la pregunta.');
-            }
-          },
-        },
-      ]
-    );
+    setAlerta({
+      visible: true, variante: 'peligro',
+      titulo: 'Eliminar pregunta',
+      mensaje: '¿Seguro que quieres eliminar esta pregunta?',
+      botones: [
+        { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrar },
+        { texto: 'Eliminar', estilo: 'destructivo', onPress: async () => {
+          cerrar();
+          try {
+            await eliminarPreguntaApi(pregunta.id);
+            setPreguntas(prev => prev.filter((_, i) => i !== idx).map((p, i) => ({ ...p, orden: i })));
+            if (expandida === idx) setExpandida(null);
+          } catch {
+            setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo eliminar la pregunta.' });
+          }
+        }},
+      ],
+    });
   };
 
   const handleCrearColeccion = async () => {
@@ -105,9 +107,9 @@ export default function EditarQuizScreen() {
       setNuevaColeccion('');
       setModalColeccion(false);
       router.replace('/(stack)/(tabs)/home');
-      Alert.alert('¡Listo!', `Quiz añadido a "${col.nombre}".`);
+      setAlerta({ visible: true, variante: 'exito', titulo: '¡Listo!', mensaje: `Quiz añadido a "${col.nombre}".` });
     } catch {
-      Alert.alert('Error', 'No se pudo crear la colección.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo crear la colección.' });
     } finally {
       setCreandoColeccion(false);
     }
@@ -122,9 +124,9 @@ export default function EditarQuizScreen() {
       ));
       setModalColeccion(false);
       router.replace('/(stack)/(tabs)/home');
-      Alert.alert('¡Listo!', 'Quiz añadido a la colección.');
+      setAlerta({ visible: true, variante: 'exito', titulo: '¡Listo!', mensaje: 'Quiz añadido a la colección.' });
     } catch {
-      Alert.alert('Error', 'No se pudo añadir el quiz a la colección.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo añadir el quiz a la colección.' });
     } finally {
       setGuardandoColeccion(false);
     }

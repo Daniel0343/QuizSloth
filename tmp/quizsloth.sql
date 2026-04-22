@@ -74,10 +74,13 @@ CREATE TABLE quizzes (
     id             INT AUTO_INCREMENT PRIMARY KEY,
     titulo         VARCHAR(200) NOT NULL,
     id_documento   INT,
+    id_creador     INT,
     id_categoria   INT,
     dificultad     ENUM('facil', 'normal', 'dificil', 'extremo') DEFAULT 'normal',
+    es_plantilla   TINYINT(1) NOT NULL DEFAULT 0,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_documento) REFERENCES documentos(id) ON DELETE SET NULL,
+    FOREIGN KEY (id_creador)   REFERENCES usuarios(id)   ON DELETE SET NULL,
     FOREIGN KEY (id_categoria) REFERENCES categorias(id) ON DELETE SET NULL
 );
 
@@ -219,6 +222,50 @@ INSERT INTO preguntas (id_quiz, enunciado, opcion_a, opcion_b, opcion_c, opcion_
         'Confirmación de recepción',
         'Solicitud de retransmisión',
         'A', 'extremo');
+
+-- ------------------------------------------------------------
+-- 9. Apuntes
+-- ------------------------------------------------------------
+CREATE TABLE apuntes (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    titulo         VARCHAR(300) NOT NULL,
+    contenido_json LONGTEXT,
+    id_usuario     INT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+-- ------------------------------------------------------------
+-- 10. Colecciones
+-- ------------------------------------------------------------
+CREATE TABLE colecciones (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    nombre     VARCHAR(100) NOT NULL,
+    id_usuario INT NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- 11. Colección ↔ Quizzes (many-to-many)
+-- ------------------------------------------------------------
+CREATE TABLE coleccion_quizzes (
+    coleccion_id INT NOT NULL,
+    quiz_id      INT NOT NULL,
+    PRIMARY KEY (coleccion_id, quiz_id),
+    FOREIGN KEY (coleccion_id) REFERENCES colecciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (quiz_id)      REFERENCES quizzes(id)     ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- 12. Colección ↔ Apuntes (many-to-many)
+-- ------------------------------------------------------------
+CREATE TABLE coleccion_apuntes (
+    coleccion_id INT NOT NULL,
+    apunte_id    INT NOT NULL,
+    PRIMARY KEY (coleccion_id, apunte_id),
+    FOREIGN KEY (coleccion_id) REFERENCES colecciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (apunte_id)    REFERENCES apuntes(id)     ON DELETE CASCADE
+);
 
 -- Calificaciones de ejemplo
 INSERT INTO calificaciones (id_usuario, id_quiz, puntuacion) VALUES

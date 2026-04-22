@@ -31,6 +31,11 @@ export const getQuizzesDeColeccion = async (coleccionId: number): Promise<any[]>
   return data;
 };
 
+export const getApuntesDeColeccion = async (coleccionId: number): Promise<any[]> => {
+  const { data } = await quizslothApi.get(`/colecciones/${coleccionId}/apuntes`);
+  return data;
+};
+
 export const eliminarColeccion = async (coleccionId: number): Promise<void> => {
   await quizslothApi.delete(`/colecciones/${coleccionId}`);
 };

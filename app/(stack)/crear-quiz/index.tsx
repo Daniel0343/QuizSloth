@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  Pressable, ActivityIndicator, Alert,
+  Pressable, ActivityIndicator,
 } from 'react-native';
+import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -27,6 +28,8 @@ export default function CrearQuizScreen() {
   const [categoriaId, setCategoriaId] = useState<number | undefined>();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [generando, setGenerando] = useState(false);
+  const [alerta, setAlerta] = useState({ visible: false, titulo: '', mensaje: '' });
+  const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
 
   useEffect(() => {
     getCategorias().then(setCategorias);
@@ -60,10 +63,7 @@ export default function CrearQuizScreen() {
       setGenerando(false);
       const status = e?.response?.status;
       const msg = e?.response?.data?.message ?? e?.message ?? 'Error desconocido';
-      Alert.alert(
-        `Error ${status ?? ''}`.trim(),
-        msg,
-      );
+      setAlerta({ visible: true, titulo: `Error ${status ?? ''}`.trim(), mensaje: msg });
     }
   };
 
@@ -205,6 +205,14 @@ export default function CrearQuizScreen() {
           </Text>
         )}
       </ScrollView>
+
+      <AppAlert
+        visible={alerta.visible}
+        variante="peligro"
+        titulo={alerta.titulo}
+        mensaje={alerta.mensaje}
+        onClose={cerrar}
+      />
     </SafeAreaView>
   );
 }

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   TextInput, Pressable, Image, ImageBackground,
-  Modal, Alert, ActivityIndicator, FlatList,
+  Modal, ActivityIndicator, FlatList,
 } from 'react-native';
+import AppAlert from '@/components/AppAlert';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,6 +79,8 @@ export default function HomePrincipal() {
   const [nuevaCat,      setNuevaCat]      = useState('');
   const [guardandoCat,  setGuardandoCat]  = useState(false);
   const [eliminandoCat, setEliminandoCat] = useState<number | null>(null);
+  const [alerta, setAlerta] = useState<{ visible: boolean; titulo: string; mensaje?: string; variante?: 'peligro'|'exito'|'info'; botones?: any[] }>({ visible: false, titulo: '' });
+  const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
 
   useEffect(() => {
     getCategorias().then(setCategories).catch(() => {});
@@ -97,32 +100,31 @@ export default function HomePrincipal() {
       setNuevaCat('');
       setModalCat(false);
     } else {
-      Alert.alert('Error', 'No se pudo crear la categoría. Puede que ya exista.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo crear la categoría. Puede que ya exista.' });
     }
   };
 
   const handleEliminarCategoria = (cat: Categoria) => {
-    Alert.alert(
-      'Eliminar categoría',
-      `¿Eliminar "${cat.nombre}"? Los quizzes que la usen quedarán sin categoría.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive',
-          onPress: async () => {
-            setEliminandoCat(cat.id);
-            const ok = await eliminarCategoria(cat.id);
-            setEliminandoCat(null);
-            if (ok) {
-              setCategories(prev => prev.filter(c => c.id !== cat.id));
-              if (selectedCat === cat.id) handleCatSelect(null);
-            } else {
-              Alert.alert('Error', 'No se pudo eliminar la categoría.');
-            }
-          },
-        },
+    setAlerta({
+      visible: true, variante: 'peligro',
+      titulo: 'Eliminar categoría',
+      mensaje: `¿Eliminar "${cat.nombre}"? Los quizzes que la usen quedarán sin categoría.`,
+      botones: [
+        { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrar },
+        { texto: 'Eliminar', estilo: 'destructivo', onPress: async () => {
+          cerrar();
+          setEliminandoCat(cat.id);
+          const ok = await eliminarCategoria(cat.id);
+          setEliminandoCat(null);
+          if (ok) {
+            setCategories(prev => prev.filter(c => c.id !== cat.id));
+            if (selectedCat === cat.id) handleCatSelect(null);
+          } else {
+            setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo eliminar la categoría.' });
+          }
+        }},
       ],
-    );
+    });
   };
 
   const handleCatSelect = (id: number | null) => {
@@ -318,6 +320,15 @@ export default function HomePrincipal() {
         </Pressable>
       </Pressable>
     </Modal>
+
+    <AppAlert
+      visible={alerta.visible}
+      variante={alerta.variante}
+      titulo={alerta.titulo}
+      mensaje={alerta.mensaje}
+      botones={alerta.botones}
+      onClose={cerrar}
+    />
     </>
   );
 }

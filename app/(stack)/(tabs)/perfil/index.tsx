@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Switch, Alert, Animated,
+  Pressable, Switch, Animated,
 } from 'react-native';
+import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -14,24 +15,9 @@ export default function PerfilScreen() {
   const [modoEstudiante, setModoEstudiante] = useState(false);
 
   const inicial = (user?.nombre ?? 'I').charAt(0).toUpperCase();
+  const [alerta, setAlerta] = useState(false);
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Cerrar sesión',
-      '¿Estás seguro de que quieres salir?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Salir',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/auth/seleccion-rol');
-          },
-        },
-      ]
-    );
-  };
+  const handleLogout = () => setAlerta(true);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -102,6 +88,18 @@ export default function PerfilScreen() {
 
         <Text style={styles.version}>QuizSloth v1.0.0</Text>
       </ScrollView>
+
+      <AppAlert
+        visible={alerta}
+        variante="peligro"
+        titulo="Cerrar sesión"
+        mensaje="¿Estás seguro de que quieres salir?"
+        botones={[
+          { texto: 'Cancelar', estilo: 'cancelar', onPress: () => setAlerta(false) },
+          { texto: 'Salir', estilo: 'destructivo', onPress: async () => { await logout(); router.replace('/auth/seleccion-rol'); } },
+        ]}
+        onClose={() => setAlerta(false)}
+      />
     </SafeAreaView>
   );
 }

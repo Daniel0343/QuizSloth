@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  TextInput, ActivityIndicator, Alert,
+  TextInput, ActivityIndicator,
 } from 'react-native';
+import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -17,6 +18,8 @@ export default function CrearApunteScreen() {
   const [texto, setTexto] = useState('');
   const [archivo, setArchivo] = useState<{ uri: string; name: string; type: string } | null>(null);
   const [generando, setGenerando] = useState(false);
+  const [alerta, setAlerta] = useState({ visible: false, titulo: '', mensaje: '' });
+  const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
 
   const handlePickFile = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -31,11 +34,11 @@ export default function CrearApunteScreen() {
 
   const handleGenerar = async () => {
     if (modo === 'texto' && !texto.trim()) {
-      Alert.alert('Escribe algo', 'Indica el tema o pega el contenido del que quieres los apuntes.');
+      setAlerta({ visible: true, titulo: 'Escribe algo', mensaje: 'Indica el tema o pega el contenido del que quieres los apuntes.' });
       return;
     }
     if (modo === 'pdf' && !archivo) {
-      Alert.alert('Selecciona un archivo', 'Elige un PDF para generar los apuntes.');
+      setAlerta({ visible: true, titulo: 'Selecciona un archivo', mensaje: 'Elige un PDF para generar los apuntes.' });
       return;
     }
     setGenerando(true);
@@ -46,7 +49,7 @@ export default function CrearApunteScreen() {
 
       router.replace(`/crear-apunte/editar?id=${apunte.id}&nuevo=true` as any);
     } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'No se pudieron generar los apuntes. Inténtalo de nuevo.');
+      setAlerta({ visible: true, titulo: 'Error', mensaje: e?.message ?? 'No se pudieron generar los apuntes. Inténtalo de nuevo.' });
     } finally {
       setGenerando(false);
     }
@@ -137,6 +140,13 @@ export default function CrearApunteScreen() {
           )}
         </Pressable>
       </ScrollView>
+      <AppAlert
+        visible={alerta.visible}
+        variante="info"
+        titulo={alerta.titulo}
+        mensaje={alerta.mensaje}
+        onClose={cerrar}
+      />
     </SafeAreaView>
   );
 }
