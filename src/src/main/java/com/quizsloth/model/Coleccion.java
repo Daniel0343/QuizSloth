@@ -33,4 +33,12 @@ public class Coleccion {
         inverseJoinColumns = @JoinColumn(name = "quiz_id")
     )
     private List<Quiz> quizzes = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "coleccion_apuntes",
+        joinColumns = @JoinColumn(name = "coleccion_id"),
+        inverseJoinColumns = @JoinColumn(name = "apunte_id")
+    )
+    private List<Apunte> apuntes = new ArrayList<>();
 }

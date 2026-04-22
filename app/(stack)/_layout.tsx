@@ -28,6 +28,8 @@ export default function StackLayout() {
       <Stack.Screen name="crear-quiz/index" />
       <Stack.Screen name="crear-quiz/editar" />
       <Stack.Screen name="plantillas/index" />
+      <Stack.Screen name="crear-apunte/index" />
+      <Stack.Screen name="crear-apunte/editar" />
     </Stack>
   );
 }

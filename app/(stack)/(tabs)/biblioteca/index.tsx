@@ -11,6 +11,8 @@ import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { getMisQuizzes, eliminarQuiz } from '@/core/quizzes/actions/get-quizzes';
 import { QuizResumen } from '@/core/auth/interface/quiz';
 import { getMisColecciones, crearColeccion, añadirQuizAColeccion, ColeccionDTO } from '@/core/colecciones/actions/colecciones';
+import { getMisApuntes, eliminarApunte } from '@/core/apuntes/actions/apuntes';
+import { ApunteResumen } from '@/core/auth/interface/apunte';
 
 type Tab = 'biblioteca' | 'colecciones';
 type Filtro = 'todos' | 'quizzes' | 'apuntes';
@@ -28,6 +30,7 @@ export default function BibliotecaScreen() {
   const [search, setSearch] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [quizzes, setQuizzes] = useState<QuizResumen[]>([]);
+  const [apuntes, setApuntes] = useState<ApunteResumen[]>([]);
   const [cargando, setCargando] = useState(false);
   const [menuQuiz, setMenuQuiz] = useState<QuizResumen | null>(null);
   const [colecciones, setColecciones] = useState<ColeccionDTO[]>([]);
@@ -39,10 +42,13 @@ export default function BibliotecaScreen() {
   const cargarQuizzes = useCallback(() => {
     if (!user) return;
     setCargando(true);
-    getMisQuizzes()
-      .then(setQuizzes)
-      .catch(() => setQuizzes([]))
-      .finally(() => setCargando(false));
+    Promise.all([
+      getMisQuizzes().catch(() => [] as QuizResumen[]),
+      getMisApuntes().catch(() => [] as ApunteResumen[]),
+    ]).then(([q, a]) => {
+      setQuizzes(q);
+      setApuntes(a);
+    }).finally(() => setCargando(false));
   }, [user]);
 
   const cargarColecciones = useCallback(() => {
@@ -118,8 +124,28 @@ export default function BibliotecaScreen() {
     );
   };
 
+  const handleEliminarApunte = (apunte: ApunteResumen) => {
+    Alert.alert(
+      'Eliminar apunte',
+      `¿Seguro que quieres eliminar "${apunte.titulo}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar', style: 'destructive',
+          onPress: async () => {
+            try { await eliminarApunte(apunte.id); } catch { /* ignorar */ }
+            setApuntes(prev => prev.filter(a => a.id !== apunte.id));
+          },
+        },
+      ]
+    );
+  };
+
   const quizzesFiltrados = quizzes.filter(q =>
     q.titulo.toLowerCase().includes(search.toLowerCase())
+  );
+  const apuntesFiltrados = apuntes.filter(a =>
+    a.titulo.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -158,10 +184,12 @@ export default function BibliotecaScreen() {
         {tab === 'biblioteca' ? (
           <TabBiblioteca
             quizzes={quizzesFiltrados}
+            apuntes={apuntesFiltrados}
             cargando={cargando}
             filtro={filtro}
             onFiltro={setFiltro}
             onOpciones={handleOpciones}
+            onEliminarApunte={handleEliminarApunte}
           />
         ) : (
           <TabColecciones
@@ -259,15 +287,19 @@ export default function BibliotecaScreen() {
 }
 
 function TabBiblioteca({
-  quizzes, cargando, filtro, onFiltro, onOpciones,
+  quizzes, apuntes, cargando, filtro, onFiltro, onOpciones, onEliminarApunte,
 }: {
   quizzes: QuizResumen[];
+  apuntes: ApunteResumen[];
   cargando: boolean;
   filtro: Filtro;
   onFiltro: (f: Filtro) => void;
   onOpciones: (q: QuizResumen) => void;
+  onEliminarApunte: (a: ApunteResumen) => void;
 }) {
-  const items = filtro === 'apuntes' ? [] : filtro === 'quizzes' ? quizzes : quizzes;
+  const showQuizzes = filtro === 'todos' || filtro === 'quizzes';
+  const showApuntes = filtro === 'todos' || filtro === 'apuntes';
+  const empty = (showQuizzes ? quizzes.length : 0) + (showApuntes ? apuntes.length : 0) === 0;
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -289,23 +321,51 @@ function TabBiblioteca({
 
       {cargando ? (
         <ActivityIndicator style={{ marginTop: 40 }} color="#844A31" />
-      ) : filtro === 'apuntes' ? (
+      ) : empty ? (
         <EmptyState
-          message="No tienes apuntes aún"
-          sub="Crea tu primer apunte desde el botón central"
-        />
-      ) : items.length === 0 ? (
-        <EmptyState
-          message="No tienes nada aún en la biblioteca"
-          sub="Aquí aparecerán tus quizzes y apuntes cuando los crees"
-          showFindButton
+          message={filtro === 'apuntes' ? 'No tienes apuntes aún' : 'No tienes nada aún en la biblioteca'}
+          sub={filtro === 'apuntes' ? 'Crea tu primer apunte desde el botón central' : 'Aquí aparecerán tus quizzes y apuntes cuando los crees'}
+          showFindButton={filtro !== 'apuntes'}
         />
       ) : (
-        items.map(q => (
-          <QuizCard key={q.id} quiz={q} onOpciones={onOpciones} />
-        ))
+        <>
+          {showQuizzes && quizzes.map(q => (
+            <QuizCard key={`quiz-${q.id}`} quiz={q} onOpciones={onOpciones} />
+          ))}
+          {showApuntes && apuntes.map(a => (
+            <ApunteCard key={`apunte-${a.id}`} apunte={a} onEliminar={onEliminarApunte} />
+          ))}
+        </>
       )}
     </ScrollView>
+  );
+}
+
+function ApunteCard({ apunte, onEliminar }: { apunte: ApunteResumen; onEliminar: (a: ApunteResumen) => void }) {
+  return (
+    <View style={styles.card}>
+      <View style={[styles.cardThumb, { backgroundColor: 'rgba(83,181,94,0.15)', alignItems: 'center', justifyContent: 'center' }]}>
+        <Ionicons name="document-text-outline" size={28} color="#24833D" />
+      </View>
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardTitle} numberOfLines={2}>{apunte.titulo}</Text>
+        <View style={styles.cardMetaRow}>
+          <Ionicons name="sparkles-outline" size={11} color="#53b55e" />
+          <Text style={[styles.cardMetaTag, { color: '#24833D' }]}>Apuntes IA</Text>
+        </View>
+      </View>
+      <Pressable
+        style={styles.cardMenu}
+        onPress={() => Alert.alert(apunte.titulo, '¿Qué quieres hacer?', [
+          { text: 'Editar', onPress: () => router.push(`/crear-apunte/editar?id=${apunte.id}` as any) },
+          { text: 'Eliminar', style: 'destructive', onPress: () => onEliminar(apunte) },
+          { text: 'Cancelar', style: 'cancel' },
+        ])}
+        hitSlop={8}
+      >
+        <Ionicons name="ellipsis-vertical" size={18} color="#412E2E" />
+      </Pressable>
+    </View>
   );
 }
 

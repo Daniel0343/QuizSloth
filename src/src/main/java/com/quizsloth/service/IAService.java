@@ -165,6 +165,61 @@ public class IAService {
         return root.path("choices").get(0).path("message").path("content").asText();
     }
 
+    public String generarApuntesDesdeTexto(String texto) {
+        try {
+            String textoLimitado = texto.length() > 9000 ? texto.substring(0, 9000) : texto;
+            String prompt = construirPromptApuntes(textoLimitado);
+            String respuesta = llamarOpenAI(prompt);
+            return limpiarJson(respuesta);
+        } catch (Exception e) {
+            log.error("Error generando apuntes: {}", e.getMessage());
+            throw new RuntimeException("Error al generar apuntes con IA: " + e.getMessage(), e);
+        }
+    }
+
+    private String construirPromptApuntes(String texto) {
+        return String.format("""
+            Eres un asistente educativo experto. A partir del siguiente tema o texto,
+            genera apuntes estructurados y completos. Decide tú mismo cuántas secciones
+            son necesarias según la complejidad y amplitud del tema (mínimo 2, máximo 6).
+
+            Responde ÚNICAMENTE con un objeto JSON con esta estructura exacta, sin texto adicional:
+            {
+              "titulo": "Título descriptivo del tema",
+              "resumen": "Párrafo introductorio de 3-4 frases explicando el tema",
+              "secciones": [
+                {
+                  "titulo": "Título de la sección",
+                  "contenido": "Explicación detallada de 3-5 frases",
+                  "puntosClave": ["Punto importante 1", "Punto importante 2", "Punto importante 3"]
+                }
+              ],
+              "referencias": [
+                {
+                  "titulo": "Nombre del recurso",
+                  "url": "https://url-real-y-accesible.com/pagina",
+                  "descripcion": "Breve descripción de qué encontrar en este enlace"
+                }
+              ]
+            }
+
+            IMPORTANTE para las referencias:
+            - Usa URLs REALES y accesibles (Wikipedia en español, Khan Academy, sitios educativos oficiales)
+            - Incluye entre 3 y 5 referencias relevantes
+            - Prefiere Wikipedia en español: https://es.wikipedia.org/wiki/...
+
+            TEMA O TEXTO:
+            %s
+            """, texto);
+    }
+
+    private String limpiarJson(String respuesta) {
+        return respuesta.trim()
+                .replaceAll("(?s)```json\\s*", "")
+                .replaceAll("(?s)```\\s*", "")
+                .trim();
+    }
+
     private List<Pregunta> parsearPreguntas(String jsonRespuesta) throws Exception {
         String json = jsonRespuesta.trim()
                 .replaceAll("```json", "")

@@ -66,6 +66,22 @@ public class ColeccionController {
         return ResponseEntity.ok(coleccionService.quitarQuiz(id, quizId, email));
     }
 
+    @PostMapping("/{id}/apuntes/{apunteId}")
+    public ResponseEntity<ColeccionService.ColeccionDTO> añadirApunte(
+            @PathVariable Integer id, @PathVariable Integer apunteId, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(coleccionService.añadirApunte(id, apunteId, email));
+    }
+
+    @DeleteMapping("/{id}/apuntes/{apunteId}")
+    public ResponseEntity<ColeccionService.ColeccionDTO> quitarApunte(
+            @PathVariable Integer id, @PathVariable Integer apunteId, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(coleccionService.quitarApunte(id, apunteId, email));
+    }
+
     @Data
     static class CrearColeccionRequest {
         private String nombre;

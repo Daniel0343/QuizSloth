@@ -120,11 +120,11 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
                 key={opt.key as string}
                 opt={opt}
                 onPress={() => {
+                  handleClose();
                   if (opt.key === 'texto-pdf') {
-                    handleClose();
-                    router.push('/crear-quiz?tipo=archivo');
+                    router.push('/crear-apunte?modo=pdf' as any);
                   } else {
-                    setSub(opt.key);
+                    router.push('/crear-apunte?modo=texto' as any);
                   }
                 }}
               />
