@@ -82,6 +82,24 @@ public class ColeccionController {
         return ResponseEntity.ok(coleccionService.quitarApunte(id, apunteId, email));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        coleccionService.eliminar(id, email);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ColeccionService.ColeccionDTO> renombrar(
+            @PathVariable Integer id,
+            @RequestBody CrearColeccionRequest req,
+            HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(coleccionService.renombrar(id, req.getNombre(), email));
+    }
+
     @Data
     static class CrearColeccionRequest {
         private String nombre;

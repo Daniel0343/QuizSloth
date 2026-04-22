@@ -13,6 +13,7 @@ import { QuizResumen } from '@/core/auth/interface/quiz';
 import { getMisColecciones, crearColeccion, añadirQuizAColeccion, ColeccionDTO } from '@/core/colecciones/actions/colecciones';
 import { getMisApuntes, eliminarApunte } from '@/core/apuntes/actions/apuntes';
 import { ApunteResumen } from '@/core/auth/interface/apunte';
+import { eliminarColeccion, renombrarColeccion } from '@/core/colecciones/actions/colecciones';
 
 type Tab = 'biblioteca' | 'colecciones';
 type Filtro = 'todos' | 'quizzes' | 'apuntes';
@@ -38,6 +39,9 @@ export default function BibliotecaScreen() {
   const [nombreNuevaCol, setNombreNuevaCol] = useState('');
   const [creandoCol, setCreandoCol] = useState(false);
   const [modalAgregarCol, setModalAgregarCol] = useState(false);
+  const [menuColeccion, setMenuColeccion] = useState<ColeccionDTO | null>(null);
+  const [modalRenombrar, setModalRenombrar] = useState(false);
+  const [nuevoNombreCol, setNuevoNombreCol] = useState('');
 
   const cargarQuizzes = useCallback(() => {
     if (!user) return;
@@ -124,6 +128,43 @@ export default function BibliotecaScreen() {
     );
   };
 
+  const handleLongPressColeccion = (col: ColeccionDTO) => {
+    setMenuColeccion(col);
+  };
+
+  const handleEliminarColeccion = () => {
+    if (!menuColeccion) return;
+    const col = menuColeccion;
+    setMenuColeccion(null);
+    Alert.alert(
+      'Eliminar colección',
+      `¿Seguro que quieres eliminar "${col.nombre}"? Se eliminará la colección pero no su contenido.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar', style: 'destructive',
+          onPress: async () => {
+            try { await eliminarColeccion(col.id); } catch { /* ignorar */ }
+            setColecciones(prev => prev.filter(c => c.id !== col.id));
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRenombrarColeccion = async () => {
+    if (!menuColeccion || !nuevoNombreCol.trim()) return;
+    try {
+      const actualizada = await renombrarColeccion(menuColeccion.id, nuevoNombreCol.trim());
+      setColecciones(prev => prev.map(c => c.id === actualizada.id ? actualizada : c));
+      setModalRenombrar(false);
+      setMenuColeccion(null);
+      setNuevoNombreCol('');
+    } catch {
+      Alert.alert('Error', 'No se pudo renombrar la colección.');
+    }
+  };
+
   const handleEliminarApunte = (apunte: ApunteResumen) => {
     Alert.alert(
       'Eliminar apunte',
@@ -201,6 +242,7 @@ export default function BibliotecaScreen() {
             onNombre={setNombreNuevaCol}
             onCrear={handleCrearColeccion}
             creando={creandoCol}
+            onLongPress={handleLongPressColeccion}
           />
         )}
       </View>
@@ -248,6 +290,65 @@ export default function BibliotecaScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      {/* Menú colección (long press) */}
+      <Modal visible={menuColeccion !== null} transparent animationType="slide" onRequestClose={() => setMenuColeccion(null)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setMenuColeccion(null)}>
+          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            {menuColeccion && <Text style={styles.sheetTitle} numberOfLines={1}>{menuColeccion.nombre}</Text>}
+            <Pressable style={styles.sheetOption} onPress={() => {
+              setNuevoNombreCol(menuColeccion?.nombre ?? '');
+              setModalRenombrar(true);
+            }}>
+              <View style={[styles.sheetIconCircle, { backgroundColor: '#f0e8e3' }]}>
+                <Ionicons name="create-outline" size={20} color="#571D11" />
+              </View>
+              <Text style={styles.sheetOptionText}>Renombrar colección</Text>
+              <Ionicons name="chevron-forward" size={16} color="rgba(65,46,46,0.4)" />
+            </Pressable>
+            <View style={styles.sheetDivider} />
+            <Pressable style={styles.sheetOption} onPress={handleEliminarColeccion}>
+              <View style={[styles.sheetIconCircle, { backgroundColor: '#fdecea' }]}>
+                <Ionicons name="trash-outline" size={20} color="#c0392b" />
+              </View>
+              <Text style={[styles.sheetOptionText, { color: '#c0392b' }]}>Eliminar colección</Text>
+              <Ionicons name="chevron-forward" size={16} color="rgba(192,57,43,0.4)" />
+            </Pressable>
+            <Pressable style={styles.sheetCancel} onPress={() => setMenuColeccion(null)}>
+              <Text style={styles.sheetCancelText}>Cancelar</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Modal renombrar */}
+      <Modal visible={modalRenombrar} transparent animationType="slide" onRequestClose={() => setModalRenombrar(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setModalRenombrar(false)}>
+          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Renombrar colección</Text>
+            <TextInput
+              style={styles.colInput}
+              placeholder="Nuevo nombre"
+              placeholderTextColor="#9ca3af"
+              value={nuevoNombreCol}
+              onChangeText={setNuevoNombreCol}
+              autoFocus
+            />
+            <Pressable
+              style={[styles.colCrearBtn, !nuevoNombreCol.trim() && { opacity: 0.4 }]}
+              onPress={handleRenombrarColeccion}
+              disabled={!nuevoNombreCol.trim()}
+            >
+              <Text style={styles.colCrearBtnText}>Guardar</Text>
+            </Pressable>
+            <Pressable style={styles.sheetCancel} onPress={() => setModalRenombrar(false)}>
+              <Text style={styles.sheetCancelText}>Cancelar</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <Modal
         visible={modalAgregarCol}
         transparent
@@ -343,7 +444,7 @@ function TabBiblioteca({
 
 function ApunteCard({ apunte, onEliminar }: { apunte: ApunteResumen; onEliminar: (a: ApunteResumen) => void }) {
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={() => router.push(`/crear-apunte/editar?id=${apunte.id}` as any)}>
       <View style={[styles.cardThumb, { backgroundColor: 'rgba(83,181,94,0.15)', alignItems: 'center', justifyContent: 'center' }]}>
         <Ionicons name="document-text-outline" size={28} color="#24833D" />
       </View>
@@ -351,7 +452,7 @@ function ApunteCard({ apunte, onEliminar }: { apunte: ApunteResumen; onEliminar:
         <Text style={styles.cardTitle} numberOfLines={2}>{apunte.titulo}</Text>
         <View style={styles.cardMetaRow}>
           <Ionicons name="sparkles-outline" size={11} color="#53b55e" />
-          <Text style={[styles.cardMetaTag, { color: '#24833D' }]}>Apuntes IA</Text>
+          <Text style={[styles.cardMetaTag, { color: '#24833D' }]}>Apuntes</Text>
         </View>
       </View>
       <Pressable
@@ -365,7 +466,7 @@ function ApunteCard({ apunte, onEliminar }: { apunte: ApunteResumen; onEliminar:
       >
         <Ionicons name="ellipsis-vertical" size={18} color="#412E2E" />
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
@@ -408,7 +509,7 @@ function QuizCard({ quiz, onOpciones }: { quiz: QuizResumen; onOpciones: (q: Qui
 
 function TabColecciones({
   colecciones, modalVisible, onAbrirModal, onCerrarModal,
-  nombre, onNombre, onCrear, creando,
+  nombre, onNombre, onCrear, creando, onLongPress,
 }: {
   colecciones: ColeccionDTO[];
   modalVisible: boolean;
@@ -418,6 +519,7 @@ function TabColecciones({
   onNombre: (v: string) => void;
   onCrear: () => void;
   creando: boolean;
+  onLongPress: (col: ColeccionDTO) => void;
 }) {
   return (
     <>
@@ -436,7 +538,7 @@ function TabColecciones({
             sub="Agrupa tus quizzes y apuntes para organizarlos mejor"
           />
         ) : (
-          colecciones.map(col => <ColeccionRow key={col.id} col={col} />)
+          colecciones.map(col => <ColeccionRow key={col.id} col={col} onLongPress={onLongPress} />)
         )}
       </ScrollView>
 
@@ -473,9 +575,13 @@ function TabColecciones({
   );
 }
 
-function ColeccionRow({ col }: { col: ColeccionDTO }) {
+function ColeccionRow({ col, onLongPress }: { col: ColeccionDTO; onLongPress: (col: ColeccionDTO) => void }) {
   return (
-    <Pressable style={styles.colRow} onPress={() => router.push({ pathname: '/(stack)/coleccion/[id]', params: { id: col.id, nombre: col.nombre } } as any)}>
+    <Pressable
+      style={styles.colRow}
+      onPress={() => router.push({ pathname: '/(stack)/coleccion/[id]', params: { id: col.id, nombre: col.nombre } } as any)}
+      onLongPress={() => onLongPress(col)}
+    >
       <Text style={styles.colNombre}>{col.nombre}</Text>
       <View style={styles.colRight}>
         <Text style={styles.colCount}>{col.cantidad}</Text>

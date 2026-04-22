@@ -104,4 +104,25 @@ public class ColeccionService {
         coleccionRepository.save(coleccion);
         return new ColeccionDTO(coleccion.getId(), coleccion.getNombre(), coleccion.getQuizzes().size());
     }
+
+    public void eliminar(Integer coleccionId, String email) {
+        Coleccion coleccion = coleccionRepository.findById(coleccionId)
+                .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
+        if (!coleccion.getUsuario().getEmail().equals(email)) {
+            throw new RuntimeException("No tienes permiso para eliminar esta colección");
+        }
+        coleccionRepository.delete(coleccion);
+    }
+
+    public ColeccionDTO renombrar(Integer coleccionId, String nuevoNombre, String email) {
+        Coleccion coleccion = coleccionRepository.findById(coleccionId)
+                .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
+        if (!coleccion.getUsuario().getEmail().equals(email)) {
+            throw new RuntimeException("No tienes permiso para modificar esta colección");
+        }
+        coleccion.setNombre(nuevoNombre);
+        coleccionRepository.save(coleccion);
+        return new ColeccionDTO(coleccion.getId(), coleccion.getNombre(),
+                coleccion.getQuizzes().size() + coleccion.getApuntes().size());
+    }
 }

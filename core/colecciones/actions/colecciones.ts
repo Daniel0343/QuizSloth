@@ -30,3 +30,12 @@ export const getQuizzesDeColeccion = async (coleccionId: number): Promise<any[]>
   const { data } = await quizslothApi.get(`/colecciones/${coleccionId}/quizzes`);
   return data;
 };
+
+export const eliminarColeccion = async (coleccionId: number): Promise<void> => {
+  await quizslothApi.delete(`/colecciones/${coleccionId}`);
+};
+
+export const renombrarColeccion = async (coleccionId: number, nombre: string): Promise<ColeccionDTO> => {
+  const { data } = await quizslothApi.put<ColeccionDTO>(`/colecciones/${coleccionId}`, { nombre });
+  return data;
+};
