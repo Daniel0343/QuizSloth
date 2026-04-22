@@ -27,6 +27,9 @@ public class Curso {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
+    @Column(length = 20)
+    private String color = "#24833D";
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_profesor")
     @JsonIgnoreProperties({"password", "cursos", "documentos", "hibernateLazyInitializer"})
