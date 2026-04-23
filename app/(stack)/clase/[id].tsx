@@ -11,8 +11,17 @@ import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import {
   getCurso, getParticipantes, invitarAlumno, quitarAlumno,
   getSecciones, crearSeccion, eliminarSeccion, editarSeccion,
-  crearElemento, eliminarElemento, editarElemento,
+  crearElemento, eliminarElemento, editarElemento, uploadPdf,
 } from '@/core/cursos/actions/get-cursos';
+import { quizslothApi } from '@/core/auth/api/quizslothApi';
+import * as DocumentPicker from 'expo-document-picker';
+
+const resolveUrl = (url: string) => {
+  if (!url) return url;
+  if (url.startsWith('http')) return url;
+  const base = (quizslothApi.defaults.baseURL ?? '').replace(/\/$/, '');
+  return `${base}${url.replace(/^\/api/, '')}`;
+};
 import { CursoResumen, Participante, SeccionCurso, ElementoCurso } from '@/core/auth/interface/curso';
 
 type Tab = 'curso' | 'participantes' | 'calificaciones';
@@ -61,6 +70,8 @@ export default function ClaseDetalleScreen() {
   const [tituloElemento, setTituloElemento] = useState('');
   const [contenidoElemento, setContenidoElemento] = useState('');
   const [guardandoElem, setGuardandoElem] = useState(false);
+  const [pdfNombre, setPdfNombre] = useState('');
+  const [subiendoPdf, setSubiendoPdf] = useState(false);
 
   // Modal invitar alumno
   const [modalInvitar, setModalInvitar] = useState(false);
@@ -161,12 +172,33 @@ export default function ClaseDetalleScreen() {
     });
   };
 
+  // -- Subir PDF --
+  const handlePickPdf = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
+      if (result.canceled || !result.assets?.[0]) return;
+      const asset = result.assets[0];
+      setSubiendoPdf(true);
+      const url = await uploadPdf(asset.uri, asset.name);
+      setContenidoElemento(url);
+      setPdfNombre(asset.name);
+    } catch (e: any) {
+      const msg = e?.response?.data?.error ?? e?.message ?? 'Error desconocido';
+      setAlerta({ visible: true, titulo: 'Error al subir', mensaje: msg });
+    } finally {
+      setSubiendoPdf(false);
+    }
+  };
+
   // -- Elementos --
   const handleCrearElemento = async () => {
-    if (!tituloElemento.trim() || modalElemento === null) return;
+    if (modalElemento === null) return;
+    const titulo = tituloElemento.trim() || pdfNombre || 'Sin título';
+    if (!titulo && tipoElemento !== 'PDF') return;
+    if (tipoElemento === 'PDF' && !contenidoElemento) return;
     setGuardandoElem(true);
     try {
-      const nuevo = await crearElemento(modalElemento, tipoElemento, tituloElemento.trim(), contenidoElemento.trim());
+      const nuevo = await crearElemento(modalElemento, tipoElemento, titulo, contenidoElemento.trim());
       setSecciones(prev => prev.map(s =>
         s.id === modalElemento ? { ...s, elementos: [...s.elementos, nuevo] } : s
       ));
@@ -275,7 +307,7 @@ export default function ClaseDetalleScreen() {
             onAddSeccion={() => setModalSeccion(true)}
             onEditSeccion={abrirEditarSec}
             onDeleteSeccion={handleEliminarSeccion}
-            onAddElemento={secId => { setModalElemento(secId); setTipoElemento('TEXTO'); setTituloElemento(''); setContenidoElemento(''); }}
+            onAddElemento={secId => { setModalElemento(secId); setTipoElemento('TEXTO'); setTituloElemento(''); setContenidoElemento(''); setPdfNombre(''); }}
             onEditElemento={abrirEditarElem}
             onDeleteElemento={handleEliminarElemento}
           />
@@ -343,18 +375,20 @@ export default function ClaseDetalleScreen() {
             ))}
           </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Título"
-            placeholderTextColor="#9ca3af"
-            value={tituloElemento}
-            onChangeText={setTituloElemento}
-          />
-
-          {tipoElemento !== 'TEXTO' && (
+          {tipoElemento !== 'PDF' && (
             <TextInput
               style={styles.input}
-              placeholder={tipoElemento === 'ENLACE' ? 'https://...' : 'URL del PDF'}
+              placeholder="Título"
+              placeholderTextColor="#9ca3af"
+              value={tituloElemento}
+              onChangeText={setTituloElemento}
+            />
+          )}
+
+          {tipoElemento === 'ENLACE' && (
+            <TextInput
+              style={styles.input}
+              placeholder="https://..."
               placeholderTextColor="#9ca3af"
               value={contenidoElemento}
               onChangeText={setContenidoElemento}
@@ -372,11 +406,34 @@ export default function ClaseDetalleScreen() {
               multiline
             />
           )}
+          {tipoElemento === 'PDF' && (
+            <Pressable style={styles.pdfDropZone} onPress={handlePickPdf} disabled={subiendoPdf}>
+              {subiendoPdf ? (
+                <>
+                  <ActivityIndicator color="#571D11" />
+                  <Text style={styles.pdfDropSub}>Subiendo archivo...</Text>
+                </>
+              ) : pdfNombre ? (
+                <>
+                  <Ionicons name="document-text" size={28} color="#571D11" />
+                  <Text style={styles.pdfNombre} numberOfLines={2}>{pdfNombre}</Text>
+                  <Text style={styles.pdfCambiar}>Toca para cambiar</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="cloud-upload-outline" size={32} color="rgba(87,29,17,0.4)" />
+                  <Text style={styles.pdfDropLabel}>Arrastra o toca para importar</Text>
+                  <Text style={styles.pdfDropSub}>PDF desde tus archivos o Google Drive</Text>
+                </>
+              )}
+            </Pressable>
+          )}
 
           <Pressable
-            style={[styles.confirmBtn, { backgroundColor: clase?.color ?? '#24833D' }, !tituloElemento.trim() && { opacity: 0.4 }]}
+            style={[styles.confirmBtn, { backgroundColor: clase?.color ?? '#24833D' },
+              !(tituloElemento.trim() || (tipoElemento === 'PDF' && contenidoElemento)) && { opacity: 0.4 }]}
             onPress={handleCrearElemento}
-            disabled={!tituloElemento.trim() || guardandoElem}
+            disabled={!(tituloElemento.trim() || (tipoElemento === 'PDF' && contenidoElemento)) || guardandoElem}
           >
             {guardandoElem
               ? <ActivityIndicator size="small" color="white" />
@@ -557,7 +614,7 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
                     if (elem.tipo === 'TEXTO' && tienePermisosEdicion) {
                       onEditElemento(elem, sec.id);
                     } else if (elem.contenido && (elem.tipo === 'ENLACE' || elem.tipo === 'PDF')) {
-                      Linking.openURL(elem.contenido);
+                      Linking.openURL(resolveUrl(elem.contenido));
                     }
                   }}
                 >
@@ -788,6 +845,15 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(65,46,46,0.2)', paddingHorizontal: 12,
     fontSize: 14, color: '#412E2E', marginBottom: 12,
   },
+  pdfDropZone: {
+    borderWidth: 1.5, borderColor: 'rgba(87,29,17,0.25)', borderStyle: 'dashed',
+    borderRadius: 14, paddingVertical: 28, alignItems: 'center', justifyContent: 'center',
+    gap: 6, backgroundColor: 'rgba(87,29,17,0.03)', marginBottom: 12,
+  },
+  pdfDropLabel: { fontSize: 14, fontWeight: '600', color: 'rgba(87,29,17,0.6)' },
+  pdfDropSub: { fontSize: 12, color: 'rgba(87,29,17,0.4)' },
+  pdfNombre: { fontSize: 13, fontWeight: '600', color: '#412E2E', textAlign: 'center', paddingHorizontal: 16 },
+  pdfCambiar: { fontSize: 11, color: '#844A31', marginTop: 2 },
   tipoRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   tipoChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,

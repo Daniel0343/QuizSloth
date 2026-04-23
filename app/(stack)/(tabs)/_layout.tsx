@@ -24,7 +24,7 @@ function CenterButton({ onPress }: { onPress: () => void }) {
       }}
     >
       <Image
-        source={require('@/assets/mano-sloth.png')}
+        source={require('@/assets/mano-perezoso.png')}
         style={{ width: 75, height: 75 }}
         resizeMode="contain"
       />

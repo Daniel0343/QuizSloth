@@ -78,3 +78,15 @@ export const crearElemento = async (
 export const eliminarElemento = async (elementoId: number): Promise<void> => {
   await quizslothApi.delete(`/cursos/elementos/${elementoId}`);
 };
+
+export const uploadPdf = async (uri: string, nombre: string): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', { uri, name: nombre, type: 'application/pdf' } as any);
+  const { data } = await quizslothApi.post<{ url: string }>('/files/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+    transformRequest: (d) => d,
+  });
+  const base = (quizslothApi.defaults.baseURL ?? '').replace(/\/$/, '');
+  return `${base}/files/${data.url}`;
+};
