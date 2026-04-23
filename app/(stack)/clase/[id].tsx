@@ -15,6 +15,10 @@ import {
 } from '@/core/cursos/actions/get-cursos';
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
 import * as DocumentPicker from 'expo-document-picker';
+import { getMisQuizzes } from '@/core/quizzes/actions/get-quizzes';
+import { getMisApuntes } from '@/core/apuntes/actions/apuntes';
+import { QuizResumen } from '@/core/auth/interface/quiz';
+import { ApunteResumen } from '@/core/auth/interface/apunte';
 
 const resolveUrl = (url: string) => {
   if (!url) return url;
@@ -25,12 +29,15 @@ const resolveUrl = (url: string) => {
 import { CursoResumen, Participante, SeccionCurso, ElementoCurso } from '@/core/auth/interface/curso';
 
 type Tab = 'curso' | 'participantes' | 'calificaciones';
-type TipoElemento = 'TEXTO' | 'ENLACE' | 'PDF';
+type TipoElemento = 'TEXTO' | 'ENLACE' | 'PDF' | 'QUIZ' | 'APUNTE';
+type ModoModal = TipoElemento | 'BIBLIOTECA';
 
 const TIPO_ICONO: Record<TipoElemento, string> = {
   TEXTO: 'chatbox-outline',
   ENLACE: 'link-outline',
   PDF: 'document-outline',
+  QUIZ: 'help-circle-outline',
+  APUNTE: 'book-outline',
 };
 
 export default function ClaseDetalleScreen() {
@@ -66,12 +73,19 @@ export default function ClaseDetalleScreen() {
 
   // Modal nuevo elemento
   const [modalElemento, setModalElemento] = useState<number | null>(null); // seccionId
+  const [modoModal, setModoModal] = useState<ModoModal>('TEXTO');
   const [tipoElemento, setTipoElemento] = useState<TipoElemento>('TEXTO');
   const [tituloElemento, setTituloElemento] = useState('');
   const [contenidoElemento, setContenidoElemento] = useState('');
   const [guardandoElem, setGuardandoElem] = useState(false);
   const [pdfNombre, setPdfNombre] = useState('');
   const [subiendoPdf, setSubiendoPdf] = useState(false);
+
+  // Biblioteca picker
+  const [bibQuizzes, setBibQuizzes] = useState<QuizResumen[]>([]);
+  const [bibApuntes, setBibApuntes] = useState<ApunteResumen[]>([]);
+  const [cargandoBib, setCargandoBib] = useState(false);
+  const [bibSeleccionado, setBibSeleccionado] = useState<{ tipo: 'QUIZ' | 'APUNTE'; id: number; titulo: string } | null>(null);
 
   // Modal invitar alumno
   const [modalInvitar, setModalInvitar] = useState(false);
@@ -172,6 +186,18 @@ export default function ClaseDetalleScreen() {
     });
   };
 
+  // -- Biblioteca --
+  const cargarBiblioteca = async () => {
+    if (bibQuizzes.length > 0 || bibApuntes.length > 0) return;
+    setCargandoBib(true);
+    try {
+      const [q, a] = await Promise.all([getMisQuizzes(), getMisApuntes()]);
+      setBibQuizzes(q);
+      setBibApuntes(a);
+    } catch { /* ignorar */ }
+    finally { setCargandoBib(false); }
+  };
+
   // -- Subir PDF --
   const handlePickPdf = async () => {
     try {
@@ -193,12 +219,21 @@ export default function ClaseDetalleScreen() {
   // -- Elementos --
   const handleCrearElemento = async () => {
     if (modalElemento === null) return;
-    const titulo = tituloElemento.trim() || pdfNombre || 'Sin título';
-    if (!titulo && tipoElemento !== 'PDF') return;
-    if (tipoElemento === 'PDF' && !contenidoElemento) return;
+    let tipo = tipoElemento;
+    let titulo = tituloElemento.trim() || pdfNombre || 'Sin título';
+    let contenido = contenidoElemento.trim();
+    if (modoModal === 'BIBLIOTECA') {
+      if (!bibSeleccionado) return;
+      tipo = bibSeleccionado.tipo;
+      titulo = bibSeleccionado.titulo;
+      contenido = String(bibSeleccionado.id);
+    } else {
+      if (!titulo && tipo !== 'PDF') return;
+      if (tipo === 'PDF' && !contenido) return;
+    }
     setGuardandoElem(true);
     try {
-      const nuevo = await crearElemento(modalElemento, tipoElemento, titulo, contenidoElemento.trim());
+      const nuevo = await crearElemento(modalElemento, tipo, titulo, contenido);
       setSecciones(prev => prev.map(s =>
         s.id === modalElemento ? { ...s, elementos: [...s.elementos, nuevo] } : s
       ));
@@ -307,7 +342,7 @@ export default function ClaseDetalleScreen() {
             onAddSeccion={() => setModalSeccion(true)}
             onEditSeccion={abrirEditarSec}
             onDeleteSeccion={handleEliminarSeccion}
-            onAddElemento={secId => { setModalElemento(secId); setTipoElemento('TEXTO'); setTituloElemento(''); setContenidoElemento(''); setPdfNombre(''); }}
+            onAddElemento={secId => { setModalElemento(secId); setModoModal('TEXTO'); setTipoElemento('TEXTO'); setTituloElemento(''); setContenidoElemento(''); setPdfNombre(''); setBibSeleccionado(null); }}
             onEditElemento={abrirEditarElem}
             onDeleteElemento={handleEliminarElemento}
           />
@@ -363,19 +398,26 @@ export default function ClaseDetalleScreen() {
           <Text style={styles.sheetTitle}>Nuevo elemento</Text>
 
           <View style={styles.tipoRow}>
-            {(['TEXTO', 'ENLACE', 'PDF'] as TipoElemento[]).map(t => (
+            {(['TEXTO', 'ENLACE', 'PDF'] as ModoModal[]).map(t => (
               <Pressable
                 key={t}
-                style={[styles.tipoChip, tipoElemento === t && { backgroundColor: clase?.color ?? '#24833D', borderColor: clase?.color ?? '#24833D' }]}
-                onPress={() => setTipoElemento(t)}
+                style={[styles.tipoChip, modoModal === t && { backgroundColor: clase?.color ?? '#24833D', borderColor: clase?.color ?? '#24833D' }]}
+                onPress={() => { setModoModal(t); setTipoElemento(t as TipoElemento); setBibSeleccionado(null); }}
               >
-                <Ionicons name={TIPO_ICONO[t] as any} size={14} color={tipoElemento === t ? 'white' : '#412E2E'} />
-                <Text style={[styles.tipoChipText, tipoElemento === t && { color: 'white' }]}>{t}</Text>
+                <Ionicons name={TIPO_ICONO[t as TipoElemento] as any} size={14} color={modoModal === t ? 'white' : '#412E2E'} />
+                <Text style={[styles.tipoChipText, modoModal === t && { color: 'white' }]}>{t}</Text>
               </Pressable>
             ))}
+            <Pressable
+              style={[styles.tipoChip, modoModal === 'BIBLIOTECA' && { backgroundColor: clase?.color ?? '#24833D', borderColor: clase?.color ?? '#24833D' }]}
+              onPress={() => { setModoModal('BIBLIOTECA'); cargarBiblioteca(); }}
+            >
+              <Ionicons name="library-outline" size={14} color={modoModal === 'BIBLIOTECA' ? 'white' : '#412E2E'} />
+              <Text style={[styles.tipoChipText, modoModal === 'BIBLIOTECA' && { color: 'white' }]}>Biblioteca</Text>
+            </Pressable>
           </View>
 
-          {tipoElemento !== 'PDF' && (
+          {modoModal !== 'PDF' && modoModal !== 'BIBLIOTECA' && (
             <TextInput
               style={styles.input}
               placeholder="Título"
@@ -385,7 +427,7 @@ export default function ClaseDetalleScreen() {
             />
           )}
 
-          {tipoElemento === 'ENLACE' && (
+          {modoModal === 'ENLACE' && (
             <TextInput
               style={styles.input}
               placeholder="https://..."
@@ -396,7 +438,7 @@ export default function ClaseDetalleScreen() {
               autoCapitalize="none"
             />
           )}
-          {tipoElemento === 'TEXTO' && (
+          {modoModal === 'TEXTO' && (
             <TextInput
               style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
               placeholder="Escribe el mensaje..."
@@ -406,7 +448,7 @@ export default function ClaseDetalleScreen() {
               multiline
             />
           )}
-          {tipoElemento === 'PDF' && (
+          {modoModal === 'PDF' && (
             <Pressable style={styles.pdfDropZone} onPress={handlePickPdf} disabled={subiendoPdf}>
               {subiendoPdf ? (
                 <>
@@ -428,12 +470,67 @@ export default function ClaseDetalleScreen() {
               )}
             </Pressable>
           )}
+          {modoModal === 'BIBLIOTECA' && (
+            <View style={styles.bibContainer}>
+              {cargandoBib ? (
+                <ActivityIndicator color="#571D11" style={{ marginVertical: 20 }} />
+              ) : (
+                <ScrollView style={{ maxHeight: 240 }} showsVerticalScrollIndicator={false}>
+                  {bibQuizzes.length > 0 && (
+                    <>
+                      <View style={styles.bibGrupoHeader}>
+                        <Ionicons name="help-circle-outline" size={13} color="#571D11" />
+                        <Text style={styles.bibGrupoLabel}>Quizzes</Text>
+                      </View>
+                      {bibQuizzes.map(q => (
+                        <Pressable
+                          key={`quiz-${q.id}`}
+                          style={[styles.bibItem, bibSeleccionado?.id === q.id && bibSeleccionado?.tipo === 'QUIZ' && styles.bibItemSeleccionado]}
+                          onPress={() => setBibSeleccionado({ tipo: 'QUIZ', id: q.id, titulo: q.titulo })}
+                        >
+                          <Ionicons name="help-circle-outline" size={16} color="#571D11" />
+                          <Text style={styles.bibItemTitulo} numberOfLines={1}>{q.titulo}</Text>
+                          {bibSeleccionado?.id === q.id && bibSeleccionado?.tipo === 'QUIZ' && (
+                            <Ionicons name="checkmark-circle" size={16} color={clase?.color ?? '#24833D'} />
+                          )}
+                        </Pressable>
+                      ))}
+                    </>
+                  )}
+                  {bibApuntes.length > 0 && (
+                    <>
+                      <View style={styles.bibGrupoHeader}>
+                        <Ionicons name="book-outline" size={13} color="#24833D" />
+                        <Text style={[styles.bibGrupoLabel, { color: '#24833D' }]}>Apuntes</Text>
+                      </View>
+                      {bibApuntes.map(a => (
+                        <Pressable
+                          key={`apunte-${a.id}`}
+                          style={[styles.bibItem, bibSeleccionado?.id === a.id && bibSeleccionado?.tipo === 'APUNTE' && styles.bibItemSeleccionado]}
+                          onPress={() => setBibSeleccionado({ tipo: 'APUNTE', id: a.id, titulo: a.titulo })}
+                        >
+                          <Ionicons name="book-outline" size={16} color="#24833D" />
+                          <Text style={styles.bibItemTitulo} numberOfLines={1}>{a.titulo}</Text>
+                          {bibSeleccionado?.id === a.id && bibSeleccionado?.tipo === 'APUNTE' && (
+                            <Ionicons name="checkmark-circle" size={16} color={clase?.color ?? '#24833D'} />
+                          )}
+                        </Pressable>
+                      ))}
+                    </>
+                  )}
+                  {bibQuizzes.length === 0 && bibApuntes.length === 0 && (
+                    <Text style={styles.bibVacio}>No tienes quizzes ni apuntes en tu biblioteca</Text>
+                  )}
+                </ScrollView>
+              )}
+            </View>
+          )}
 
           <Pressable
             style={[styles.confirmBtn, { backgroundColor: clase?.color ?? '#24833D' },
-              !(tituloElemento.trim() || (tipoElemento === 'PDF' && contenidoElemento)) && { opacity: 0.4 }]}
+              !(modoModal === 'BIBLIOTECA' ? bibSeleccionado : (tituloElemento.trim() || (modoModal === 'PDF' && contenidoElemento))) && { opacity: 0.4 }]}
             onPress={handleCrearElemento}
-            disabled={!(tituloElemento.trim() || (tipoElemento === 'PDF' && contenidoElemento)) || guardandoElem}
+            disabled={!(modoModal === 'BIBLIOTECA' ? bibSeleccionado : (tituloElemento.trim() || (modoModal === 'PDF' && contenidoElemento))) || guardandoElem}
           >
             {guardandoElem
               ? <ActivityIndicator size="small" color="white" />
@@ -615,6 +712,10 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
                       onEditElemento(elem, sec.id);
                     } else if (elem.contenido && (elem.tipo === 'ENLACE' || elem.tipo === 'PDF')) {
                       Linking.openURL(resolveUrl(elem.contenido));
+                    } else if (elem.tipo === 'QUIZ' && elem.contenido) {
+                      router.push(`/crear-quiz/editar?id=${elem.contenido}` as any);
+                    } else if (elem.tipo === 'APUNTE' && elem.contenido) {
+                      router.push(`/crear-apunte/editar?id=${elem.contenido}` as any);
                     }
                   }}
                 >
@@ -854,7 +955,7 @@ const styles = StyleSheet.create({
   pdfDropSub: { fontSize: 12, color: 'rgba(87,29,17,0.4)' },
   pdfNombre: { fontSize: 13, fontWeight: '600', color: '#412E2E', textAlign: 'center', paddingHorizontal: 16 },
   pdfCambiar: { fontSize: 11, color: '#844A31', marginTop: 2 },
-  tipoRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
+  tipoRow: { flexDirection: 'row', gap: 8, marginBottom: 14, flexWrap: 'wrap' },
   tipoChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
@@ -870,4 +971,24 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   cancelBtnText: { fontSize: 14, fontWeight: '600', color: '#412E2E' },
+  bibContainer: {
+    borderWidth: 1.5, borderColor: 'rgba(65,46,46,0.15)', borderRadius: 12,
+    marginBottom: 12, overflow: 'hidden', backgroundColor: 'rgba(65,46,46,0.02)',
+  },
+  bibGrupoHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingTop: 10, paddingBottom: 4,
+  },
+  bibGrupoLabel: {
+    fontSize: 11, fontWeight: '700', color: '#571D11',
+    textTransform: 'uppercase', letterSpacing: 0.5,
+  },
+  bibItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 12, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: 'rgba(65,46,46,0.06)',
+  },
+  bibItemSeleccionado: { backgroundColor: 'rgba(65,46,46,0.07)' },
+  bibItemTitulo: { flex: 1, fontSize: 13, color: '#412E2E', fontWeight: '500' },
+  bibVacio: { fontSize: 13, color: 'rgba(65,46,46,0.45)', textAlign: 'center', paddingVertical: 20 },
 });

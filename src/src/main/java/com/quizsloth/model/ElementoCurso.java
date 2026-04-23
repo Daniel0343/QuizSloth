@@ -33,5 +33,5 @@ public class ElementoCurso {
     @JoinColumn(name = "id_seccion", nullable = false)
     private SeccionCurso seccion;
 
-    public enum Tipo { TEXTO, ENLACE, PDF }
+    public enum Tipo { TEXTO, ENLACE, PDF, QUIZ, APUNTE }
 }
