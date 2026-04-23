@@ -10,8 +10,8 @@ import AppAlert from '@/components/AppAlert';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import {
   getCurso, getParticipantes, invitarAlumno, quitarAlumno,
-  getSecciones, crearSeccion, eliminarSeccion,
-  crearElemento, eliminarElemento,
+  getSecciones, crearSeccion, eliminarSeccion, editarSeccion,
+  crearElemento, eliminarElemento, editarElemento,
 } from '@/core/cursos/actions/get-cursos';
 import { CursoResumen, Participante, SeccionCurso, ElementoCurso } from '@/core/auth/interface/curso';
 
@@ -44,6 +44,17 @@ export default function ClaseDetalleScreen() {
   const [tituloSeccion, setTituloSeccion] = useState('');
   const [guardandoSec, setGuardandoSec] = useState(false);
 
+  // Modal editar sección
+  const [modalEditarSec, setModalEditarSec] = useState<SeccionCurso | null>(null);
+  const [tituloEditarSec, setTituloEditarSec] = useState('');
+  const [guardandoEditSec, setGuardandoEditSec] = useState(false);
+
+  // Modal editar elemento (solo TEXTO)
+  const [modalEditarElem, setModalEditarElem] = useState<{ elem: ElementoCurso; secId: number } | null>(null);
+  const [tituloEditarElem, setTituloEditarElem] = useState('');
+  const [contenidoEditarElem, setContenidoEditarElem] = useState('');
+  const [guardandoEditElem, setGuardandoEditElem] = useState(false);
+
   // Modal nuevo elemento
   const [modalElemento, setModalElemento] = useState<number | null>(null); // seccionId
   const [tipoElemento, setTipoElemento] = useState<TipoElemento>('TEXTO');
@@ -73,6 +84,53 @@ export default function ClaseDetalleScreen() {
     };
     cargar();
   }, [cursoId]);
+
+  // -- Editar sección --
+  const abrirEditarSec = (sec: SeccionCurso) => {
+    setTituloEditarSec(sec.titulo);
+    setModalEditarSec(sec);
+  };
+
+  const handleEditarSeccion = async () => {
+    if (!modalEditarSec || !tituloEditarSec.trim()) return;
+    setGuardandoEditSec(true);
+    try {
+      const actualizada = await editarSeccion(modalEditarSec.id, tituloEditarSec.trim());
+      setSecciones(prev => prev.map(s => s.id === modalEditarSec!.id ? { ...s, titulo: actualizada.titulo } : s));
+      setModalEditarSec(null);
+    } catch {
+      setAlerta({ visible: true, titulo: 'Error', mensaje: 'No se pudo guardar la sección.' });
+    } finally {
+      setGuardandoEditSec(false);
+    }
+  };
+
+  // -- Editar elemento (TEXTO) --
+  const abrirEditarElem = (elem: ElementoCurso, secId: number) => {
+    setTituloEditarElem(elem.titulo);
+    setContenidoEditarElem(elem.contenido ?? '');
+    setModalEditarElem({ elem, secId });
+  };
+
+  const handleEditarElemento = async () => {
+    if (!modalEditarElem || !tituloEditarElem.trim()) return;
+    setGuardandoEditElem(true);
+    try {
+      const actualizado = await editarElemento(modalEditarElem.elem.id, tituloEditarElem.trim(), contenidoEditarElem.trim());
+      const secId = modalEditarElem.secId;
+      const elemId = modalEditarElem.elem.id;
+      setSecciones(prev => prev.map(s =>
+        s.id === secId
+          ? { ...s, elementos: s.elementos.map(e => e.id === elemId ? actualizado : e) }
+          : s
+      ));
+      setModalEditarElem(null);
+    } catch {
+      setAlerta({ visible: true, titulo: 'Error', mensaje: 'No se pudo guardar el elemento.' });
+    } finally {
+      setGuardandoEditElem(false);
+    }
+  };
 
   // -- Secciones --
   const handleCrearSeccion = async () => {
@@ -215,8 +273,10 @@ export default function ClaseDetalleScreen() {
             secciones={secciones}
             tienePermisosEdicion={tienePermisosEdicion}
             onAddSeccion={() => setModalSeccion(true)}
+            onEditSeccion={abrirEditarSec}
             onDeleteSeccion={handleEliminarSeccion}
             onAddElemento={secId => { setModalElemento(secId); setTipoElemento('TEXTO'); setTituloElemento(''); setContenidoElemento(''); }}
+            onEditElemento={abrirEditarElem}
             onDeleteElemento={handleEliminarElemento}
           />
         )}
@@ -364,6 +424,75 @@ export default function ClaseDetalleScreen() {
       </Pressable>
     </Modal>
 
+    {/* Modal editar sección */}
+    <Modal visible={modalEditarSec !== null} transparent animationType="slide" onRequestClose={() => setModalEditarSec(null)}>
+      <Pressable style={styles.overlay} onPress={() => setModalEditarSec(null)}>
+        <Pressable style={styles.sheet} onPress={() => {}}>
+          <View style={styles.handle} />
+          <Text style={styles.sheetTitle}>Editar sección</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nombre de la sección"
+            placeholderTextColor="#9ca3af"
+            value={tituloEditarSec}
+            onChangeText={setTituloEditarSec}
+            autoFocus
+          />
+          <Pressable
+            style={[styles.confirmBtn, { backgroundColor: clase?.color ?? '#24833D' }, !tituloEditarSec.trim() && { opacity: 0.4 }]}
+            onPress={handleEditarSeccion}
+            disabled={!tituloEditarSec.trim() || guardandoEditSec}
+          >
+            {guardandoEditSec
+              ? <ActivityIndicator size="small" color="white" />
+              : <Text style={styles.confirmBtnText}>Guardar</Text>
+            }
+          </Pressable>
+          <Pressable style={styles.cancelBtn} onPress={() => setModalEditarSec(null)}>
+            <Text style={styles.cancelBtnText}>Cancelar</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+
+    {/* Modal editar elemento TEXTO */}
+    <Modal visible={modalEditarElem !== null} transparent animationType="slide" onRequestClose={() => setModalEditarElem(null)}>
+      <Pressable style={styles.overlay} onPress={() => setModalEditarElem(null)}>
+        <Pressable style={styles.sheet} onPress={() => {}}>
+          <View style={styles.handle} />
+          <Text style={styles.sheetTitle}>Editar texto</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Título"
+            placeholderTextColor="#9ca3af"
+            value={tituloEditarElem}
+            onChangeText={setTituloEditarElem}
+          />
+          <TextInput
+            style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
+            placeholder="Contenido..."
+            placeholderTextColor="#9ca3af"
+            value={contenidoEditarElem}
+            onChangeText={setContenidoEditarElem}
+            multiline
+          />
+          <Pressable
+            style={[styles.confirmBtn, { backgroundColor: clase?.color ?? '#24833D' }, !tituloEditarElem.trim() && { opacity: 0.4 }]}
+            onPress={handleEditarElemento}
+            disabled={!tituloEditarElem.trim() || guardandoEditElem}
+          >
+            {guardandoEditElem
+              ? <ActivityIndicator size="small" color="white" />
+              : <Text style={styles.confirmBtnText}>Guardar</Text>
+            }
+          </Pressable>
+          <Pressable style={styles.cancelBtn} onPress={() => setModalEditarElem(null)}>
+            <Text style={styles.cancelBtnText}>Cancelar</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+
     <AppAlert
       visible={alerta.visible}
       variante="peligro"
@@ -376,12 +505,14 @@ export default function ClaseDetalleScreen() {
   );
 }
 
-function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onDeleteSeccion, onAddElemento, onDeleteElemento }: {
+function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion, onDeleteSeccion, onAddElemento, onEditElemento, onDeleteElemento }: {
   secciones: SeccionCurso[];
   tienePermisosEdicion: boolean;
   onAddSeccion: () => void;
+  onEditSeccion: (s: SeccionCurso) => void;
   onDeleteSeccion: (s: SeccionCurso) => void;
   onAddElemento: (seccionId: number) => void;
+  onEditElemento: (e: ElementoCurso, seccionId: number) => void;
   onDeleteElemento: (e: ElementoCurso, seccionId: number) => void;
 }) {
   const [colapsadas, setColapsadas] = useState<Record<number, boolean>>({});
@@ -405,9 +536,14 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onDeleteSecci
             />
             <Text style={styles.seccionTitulo}>{sec.titulo}</Text>
             {tienePermisosEdicion && (
-              <Pressable onPress={() => onDeleteSeccion(sec)} hitSlop={8} style={{ marginLeft: 'auto' }}>
-                <Ionicons name="trash-outline" size={16} color="#c0392b" />
-              </Pressable>
+              <View style={styles.seccionAcciones}>
+                <Pressable onPress={() => onEditSeccion(sec)} hitSlop={8}>
+                  <Ionicons name="pencil-outline" size={16} color="#571D11" />
+                </Pressable>
+                <Pressable onPress={() => onDeleteSeccion(sec)} hitSlop={8}>
+                  <Ionicons name="trash-outline" size={16} color="#c0392b" />
+                </Pressable>
+              </View>
             )}
           </Pressable>
 
@@ -417,9 +553,13 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onDeleteSecci
                 <Pressable
                   key={elem.id}
                   style={styles.elemRow}
-                  onPress={() => elem.contenido && (elem.tipo === 'ENLACE' || elem.tipo === 'PDF')
-                    ? Linking.openURL(elem.contenido) : undefined
-                  }
+                  onPress={() => {
+                    if (elem.tipo === 'TEXTO' && tienePermisosEdicion) {
+                      onEditElemento(elem, sec.id);
+                    } else if (elem.contenido && (elem.tipo === 'ENLACE' || elem.tipo === 'PDF')) {
+                      Linking.openURL(elem.contenido);
+                    }
+                  }}
                 >
                   <View style={styles.elemIconBox}>
                     <Ionicons name={TIPO_ICONO[elem.tipo] as any} size={18} color="#571D11" />
@@ -579,6 +719,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(65,46,46,0.03)',
   },
   seccionTitulo: { fontSize: 14, fontWeight: '700', color: '#412E2E', flex: 1 },
+  seccionAcciones: { flexDirection: 'row', alignItems: 'center', gap: 14, marginLeft: 'auto' },
   elemRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
     paddingHorizontal: 14, paddingVertical: 12,

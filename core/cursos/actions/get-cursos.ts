@@ -55,6 +55,16 @@ export const eliminarSeccion = async (seccionId: number): Promise<void> => {
   await quizslothApi.delete(`/cursos/secciones/${seccionId}`);
 };
 
+export const editarSeccion = async (seccionId: number, titulo: string): Promise<SeccionCurso> => {
+  const { data } = await quizslothApi.put<SeccionCurso>(`/cursos/secciones/${seccionId}`, { titulo });
+  return data;
+};
+
+export const editarElemento = async (elementoId: number, titulo: string, contenido: string): Promise<ElementoCurso> => {
+  const { data } = await quizslothApi.put<ElementoCurso>(`/cursos/elementos/${elementoId}`, { titulo, contenido });
+  return data;
+};
+
 export const crearElemento = async (
   seccionId: number,
   tipo: 'TEXTO' | 'ENLACE' | 'PDF',

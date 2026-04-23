@@ -25,7 +25,7 @@ public class SeccionCurso {
     private Integer orden = 0;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_curso", nullable = false)
     private Curso curso;
 

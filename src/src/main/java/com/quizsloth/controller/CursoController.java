@@ -117,6 +117,22 @@ public class CursoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/secciones/{seccionId}")
+    public ResponseEntity<CursoService.SeccionDTO> editarSeccion(
+            @PathVariable Integer seccionId, @RequestBody Map<String, String> body, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(cursoService.editarSeccion(seccionId, body.get("titulo"), email));
+    }
+
+    @PutMapping("/elementos/{elementoId}")
+    public ResponseEntity<CursoService.ElementoDTO> editarElemento(
+            @PathVariable Integer elementoId, @RequestBody CrearElementoRequest req, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(cursoService.editarElemento(elementoId, req.getTitulo(), req.getContenido(), email));
+    }
+
     @PostMapping("/secciones/{seccionId}/elementos")
     public ResponseEntity<CursoService.ElementoDTO> crearElemento(
             @PathVariable Integer seccionId, @RequestBody CrearElementoRequest req, HttpServletRequest request) {

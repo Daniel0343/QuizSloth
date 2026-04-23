@@ -29,7 +29,7 @@ public class ElementoCurso {
     private Integer orden = 0;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_seccion", nullable = false)
     private SeccionCurso seccion;
 

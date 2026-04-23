@@ -165,6 +165,24 @@ public class CursoService {
         return new ElementoDTO(saved.getId(), saved.getTipo().name(), saved.getTitulo(), saved.getContenido(), saved.getOrden());
     }
 
+    public SeccionDTO editarSeccion(Integer seccionId, String titulo, String email) {
+        SeccionCurso sec = seccionRepository.findById(seccionId)
+                .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
+        verificarProfesor(sec.getCurso(), email);
+        sec.setTitulo(titulo);
+        return toSeccionDTO(seccionRepository.save(sec));
+    }
+
+    public ElementoDTO editarElemento(Integer elementoId, String titulo, String contenido, String email) {
+        ElementoCurso elem = elementoRepository.findById(elementoId)
+                .orElseThrow(() -> new RuntimeException("Elemento no encontrado"));
+        verificarProfesor(elem.getSeccion().getCurso(), email);
+        elem.setTitulo(titulo);
+        elem.setContenido(contenido);
+        ElementoCurso saved = elementoRepository.save(elem);
+        return new ElementoDTO(saved.getId(), saved.getTipo().name(), saved.getTitulo(), saved.getContenido(), saved.getOrden());
+    }
+
     public void eliminarElemento(Integer elementoId, String email) {
         ElementoCurso elem = elementoRepository.findById(elementoId)
                 .orElseThrow(() -> new RuntimeException("Elemento no encontrado"));
