@@ -96,9 +96,17 @@ public class CursoService {
 
     public List<ParticipanteDTO> listarParticipantes(Integer id, String email) {
         Curso curso = getCurso(id);
-        return curso.getAlumnos().stream()
-                .map(a -> new ParticipanteDTO(a.getId(), a.getNombre(), a.getEmail(), a.getRol().name()))
-                .toList();
+        List<ParticipanteDTO> lista = new java.util.ArrayList<>();
+        if (curso.getProfesor() != null) {
+            lista.add(new ParticipanteDTO(curso.getProfesor().getId(), curso.getProfesor().getNombre(),
+                    curso.getProfesor().getEmail(), "profesor"));
+        }
+        if (curso.getAlumnos() != null) {
+            curso.getAlumnos().stream()
+                    .map(a -> new ParticipanteDTO(a.getId(), a.getNombre(), a.getEmail(), a.getRol().name()))
+                    .forEach(lista::add);
+        }
+        return lista;
     }
 
     public CursoDTO invitarAlumno(Integer id, String emailAlumno, String emailProfesor) {

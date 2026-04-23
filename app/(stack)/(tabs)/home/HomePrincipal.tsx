@@ -24,9 +24,6 @@ const ACCENT_BG    = [
 const QUIZ_ICONS: Array<keyof typeof Ionicons.glyphMap> = [
   'leaf-outline', 'time-outline', 'calculator-outline', 'planet-outline', 'shield-outline',
 ];
-const CLASS_ICONS: Array<keyof typeof Ionicons.glyphMap> = [
-  'book-outline', 'school-outline', 'flask-outline', 'stats-chart-outline',
-];
 
 function QuizCard({ quiz, idx }: { quiz: QuizResumen; idx: number }) {
   const color = ACCENT_COLORS[idx % ACCENT_COLORS.length];
@@ -48,20 +45,27 @@ function QuizCard({ quiz, idx }: { quiz: QuizResumen; idx: number }) {
   );
 }
 
+const FALLBACK_COLORS = ['#24833D', '#571D11', '#1a6fa8', '#7c3aed', '#b45309', '#c1623e'];
+
 function ClassCard({ curso, idx }: { curso: CursoResumen; idx: number }) {
-  const color = ACCENT_COLORS[idx % ACCENT_COLORS.length];
-  const bg    = ACCENT_BG[idx % ACCENT_BG.length];
-  const icon  = CLASS_ICONS[idx % CLASS_ICONS.length];
+  const bannerColor = curso.color || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+  const iniciales = curso.nombre.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('');
   return (
-    <View style={styles.classCard}>
-      <View style={styles.classCardDivider} />
-      <Text style={styles.classCardName} numberOfLines={2}>{curso.nombre}</Text>
-      <View style={[styles.classCardFooter, { backgroundColor: bg }]}>
-        <View style={[styles.classCardIcon, { backgroundColor: color + '33' }]}>
-          <Ionicons name={icon} size={14} color={color} />
+    <Pressable style={styles.classCard} onPress={() => router.push(`/clase/${curso.id}` as any)}>
+      <View style={[styles.classCardBanner, { backgroundColor: bannerColor }]}>
+        <View style={styles.classCardIniciales}>
+          <Text style={styles.classCardInicialesText}>{iniciales}</Text>
         </View>
       </View>
-    </View>
+      <View style={styles.classCardBody}>
+        <Text style={styles.classCardName} numberOfLines={1}>{curso.nombre}</Text>
+        {curso.profesor ? (
+          <Text style={styles.classCardSub} numberOfLines={1}>{curso.profesor.nombre}</Text>
+        ) : (
+          <Text style={styles.classCardSub} numberOfLines={1}>{curso.numAlumnos} estudiantes</Text>
+        )}
+      </View>
+    </Pressable>
   );
 }
 
@@ -235,17 +239,25 @@ export default function HomePrincipal() {
           </View>
 
           <View style={styles.classesSection}>
-            <Text style={styles.classesSectionTitle}>Tus clases</Text>
+            <View style={styles.classesSectionHeader}>
+              <Text style={styles.classesSectionTitle}>Tus clases</Text>
+              {cursos.length > 0 && (
+                <Pressable onPress={() => router.push('/(stack)/(tabs)/clase' as any)}>
+                  <Text style={styles.classesSectionVerTodas}>Ver todas →</Text>
+                </Pressable>
+              )}
+            </View>
             {cursos.length === 0 ? (
               <View style={styles.emptyClases}>
+                <Ionicons name="school-outline" size={32} color="rgba(132,74,49,0.35)" />
                 <Text style={styles.emptyDark}>Sin clases asignadas</Text>
                 <Pressable
                   style={styles.emptyClasesBtn}
-                  onPress={() => router.push('/(stack)/(tabs)/clase')}
+                  onPress={() => router.push('/(stack)/(tabs)/clase' as any)}
                 >
                   <Ionicons name="add" size={15} color="white" />
                   <Text style={styles.emptyClasesBtnText}>
-                    {esProfesor ? 'Crear una clase' : 'Unirse a una clase'}
+                    {esProfesor ? 'Crear una clase' : 'Ver clases'}
                   </Text>
                 </Pressable>
               </View>
@@ -574,13 +586,22 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  classesSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
   classesSectionTitle: {
     color: '#412E2E',
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: -0.2,
-    marginBottom: 10,
-    textAlign: 'center',
+  },
+  classesSectionVerTodas: {
+    color: '#844A31',
+    fontSize: 12,
+    fontWeight: '600',
   },
   classGrid: {
     flexDirection: 'row',
@@ -590,38 +611,44 @@ const styles = StyleSheet.create({
   },
   classCard: {
     width: '47%',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(207,194,183,0.5)',
-    backgroundColor: 'rgba(232,221,213,1)',
+    borderRadius: 12,
+    backgroundColor: 'white',
     overflow: 'hidden',
+    shadowColor: 'rgba(0,0,0,0.08)',
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  classCardDivider: {
-    height: 1,
-    marginHorizontal: 8,
-    backgroundColor: 'rgba(207,194,183,0.5)',
+  classCardBanner: {
+    height: 60,
+    justifyContent: 'flex-end',
+    padding: 8,
+  },
+  classCardIniciales: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  classCardInicialesText: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  classCardBody: {
+    padding: 8,
+    gap: 2,
   },
   classCardName: {
     color: '#412E2E',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  classCardSub: {
+    color: '#6a7282',
     fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingHorizontal: 8,
-    paddingTop: 6,
-    paddingBottom: 4,
-    lineHeight: 16.5,
-  },
-  classCardFooter: {
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  classCardIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   emptyDark: {
     color: '#844A31',

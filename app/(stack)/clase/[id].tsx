@@ -57,20 +57,21 @@ export default function ClaseDetalleScreen() {
   const [invitando, setInvitando] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      getCurso(cursoId),
-      getSecciones(cursoId),
-      getParticipantes(cursoId),
-    ]).then(([c, s, p]) => {
-      setClase(c);
-      setSecciones(s);
-      setParticipantes(p);
-      if (user?.rol === 'profesor') {
-        const esCreador = c.profesor?.email === user.email;
-        const esInvitado = p.some(par => par.email === user.email && par.rol === 'profesor');
-        setTienePermisosEdicion(esCreador || esInvitado);
-      }
-    }).catch(() => {}).finally(() => setCargando(false));
+    const cargar = async () => {
+      try {
+        const [c, s, p] = await Promise.all([
+          getCurso(cursoId),
+          getSecciones(cursoId),
+          getParticipantes(cursoId),
+        ]);
+        setClase(c);
+        setSecciones(s);
+        setParticipantes(p);
+        setTienePermisosEdicion(user?.rol === 'profesor');
+      } catch { /* ignorar */ }
+      finally { setCargando(false); }
+    };
+    cargar();
   }, [cursoId]);
 
   // -- Secciones --
