@@ -1,17 +1,28 @@
-import { useEffect, useState, useCallback } from 'react';
+import AppAlert from '@/components/AppAlert';
+import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, Pressable,
-  Image, ActivityIndicator, Modal,
+  actualizarCurso,
+  crearCurso,
+  CursoResumen,
+  eliminarCurso,
+  getMisCursos,
+} from '@/core/cursos/actions/get-cursos';
+import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useFocusEffect } from 'expo-router';
-import AppAlert from '@/components/AppAlert';
-import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import {
-  getMisCursos, crearCurso, actualizarCurso, eliminarCurso, CursoResumen,
-} from '@/core/cursos/actions/get-cursos';
 
 const COLORES = ['#24833D', '#571D11', '#1a6fa8', '#7c3aed', '#b45309', '#c1623e'];
 
@@ -82,17 +93,26 @@ export default function ClaseScreen() {
       mensaje: `¿Seguro que quieres eliminar "${clase.nombre}"? Se perderá todo su contenido.`,
       botones: [
         { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrarAlerta },
-        { texto: 'Eliminar', estilo: 'destructivo', onPress: async () => {
-          cerrarAlerta();
-          try { await eliminarCurso(clase.id); } catch { /* ignorar */ }
-          setClases(prev => prev.filter(c => c.id !== clase.id));
-        }},
+        {
+          texto: 'Eliminar', estilo: 'destructivo', onPress: async () => {
+            cerrarAlerta();
+            try { await eliminarCurso(clase.id); } catch { /* ignorar */ }
+            setClases(prev => prev.filter(c => c.id !== clase.id));
+          }
+        },
       ],
     });
   };
 
   const clasesFiltradas = clases.filter(c =>
     c.nombre.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (!user) return (
+    <PantallaInvitado
+      titulo="Accede a tus clases"
+      mensaje="Inicia sesión para ver las clases en las que participas o crea las tuyas como profesor."
+    />
   );
 
   return (
@@ -138,7 +158,7 @@ export default function ClaseScreen() {
         onRequestClose={() => { setModalCrear(false); setModalEditar(null); }}
       >
         <Pressable style={styles.overlay} onPress={() => { setModalCrear(false); setModalEditar(null); }}>
-          <Pressable style={styles.sheet} onPress={() => {}}>
+          <Pressable style={styles.sheet} onPress={() => { }}>
             <View style={styles.handle} />
             <Text style={styles.sheetTitle}>{modalEditar ? 'Editar clase' : 'Nueva clase'}</Text>
 
@@ -194,7 +214,7 @@ export default function ClaseScreen() {
       {/* Menú opciones tarjeta */}
       <Modal visible={menuClase !== null} transparent animationType="slide" onRequestClose={() => setMenuClase(null)}>
         <Pressable style={styles.overlay} onPress={() => setMenuClase(null)}>
-          <Pressable style={styles.sheet} onPress={() => {}}>
+          <Pressable style={styles.sheet} onPress={() => { }}>
             <View style={styles.handle} />
             {menuClase && <Text style={styles.sheetTitle} numberOfLines={1}>{menuClase.nombre}</Text>}
             <Pressable style={styles.menuOption} onPress={() => menuClase && abrirEditar(menuClase)}>

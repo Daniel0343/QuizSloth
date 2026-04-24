@@ -1,21 +1,27 @@
-import { useState, useRef } from 'react';
-import {
-  View, Text, StyleSheet, Modal, Pressable,
-  TextInput, Animated, Image,
-} from 'react-native';
+import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
+import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useRef, useState } from 'react';
+import {
+  Animated, Image,
+  Modal, Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 type SubType = 'prediseñados' | 'texto-ia' | 'url' | 'texto-pdf' | 'sloth-ia' | null;
 
 const QUIZ_OPTIONS = [
   { key: 'prediseñados' as SubType, icon: 'grid-outline', label: 'Prediseñados', sub: 'Plantillas listas', color: '#53b55e', bg: 'rgba(83,181,94,0.10)' },
-  { key: 'texto-ia' as SubType,    icon: 'document-text-outline', label: 'Con texto',     sub: 'Pega contenido', color: '#c1623e', bg: 'rgba(193,98,62,0.10)' },
+  { key: 'texto-ia' as SubType, icon: 'document-text-outline', label: 'Con texto', sub: 'Pega contenido', color: '#c1623e', bg: 'rgba(193,98,62,0.10)' },
 ] as const;
 
 const NOTES_OPTIONS = [
-  { key: 'texto-pdf' as SubType, icon: 'document-attach-outline', label: 'Texto o PDF', sub: 'Con ayuda IA',        color: '#844A31', bg: 'rgba(132,74,49,0.08)' },
-  { key: 'sloth-ia' as SubType,  icon: 'sparkles-outline',        label: 'Sloth IA',    sub: 'Deja a Sloth ayudar', color: '#53b55e', bg: 'rgba(83,181,94,0.10)' },
+  { key: 'texto-pdf' as SubType, icon: 'document-attach-outline', label: 'Texto o PDF', sub: 'Con ayuda IA', color: '#844A31', bg: 'rgba(132,74,49,0.08)' },
+  { key: 'sloth-ia' as SubType, icon: 'sparkles-outline', label: 'Sloth IA', sub: 'Deja a Sloth ayudar', color: '#53b55e', bg: 'rgba(83,181,94,0.10)' },
 ] as const;
 
 const SUB_CONFIG: Record<string, { title: string; desc: string; icon: string; color: string }> = {
@@ -47,6 +53,7 @@ const SUB_CONFIG: Record<string, { title: string; desc: string; icon: string; co
 };
 
 export default function CrearModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { user } = useAuthStore();
   const [sub, setSub] = useState<SubType>(null);
 
   const handleClose = () => {
@@ -55,87 +62,101 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <Pressable style={styles.backdrop} onPress={handleClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
+    <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
+      {!user ? (
+        <View style={{ flex: 1 }}>
+          <Pressable style={styles.modalCloseTop} onPress={handleClose}>
+            <Ionicons name="close" size={24} color="#412E2E" />
+          </Pressable>
+          <PantallaInvitado
+            titulo="Crea con Sloth"
+            mensaje="Inicia sesión para generar quizzes y apuntes con inteligencia artificial."
+          />
+        </View>
+      ) : (
+        <Pressable style={styles.backdropFull} onPress={handleClose}>
+          <Pressable style={styles.backdrop} onPress={handleClose}>
+            <Pressable style={styles.sheet} onPress={() => { }}>
 
-          <View style={styles.handle} />
+              <View style={styles.handle} />
 
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Image
-                source={require('@/assets/sloth-sintexto.png')}
-                style={{ width: 65, height: 65 }}
-                resizeMode="contain"
-              />
-              <View>
-                <Text style={styles.headerTitle}>Crear con Sloth</Text>
-                <Text style={styles.headerSub}>Quizzes y apuntes con IA</Text>
+              <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                  <Image
+                    source={require('@/assets/sloth-sintexto.png')}
+                    style={{ width: 65, height: 65 }}
+                    resizeMode="contain"
+                  />
+                  <View>
+                    <Text style={styles.headerTitle}>Crear con Sloth</Text>
+                    <Text style={styles.headerSub}>Quizzes y apuntes con IA</Text>
+                  </View>
+                </View>
+                <Pressable style={styles.closeBtn} onPress={handleClose}>
+                  <Ionicons name="close" size={18} color="#844A31" />
+                </Pressable>
               </View>
-            </View>
-            <Pressable style={styles.closeBtn} onPress={handleClose}>
-              <Ionicons name="close" size={18} color="#844A31" />
+
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionDot, { backgroundColor: '#844A31' }]}>
+                  <Ionicons name="add" size={14} color="white" />
+                </View>
+                <Text style={styles.sectionTitle}>Crear Quiz con IA</Text>
+              </View>
+
+              <View style={styles.cardRow}>
+                {QUIZ_OPTIONS.map(opt => (
+                  <OptionCard
+                    key={opt.key as string}
+                    opt={opt}
+                    onPress={() => {
+                      if (opt.key === 'texto-ia') {
+                        handleClose();
+                        router.push(`/crear-quiz?tipo=${opt.key}`);
+                      } else if (opt.key === 'prediseñados') {
+                        handleClose();
+                        router.push('/plantillas' as any);
+                      } else {
+                        setSub(opt.key);
+                      }
+                    }}
+                  />
+                ))}
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionDot, { backgroundColor: '#844A31' }]}>
+                  <Ionicons name="book-outline" size={14} color="white" />
+                </View>
+                <Text style={styles.sectionTitle}>Crear Apuntes con ayuda IA</Text>
+              </View>
+
+              <View style={styles.cardRowTwo}>
+                {NOTES_OPTIONS.map(opt => (
+                  <OptionCard
+                    key={opt.key as string}
+                    opt={opt}
+                    onPress={() => {
+                      handleClose();
+                      if (opt.key === 'texto-pdf') {
+                        router.push('/crear-apunte?modo=pdf' as any);
+                      } else {
+                        router.push('/crear-apunte?modo=texto' as any);
+                      }
+                    }}
+                  />
+                ))}
+              </View>
+
             </Pressable>
-          </View>
+          </Pressable>
 
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: '#844A31' }]}>
-              <Ionicons name="add" size={14} color="white" />
-            </View>
-            <Text style={styles.sectionTitle}>Crear Quiz con IA</Text>
-          </View>
-
-          <View style={styles.cardRow}>
-            {QUIZ_OPTIONS.map(opt => (
-              <OptionCard
-                key={opt.key as string}
-                opt={opt}
-                onPress={() => {
-                  if (opt.key === 'texto-ia') {
-                    handleClose();
-                    router.push(`/crear-quiz?tipo=${opt.key}`);
-                  } else if (opt.key === 'prediseñados') {
-                    handleClose();
-                    router.push('/plantillas' as any);
-                  } else {
-                    setSub(opt.key);
-                  }
-                }}
-              />
-            ))}
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: '#844A31' }]}>
-              <Ionicons name="book-outline" size={14} color="white" />
-            </View>
-            <Text style={styles.sectionTitle}>Crear Apuntes con ayuda IA</Text>
-          </View>
-
-          <View style={styles.cardRowTwo}>
-            {NOTES_OPTIONS.map(opt => (
-              <OptionCard
-                key={opt.key as string}
-                opt={opt}
-                onPress={() => {
-                  handleClose();
-                  if (opt.key === 'texto-pdf') {
-                    router.push('/crear-apunte?modo=pdf' as any);
-                  } else {
-                    router.push('/crear-apunte?modo=texto' as any);
-                  }
-                }}
-              />
-            ))}
-          </View>
-
+          {sub !== null && (
+            <SubModal type={sub} onClose={() => setSub(null)} onDismiss={handleClose} />
+          )}
         </Pressable>
-      </Pressable>
-
-      {sub !== null && (
-        <SubModal type={sub} onClose={() => setSub(null)} onDismiss={handleClose} />
       )}
     </Modal>
   );
@@ -143,8 +164,8 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
 
 function OptionCard({ opt, onPress }: { opt: typeof QUIZ_OPTIONS[number] | typeof NOTES_OPTIONS[number]; onPress: () => void }) {
   const scale = useRef(new Animated.Value(1)).current;
-  const onPressIn  = () => Animated.spring(scale, { toValue: 0.94, useNativeDriver: true, speed: 30 }).start();
-  const onPressOut = () => Animated.spring(scale, { toValue: 1,    useNativeDriver: true, speed: 20 }).start();
+  const onPressIn = () => Animated.spring(scale, { toValue: 0.94, useNativeDriver: true, speed: 30 }).start();
+  const onPressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20 }).start();
 
   return (
     <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} style={styles.cardWrapper}>
@@ -166,7 +187,7 @@ function SubModal({ type, onClose, onDismiss }: { type: SubType; onClose: () => 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.subBackdrop} onPress={onClose}>
-        <Pressable style={styles.subCard} onPress={() => {}}>
+        <Pressable style={styles.subCard} onPress={() => { }}>
 
           <View style={styles.subIconWrap}>
             <View style={[styles.subIconBox, { backgroundColor: cfg.color + '15' }]}>
@@ -248,6 +269,13 @@ function SubContent({ type }: { type: SubType }) {
 }
 
 const styles = StyleSheet.create({
+  backdropFull: { flex: 1 },
+  modalCloseTop: {
+    position: 'absolute', top: 52, right: 16, zIndex: 10,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(65,46,46,0.12)',
+    alignItems: 'center', justifyContent: 'center',
+  },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(65,46,46,0.55)',

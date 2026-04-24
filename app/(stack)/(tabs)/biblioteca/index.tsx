@@ -1,34 +1,41 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useFocusEffect } from 'expo-router';
-import {
-  View, Text, StyleSheet, ScrollView, Modal,
-  TextInput, Pressable, Image, Alert, ActivityIndicator,
-} from 'react-native';
 import AppAlert from '@/components/AppAlert';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
-import { getMisQuizzes, eliminarQuiz } from '@/core/quizzes/actions/get-quizzes';
-import { QuizResumen } from '@/core/auth/interface/quiz';
-import { getMisColecciones, crearColeccion, añadirQuizAColeccion, ColeccionDTO } from '@/core/colecciones/actions/colecciones';
-import { getMisApuntes, eliminarApunte } from '@/core/apuntes/actions/apuntes';
+import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
+import { eliminarApunte, getMisApuntes } from '@/core/apuntes/actions/apuntes';
 import { ApunteResumen } from '@/core/auth/interface/apunte';
-import { eliminarColeccion, renombrarColeccion } from '@/core/colecciones/actions/colecciones';
+import { QuizResumen } from '@/core/auth/interface/quiz';
+import { añadirQuizAColeccion, ColeccionDTO, crearColeccion, eliminarColeccion, getMisColecciones, renombrarColeccion } from '@/core/colecciones/actions/colecciones';
+import { eliminarQuiz, getMisQuizzes } from '@/core/quizzes/actions/get-quizzes';
+import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Tab = 'biblioteca' | 'colecciones';
 type Filtro = 'todos' | 'quizzes' | 'apuntes';
 
 const DIFICULTAD_COLOR: Record<string, string> = {
-  facil:   '#24833D',
-  normal:  '#844A31',
+  facil: '#24833D',
+  normal: '#844A31',
   dificil: '#c1623e',
   extremo: '#571D11',
 };
 
 export default function BibliotecaScreen() {
   const { user } = useAuthStore();
-  const [tab, setTab]       = useState<Tab>('biblioteca');
+  const [tab, setTab] = useState<Tab>('biblioteca');
   const [search, setSearch] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [quizzes, setQuizzes] = useState<QuizResumen[]>([]);
@@ -60,7 +67,7 @@ export default function BibliotecaScreen() {
 
   const cargarColecciones = useCallback(() => {
     if (!user) return;
-    getMisColecciones().then(setColecciones).catch(() => {});
+    getMisColecciones().then(setColecciones).catch(() => { });
   }, [user]);
 
   useEffect(() => {
@@ -193,6 +200,13 @@ export default function BibliotecaScreen() {
     a.titulo.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (!user) return (
+    <PantallaInvitado
+      titulo="Tu biblioteca te espera"
+      mensaje="Inicia sesión para guardar tus quizzes, apuntes y colecciones."
+    />
+  );
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
@@ -258,7 +272,7 @@ export default function BibliotecaScreen() {
         onRequestClose={() => setMenuQuiz(null)}
       >
         <Pressable style={styles.modalOverlay} onPress={() => setMenuQuiz(null)}>
-          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+          <Pressable style={styles.bottomSheet} onPress={() => { }}>
             <View style={styles.sheetHandle} />
             {menuQuiz && (
               <Text style={styles.sheetTitle} numberOfLines={2}>
@@ -297,7 +311,7 @@ export default function BibliotecaScreen() {
       {/* Menú colección (long press) */}
       <Modal visible={menuColeccion !== null} transparent animationType="slide" onRequestClose={() => setMenuColeccion(null)}>
         <Pressable style={styles.modalOverlay} onPress={() => setMenuColeccion(null)}>
-          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+          <Pressable style={styles.bottomSheet} onPress={() => { }}>
             <View style={styles.sheetHandle} />
             {menuColeccion && <Text style={styles.sheetTitle} numberOfLines={1}>{menuColeccion.nombre}</Text>}
             <Pressable style={styles.sheetOption} onPress={() => {
@@ -328,7 +342,7 @@ export default function BibliotecaScreen() {
       {/* Modal renombrar */}
       <Modal visible={modalRenombrar} transparent animationType="slide" onRequestClose={() => setModalRenombrar(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setModalRenombrar(false)}>
-          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+          <Pressable style={styles.bottomSheet} onPress={() => { }}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Renombrar colección</Text>
             <TextInput
@@ -360,7 +374,7 @@ export default function BibliotecaScreen() {
         onRequestClose={() => setModalAgregarCol(false)}
       >
         <Pressable style={styles.modalOverlay} onPress={() => setModalAgregarCol(false)}>
-          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+          <Pressable style={styles.bottomSheet} onPress={() => { }}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Agregar a colección</Text>
             <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
@@ -556,7 +570,7 @@ function TabColecciones({
 
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={onCerrarModal}>
         <Pressable style={styles.modalOverlay} onPress={onCerrarModal}>
-          <Pressable style={styles.bottomSheet} onPress={() => {}}>
+          <Pressable style={styles.bottomSheet} onPress={() => { }}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Nueva colección</Text>
             <TextInput
