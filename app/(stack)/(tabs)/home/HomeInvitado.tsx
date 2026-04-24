@@ -14,11 +14,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getCategorias } from '@/core/categorias/actions/get-categorias';
 import { Categoria } from '@/core/auth/interface/categoria';
+import QrScanner from '@/components/QrScanner';
 
 export default function HomeInvitado() {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [code, setCode] = useState('');
   const [categories, setCategories] = useState<Categoria[]>([]);
+  const [qrVisible, setQrVisible] = useState(false);
 
   useEffect(() => {
     getCategorias()
@@ -27,12 +29,13 @@ export default function HomeInvitado() {
   }, []);
 
   return (
-    <ImageBackground
-      source={require('@/assets/sloth.png')}
-      style={styles.background}
-      resizeMode="cover"
-      imageStyle={{ opacity: 0.55 }}
-    >
+    <>
+      <ImageBackground
+        source={require('@/assets/sloth.png')}
+        style={styles.background}
+        resizeMode="cover"
+        imageStyle={{ opacity: 0.55 }}
+      >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView showsVerticalScrollIndicator={false}>
 
@@ -125,7 +128,9 @@ export default function HomeInvitado() {
                 value={code}
                 onChangeText={setCode}
               />
-              <Ionicons name="qr-code-outline" size={20} color="#844A31" />
+              <Pressable onPress={() => setQrVisible(true)} hitSlop={8}>
+                <Ionicons name="qr-code-outline" size={20} color="#844A31" />
+              </Pressable>
             </View>
             <Pressable style={styles.joinButton}>
               <Text style={styles.joinButtonText}>Unirse al juego</Text>
@@ -134,7 +139,13 @@ export default function HomeInvitado() {
 
         </ScrollView>
       </SafeAreaView>
-    </ImageBackground>
+      </ImageBackground>
+      <QrScanner
+        visible={qrVisible}
+        onClose={() => setQrVisible(false)}
+        onScanned={(data) => setCode(data)}
+      />
+    </>
   );
 }
 

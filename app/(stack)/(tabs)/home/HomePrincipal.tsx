@@ -5,6 +5,7 @@ import {
   Modal, ActivityIndicator, FlatList,
 } from 'react-native';
 import AppAlert from '@/components/AppAlert';
+import QrScanner from '@/components/QrScanner';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,6 +76,7 @@ export default function HomePrincipal() {
 
   const [search,        setSearch]        = useState('');
   const [code,          setCode]          = useState('');
+  const [qrVisible,     setQrVisible]     = useState(false);
   const [selectedCat,   setSelectedCat]   = useState<number | null>(null);
   const [categories,    setCategories]    = useState<Categoria[]>([]);
   const [cursos,        setCursos]        = useState<CursoResumen[]>([]);
@@ -231,7 +233,9 @@ export default function HomePrincipal() {
                 value={code}
                 onChangeText={setCode}
               />
-              <Ionicons name="qr-code-outline" size={20} color="#844A31" />
+              <Pressable onPress={() => setQrVisible(true)} hitSlop={8}>
+                <Ionicons name="qr-code-outline" size={20} color="#844A31" />
+              </Pressable>
             </View>
             <Pressable style={styles.joinButton}>
               <Text style={styles.joinButtonText}>Unirse al juego</Text>
@@ -340,6 +344,11 @@ export default function HomePrincipal() {
       mensaje={alerta.mensaje}
       botones={alerta.botones}
       onClose={cerrar}
+    />
+    <QrScanner
+      visible={qrVisible}
+      onClose={() => setQrVisible(false)}
+      onScanned={(data) => setCode(data)}
     />
     </>
   );
