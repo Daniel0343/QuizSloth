@@ -82,6 +82,17 @@ public class ApunteController {
         }
     }
 
+    @GetMapping("/{id}/ver")
+    public ResponseEntity<?> ver(@PathVariable Integer id, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        try {
+            return ResponseEntity.ok(toResponse(apunteService.obtenerParaLectura(id)));
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(
             @PathVariable Integer id,

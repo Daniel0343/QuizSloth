@@ -31,6 +31,7 @@ export default function StackLayout() {
       <Stack.Screen name="crear-apunte/index" />
       <Stack.Screen name="crear-apunte/editar" />
       <Stack.Screen name="clase/[id]" />
+      <Stack.Screen name="apunte/[id]" />
     </Stack>
   );
 }

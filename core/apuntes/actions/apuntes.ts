@@ -45,6 +45,11 @@ export const getApunte = async (id: number): Promise<ApunteDetalle> => {
   return data;
 };
 
+export const getApuntePublico = async (id: number): Promise<ApunteDetalle> => {
+  const { data } = await quizslothApi.get<ApunteDetalle>(`/apuntes/${id}/ver`);
+  return data;
+};
+
 export const actualizarApunte = async (
   id: number,
   titulo: string,

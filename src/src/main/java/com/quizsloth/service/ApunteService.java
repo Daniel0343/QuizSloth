@@ -63,6 +63,11 @@ public class ApunteService {
         return apunte;
     }
 
+    public Apunte obtenerParaLectura(Integer id) {
+        return apunteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Apunte no encontrado"));
+    }
+
     public Apunte actualizar(Integer id, String titulo, String contenidoJson, String email) {
         Apunte apunte = obtener(id, email);
         apunte.setTitulo(titulo);

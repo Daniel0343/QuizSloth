@@ -715,7 +715,7 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
                     } else if (elem.tipo === 'QUIZ' && elem.contenido) {
                       router.push(`/crear-quiz/editar?id=${elem.contenido}` as any);
                     } else if (elem.tipo === 'APUNTE' && elem.contenido) {
-                      router.push(`/crear-apunte/editar?id=${elem.contenido}` as any);
+                      router.push(`/apunte/${elem.contenido}` as any);
                     }
                   }}
                 >
