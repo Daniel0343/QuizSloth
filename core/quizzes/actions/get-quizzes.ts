@@ -1,5 +1,5 @@
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
-import { QuizResumen } from '@/core/auth/interface/quiz';
+import { QuizResumen, PreguntaDetalle } from '@/core/auth/interface/quiz';
 
 export type { QuizResumen };
 
@@ -16,4 +16,9 @@ export async function getMisQuizzes(): Promise<QuizResumen[]> {
 
 export async function eliminarQuiz(id: number): Promise<void> {
   await quizslothApi.delete(`/quizzes/${id}`);
+}
+
+export async function getQuizPreguntas(id: number): Promise<PreguntaDetalle[]> {
+  const { data } = await quizslothApi.get<PreguntaDetalle[]>(`/quizzes/${id}/preguntas`);
+  return data;
 }

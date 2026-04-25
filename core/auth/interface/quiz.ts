@@ -25,4 +25,5 @@ export interface PreguntaDetalle {
   dificultad: 'facil' | 'normal' | 'dificil' | 'extremo';
   orden: number;
   peso: number;
+  segundos: number;
 }

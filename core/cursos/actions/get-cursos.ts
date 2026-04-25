@@ -67,7 +67,7 @@ export const editarElemento = async (elementoId: number, titulo: string, conteni
 
 export const crearElemento = async (
   seccionId: number,
-  tipo: 'TEXTO' | 'ENLACE' | 'PDF',
+  tipo: 'TEXTO' | 'ENLACE' | 'PDF' | 'QUIZ' | 'APUNTE',
   titulo: string,
   contenido: string,
 ): Promise<ElementoCurso> => {
