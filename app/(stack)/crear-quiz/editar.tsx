@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  Pressable, ActivityIndicator, Modal,
+  Pressable, ActivityIndicator, Modal, Alert,
 } from 'react-native';
 import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -154,6 +154,7 @@ export default function EditarQuizScreen() {
           dificultad: p.dificultad,
           orden: p.orden,
           peso: p.peso,
+          segundos: p.segundos ?? 30,
         }))
       );
 
@@ -427,6 +428,24 @@ function PreguntaCard({
                 <Pressable
                   style={styles.pesoBtn}
                   onPress={() => onChange({ peso: Number((pregunta.peso + 0.5).toFixed(1)) })}
+                >
+                  <Ionicons name="add" size={16} color="#844A31" />
+                </Pressable>
+              </View>
+            </View>
+            <View style={styles.pesoBox}>
+              <Text style={styles.fieldLabel}>Tiempo</Text>
+              <View style={styles.pesoControls}>
+                <Pressable
+                  style={styles.pesoBtn}
+                  onPress={() => onChange({ segundos: Math.max(5, (pregunta.segundos ?? 30) - 5) })}
+                >
+                  <Ionicons name="remove" size={16} color="#844A31" />
+                </Pressable>
+                <Text style={styles.pesoValue}>{pregunta.segundos ?? 30}s</Text>
+                <Pressable
+                  style={styles.pesoBtn}
+                  onPress={() => onChange({ segundos: Math.min(300, (pregunta.segundos ?? 30) + 5) })}
                 >
                   <Ionicons name="add" size={16} color="#844A31" />
                 </Pressable>
