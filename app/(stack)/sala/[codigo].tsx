@@ -16,11 +16,8 @@ import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const OPCIONES = ['A', 'B', 'C', 'D'] as const;
-const OPCION_COLORS = ['#571D11', '#24833D', '#844A31', '#1a6fa8'];
-const OPCION_BG = [
-  'rgba(87,29,17,0.08)', 'rgba(36,131,61,0.08)',
-  'rgba(132,74,49,0.08)', 'rgba(26,111,168,0.08)',
-];
+const OPCION_COLORS = ['#c0392b', '#27ae60', '#d35400', '#2980b9'];
+const OPCION_BG = ['#fadbd8', '#d5f5e3', '#fdebd0', '#d6eaf8'];
 
 export default function SalaScreen() {
   const params = useLocalSearchParams<{
@@ -51,10 +48,13 @@ export default function SalaScreen() {
     const nick = nickname.trim() || user?.nombre || 'Jugador';
     setUniendose(true);
     try {
+      console.log('[UNIRSE] llamando a unirseASala, codigo:', codigo, 'nick:', nick);
       const res = await unirseASala(codigo, nick);
+      console.log('[UNIRSE] respuesta:', JSON.stringify(res));
       setParticipanteId(res.participanteId);
       setQuizTitulo(res.sala.quizTitulo);
-    } catch {
+    } catch (e: any) {
+      console.log('[UNIRSE] error:', e?.message ?? e);
       Alert.alert('Error', 'No se pudo unir a la sala. Verifica el código.');
     } finally {
       setUniendose(false);
@@ -71,11 +71,16 @@ export default function SalaScreen() {
     if (ws.fase === 'pregunta') setRespuestaElegida(null);
   }, [ws.preguntaActual?.idx]);
 
-  if (!ws.conectado && participanteId !== null) {
+  console.log('[SALA] render — fase:', ws.fase, '| conectado:', ws.conectado, '| participanteId:', participanteId, '| esHost:', esHost, '| preguntaActual:', ws.preguntaActual?.idx);
+
+  if (ws.fase === 'error') {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#571D11" />
-        <Text style={styles.conectandoText}>Conectando a la sala...</Text>
+        <Ionicons name="warning-outline" size={48} color="#c1623e" />
+        <Text style={styles.errorText}>Error de conexión</Text>
+        <Pressable style={styles.btnRojo} onPress={() => router.back()}>
+          <Text style={styles.btnTextoBlanco}>Volver</Text>
+        </Pressable>
       </View>
     );
   }
@@ -90,14 +95,11 @@ export default function SalaScreen() {
     />;
   }
 
-  if (ws.fase === 'error') {
+  if (!ws.conectado && participanteId !== null) {
     return (
       <View style={styles.center}>
-        <Ionicons name="warning-outline" size={48} color="#c1623e" />
-        <Text style={styles.errorText}>Error de conexión</Text>
-        <Pressable style={styles.btnRojo} onPress={() => router.back()}>
-          <Text style={styles.btnTextoBlanco}>Volver</Text>
-        </Pressable>
+        <ActivityIndicator size="large" color="#571D11" />
+        <Text style={styles.conectandoText}>Conectando a la sala...</Text>
       </View>
     );
   }
@@ -128,6 +130,7 @@ export default function SalaScreen() {
   if (ws.fase === 'resultado' && ws.resultado) {
     return <PantallaResultado
       resultado={ws.resultado}
+      pregunta={ws.preguntaActual}
       esHost={esHost}
       onSiguiente={ws.siguiente}
     />;
@@ -299,12 +302,12 @@ function PantallaPregunta({ pregunta, respuestaElegida, onResponder, respondidos
             key={letra}
             style={[
               styles.opcionBtn,
-              { backgroundColor: OPCION_BG[i], borderColor: OPCION_COLORS[i] + '40' },
+              { backgroundColor: OPCION_BG[i], borderColor: OPCION_COLORS[i] },
               respuestaElegida === letra && {
                 backgroundColor: OPCION_COLORS[i],
                 borderColor: OPCION_COLORS[i],
               },
-              (respuestaElegida !== null && respuestaElegida !== letra) && { opacity: 0.5 },
+              (respuestaElegida !== null && respuestaElegida !== letra) && { opacity: 0.45 },
             ]}
             onPress={() => onResponder(letra)}
             disabled={respuestaElegida !== null || segundos === 0}
@@ -315,7 +318,7 @@ function PantallaPregunta({ pregunta, respuestaElegida, onResponder, respondidos
             <Text
               style={[
                 styles.opcionTexto,
-                respuestaElegida === letra && { color: 'white' },
+                respuestaElegida === letra && { color: 'white', fontWeight: '700' },
               ]}
               numberOfLines={3}
             >
@@ -337,8 +340,10 @@ function PantallaPregunta({ pregunta, respuestaElegida, onResponder, respondidos
   );
 }
 
-function PantallaResultado({ resultado, esHost, onSiguiente }: {
-  resultado: any; esHost: boolean; onSiguiente: () => void;
+const LETRA_IDX: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+
+function PantallaResultado({ resultado, pregunta, esHost, onSiguiente }: {
+  resultado: any; pregunta: any; esHost: boolean; onSiguiente: () => void;
 }) {
   const [avanzando, setAvanzando] = useState(false);
 
@@ -347,14 +352,24 @@ function PantallaResultado({ resultado, esHost, onSiguiente }: {
     await onSiguiente();
   };
 
+  const letra = resultado.respuestaCorrecta as string;
+  const idx = LETRA_IDX[letra] ?? 0;
+  const color = OPCION_COLORS[idx];
+  const bg = OPCION_BG[idx];
+  const opciones: Record<string, string> = pregunta
+    ? { A: pregunta.opcionA, B: pregunta.opcionB, C: pregunta.opcionC, D: pregunta.opcionD }
+    : {};
+  const textoOpcion = opciones[letra] ?? '';
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: '#fdfaf7' }]}>
       <View style={styles.resultadoHeader}>
         <Text style={styles.resultadoLabel}>Respuesta correcta</Text>
-        <View style={styles.respuestaCorrectaBox}>
-          <Text style={styles.respuestaCorrectaTexto}>
-            Opción {resultado.respuestaCorrecta}
-          </Text>
+        <View style={[styles.respuestaCorrectaOpcion, { backgroundColor: bg, borderColor: color }]}>
+          <View style={[styles.opcionLetraBox, { backgroundColor: color }]}>
+            <Text style={styles.opcionLetra}>{letra}</Text>
+          </View>
+          <Text style={[styles.opcionTexto, { color: '#1a1a1a' }]} numberOfLines={2}>{textoOpcion}</Text>
         </View>
       </View>
 
@@ -535,14 +550,14 @@ const styles = StyleSheet.create({
   },
   opcionBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: 14, padding: 14, borderWidth: 1.5, flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14, padding: 14, borderWidth: 2, flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.92)',
   },
   opcionLetraBox: {
-    width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center',
+    width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center',
   },
-  opcionLetra: { color: 'white', fontSize: 14, fontWeight: '800' },
-  opcionTexto: { flex: 1, color: 'white', fontSize: 14, fontWeight: '600', lineHeight: 18 },
+  opcionLetra: { color: 'white', fontSize: 15, fontWeight: '800' },
+  opcionTexto: { flex: 1, color: '#1a1a1a', fontSize: 14, fontWeight: '600', lineHeight: 18 },
   progresoRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 12,
@@ -556,14 +571,15 @@ const styles = StyleSheet.create({
 
   // Resultado
   resultadoHeader: {
-    alignItems: 'center', paddingTop: 32, paddingBottom: 20, gap: 12,
+    alignItems: 'center', paddingTop: 32, paddingBottom: 20,
+    paddingHorizontal: 20, gap: 12,
   },
   resultadoLabel: { fontSize: 14, fontWeight: '600', color: 'rgba(65,46,46,0.6)' },
-  respuestaCorrectaBox: {
-    backgroundColor: '#24833D', borderRadius: 14,
-    paddingHorizontal: 24, paddingVertical: 12,
+  respuestaCorrectaOpcion: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: 14, padding: 14, borderWidth: 2,
+    width: '100%',
   },
-  respuestaCorrectaTexto: { color: 'white', fontSize: 18, fontWeight: '800' },
   rankingList: { flex: 1, paddingHorizontal: 20 },
   rankRow: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
