@@ -132,7 +132,11 @@ export default function HomeInvitado() {
                 <Ionicons name="qr-code-outline" size={20} color="#844A31" />
               </Pressable>
             </View>
-            <Pressable style={styles.joinButton}>
+            <Pressable
+              style={[styles.joinButton, !code.trim() && { opacity: 0.5 }]}
+              onPress={() => { if (code.trim()) router.push(`/sala/${code.trim().toUpperCase()}` as any); }}
+              disabled={!code.trim()}
+            >
               <Text style={styles.joinButtonText}>Unirse al juego</Text>
             </Pressable>
           </View>

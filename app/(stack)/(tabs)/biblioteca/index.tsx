@@ -1,5 +1,6 @@
 import AppAlert from '@/components/AppAlert';
 import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
+import QuizOpcionesModal from '@/components/QuizOpcionesModal';
 import { eliminarApunte, getMisApuntes } from '@/core/apuntes/actions/apuntes';
 import { ApunteResumen } from '@/core/auth/interface/apunte';
 import { QuizResumen } from '@/core/auth/interface/quiz';
@@ -42,6 +43,7 @@ export default function BibliotecaScreen() {
   const [apuntes, setApuntes] = useState<ApunteResumen[]>([]);
   const [cargando, setCargando] = useState(false);
   const [menuQuiz, setMenuQuiz] = useState<QuizResumen | null>(null);
+  const [quizOpciones, setQuizOpciones] = useState<QuizResumen | null>(null);
   const [colecciones, setColecciones] = useState<ColeccionDTO[]>([]);
   const [modalNuevaCol, setModalNuevaCol] = useState(false);
   const [nombreNuevaCol, setNombreNuevaCol] = useState('');
@@ -94,6 +96,7 @@ export default function BibliotecaScreen() {
   };
 
   const handleOpciones = (quiz: QuizResumen) => setMenuQuiz(quiz);
+  const handleJugar = (quiz: QuizResumen) => setQuizOpciones(quiz);
 
   const handleEditar = () => {
     if (!menuQuiz) return;
@@ -248,6 +251,7 @@ export default function BibliotecaScreen() {
             filtro={filtro}
             onFiltro={setFiltro}
             onOpciones={handleOpciones}
+            onJugar={handleJugar}
             onEliminarApunte={handleEliminarApunte}
           />
         ) : (
@@ -409,12 +413,19 @@ export default function BibliotecaScreen() {
         botones={alerta.botones}
         onClose={cerrarAlerta}
       />
+      <QuizOpcionesModal
+        visible={quizOpciones !== null}
+        quizId={quizOpciones?.id ?? null}
+        quizTitulo={quizOpciones?.titulo}
+        esCreador
+        onClose={() => setQuizOpciones(null)}
+      />
     </SafeAreaView>
   );
 }
 
 function TabBiblioteca({
-  quizzes, apuntes, cargando, filtro, onFiltro, onOpciones, onEliminarApunte,
+  quizzes, apuntes, cargando, filtro, onFiltro, onOpciones, onJugar, onEliminarApunte,
 }: {
   quizzes: QuizResumen[];
   apuntes: ApunteResumen[];
@@ -422,6 +433,7 @@ function TabBiblioteca({
   filtro: Filtro;
   onFiltro: (f: Filtro) => void;
   onOpciones: (q: QuizResumen) => void;
+  onJugar: (q: QuizResumen) => void;
   onEliminarApunte: (a: ApunteResumen) => void;
 }) {
   const showQuizzes = filtro === 'todos' || filtro === 'quizzes';
@@ -457,7 +469,7 @@ function TabBiblioteca({
       ) : (
         <>
           {showQuizzes && quizzes.map(q => (
-            <QuizCard key={`quiz-${q.id}`} quiz={q} onOpciones={onOpciones} />
+            <QuizCard key={`quiz-${q.id}`} quiz={q} onOpciones={onOpciones} onJugar={onJugar} />
           ))}
           {showApuntes && apuntes.map(a => (
             <ApunteCard key={`apunte-${a.id}`} apunte={a} onEliminar={onEliminarApunte} />
@@ -496,11 +508,11 @@ function ApunteCard({ apunte, onEliminar }: { apunte: ApunteResumen; onEliminar:
   );
 }
 
-function QuizCard({ quiz, onOpciones }: { quiz: QuizResumen; onOpciones: (q: QuizResumen) => void }) {
+function QuizCard({ quiz, onOpciones, onJugar }: { quiz: QuizResumen; onOpciones: (q: QuizResumen) => void; onJugar: (q: QuizResumen) => void }) {
   const dificultadColor = DIFICULTAD_COLOR[quiz.dificultad] ?? '#844A31';
 
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={() => onJugar(quiz)}>
       <Image source={require('@/assets/imagen-quizz-foto.png')} style={styles.cardThumb} />
 
       <View style={styles.cardInfo}>
@@ -524,12 +536,12 @@ function QuizCard({ quiz, onOpciones }: { quiz: QuizResumen; onOpciones: (q: Qui
 
       <Pressable
         style={styles.cardMenu}
-        onPress={() => onOpciones(quiz)}
+        onPress={(e) => { e.stopPropagation(); onOpciones(quiz); }}
         hitSlop={8}
       >
         <Ionicons name="ellipsis-vertical" size={18} color="#412E2E" />
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
