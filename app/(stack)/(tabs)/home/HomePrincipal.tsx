@@ -16,6 +16,7 @@ import { getMisCursos } from '@/core/cursos/actions/get-cursos';
 import { Categoria } from '@/core/auth/interface/categoria';
 import { QuizResumen } from '@/core/auth/interface/quiz';
 import { CursoResumen } from '@/core/auth/interface/curso';
+import QuizOpcionesModal from '@/components/QuizOpcionesModal';
 
 const ACCENT_COLORS = ['#53B55E', '#844A31', '#571D11', '#2D7A3A', '#6B2A1A'];
 const ACCENT_BG    = [
@@ -26,12 +27,12 @@ const QUIZ_ICONS: Array<keyof typeof Ionicons.glyphMap> = [
   'leaf-outline', 'time-outline', 'calculator-outline', 'planet-outline', 'shield-outline',
 ];
 
-function QuizCard({ quiz, idx }: { quiz: QuizResumen; idx: number }) {
+function QuizCard({ quiz, idx, onPress }: { quiz: QuizResumen; idx: number; onPress: () => void }) {
   const color = ACCENT_COLORS[idx % ACCENT_COLORS.length];
   const bg    = ACCENT_BG[idx % ACCENT_BG.length];
   const icon  = QUIZ_ICONS[idx % QUIZ_ICONS.length];
   return (
-    <View style={styles.quizCard}>
+    <Pressable style={styles.quizCard} onPress={onPress}>
       <View style={[styles.quizIconBox, { backgroundColor: bg }]}>
         <Ionicons name={icon} size={16} color={color} />
       </View>
@@ -42,7 +43,7 @@ function QuizCard({ quiz, idx }: { quiz: QuizResumen; idx: number }) {
         </Text>
       </View>
       <View style={[styles.quizBar, { backgroundColor: color }]} />
-    </View>
+    </Pressable>
   );
 }
 
@@ -85,6 +86,7 @@ export default function HomePrincipal() {
   const [nuevaCat,      setNuevaCat]      = useState('');
   const [guardandoCat,  setGuardandoCat]  = useState(false);
   const [eliminandoCat, setEliminandoCat] = useState<number | null>(null);
+  const [quizOpciones, setQuizOpciones] = useState<QuizResumen | null>(null);
   const [alerta, setAlerta] = useState<{ visible: boolean; titulo: string; mensaje?: string; variante?: 'peligro'|'exito'|'info'; botones?: any[] }>({ visible: false, titulo: '' });
   const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
 
@@ -219,7 +221,7 @@ export default function HomePrincipal() {
               {quizzes.length === 0 ? (
                 <Text style={styles.emptyLight}>Sin quizzes en esta categoría</Text>
               ) : (
-                quizzes.map((q, i) => <QuizCard key={q.id} quiz={q} idx={i} />)
+                quizzes.map((q, i) => <QuizCard key={q.id} quiz={q} idx={i} onPress={() => setQuizOpciones(q)} />)
               )}
             </ScrollView>
           </View>
@@ -341,6 +343,12 @@ export default function HomePrincipal() {
       </Pressable>
     </Modal>
 
+    <QuizOpcionesModal
+      visible={quizOpciones !== null}
+      quizId={quizOpciones?.id ?? null}
+      quizTitulo={quizOpciones?.titulo}
+      onClose={() => setQuizOpciones(null)}
+    />
     <AppAlert
       visible={alerta.visible}
       variante={alerta.variante}
