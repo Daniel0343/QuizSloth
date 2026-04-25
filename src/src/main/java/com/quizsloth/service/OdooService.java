@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *  1. authenticate() — obtiene el uid del usuario admin en Odoo.
- *  2. crearCliente()  — crea un res.partner para el alumno y un sale.order mensual.
- *  3. crearFacturaMensual() — genera la factura mensual automática.
+  authenticate() — obtiene el uid del usuario admin en Odoo.
+ crearCliente()  — crea un res.partner para el alumno y un sale.order mensual.
+ crearFacturaMensual() — genera la factura mensual automática.
 
  */
 @Slf4j

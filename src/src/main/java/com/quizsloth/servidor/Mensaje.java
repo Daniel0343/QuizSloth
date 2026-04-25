@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Mensaje {
 
-    // Tipos de mensaje cliente → servidor
+    // Tipos de mensaje cliente  servidor
     public static final String CREAR_SALA       = "crear_sala";
     public static final String UNIRSE_SALA      = "unirse_sala";
     public static final String INICIAR_PARTIDA  = "iniciar_partida";
@@ -18,7 +18,7 @@ public class Mensaje {
     public static final String SIGUIENTE        = "siguiente_pregunta";
     public static final String FINALIZAR        = "finalizar_partida";
 
-    // Tipos de mensaje servidor → cliente
+    // Tipos de mensaje servidor  cliente
     public static final String SALA_CREADA          = "sala_creada";
     public static final String SALA_UNIDA           = "sala_unida";
     public static final String JUGADORES            = "jugadores_actualizados";

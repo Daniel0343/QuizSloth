@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * DAO de Usuarios — Evidencia 1
  * Gestiona la persistencia de profesores y alumnos.
  */
 @Repository

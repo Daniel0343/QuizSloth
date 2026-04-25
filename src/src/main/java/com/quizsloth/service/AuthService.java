@@ -47,7 +47,7 @@ public class AuthService {
 
         Usuario saved = usuarioRepository.save(usuario);
 
-        // Evidencia 2: registrar en Odoo si es alumno
+        //  registrar en Odoo si es alumno
         if (saved.getRol() == Usuario.Rol.alumno) {
             try {
                 Integer odooId = odooService.crearCliente(saved);

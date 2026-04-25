@@ -8,9 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-/**
- * DAO de Documentos — Evidencia 1
- */
 @Repository
 public interface DocumentoRepository extends JpaRepository<Documento, Integer> {
 
