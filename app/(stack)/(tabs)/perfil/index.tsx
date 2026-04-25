@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Switch, Animated,
+  Pressable, Animated,
 } from 'react-native';
 import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,9 +11,6 @@ import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 
 export default function PerfilScreen() {
   const { user, logout } = useAuthStore();
-  const esProfesor = user?.rol === 'profesor';
-  const [modoEstudiante, setModoEstudiante] = useState(false);
-
   const inicial = (user?.nombre ?? 'I').charAt(0).toUpperCase();
   const [alerta, setAlerta] = useState(false);
 
@@ -43,25 +40,6 @@ export default function PerfilScreen() {
             </Pressable>
           )}
         </View>
-
-        {esProfesor && (
-          <View style={styles.section}>
-            <View style={styles.toggleRow}>
-              <View style={styles.toggleLeft}>
-                <View style={styles.toggleIconBox}>
-                  <Ionicons name="school-outline" size={18} color="#571D11" />
-                </View>
-                <Text style={styles.toggleLabel}>Cambiar a modo estudiante</Text>
-              </View>
-              <Switch
-                value={modoEstudiante}
-                onValueChange={setModoEstudiante}
-                trackColor={{ false: '#d1d5db', true: '#53b55e' }}
-                thumbColor="white"
-              />
-            </View>
-          </View>
-        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Cuenta</Text>
