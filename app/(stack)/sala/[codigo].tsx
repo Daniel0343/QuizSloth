@@ -266,17 +266,29 @@ function PantallaPregunta({ pregunta, respuestaElegida, onResponder, respondidos
 }) {
   const [segundos, setSegundos] = useState(pregunta.segundos ?? 30);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reveladoRef = useRef(false);
 
   useEffect(() => {
+    reveladoRef.current = false;
     setSegundos(pregunta.segundos ?? 30);
     timerRef.current = setInterval(() => {
       setSegundos((s: number) => {
-        if (s <= 1) { clearInterval(timerRef.current!); return 0; }
+        if (s <= 1) {
+          clearInterval(timerRef.current!);
+          return 0;
+        }
         return s - 1;
       });
     }, 1000);
     return () => clearInterval(timerRef.current!);
   }, [pregunta.idx]);
+
+  useEffect(() => {
+    if (segundos === 0 && esHost && !reveladoRef.current) {
+      reveladoRef.current = true;
+      onRevelar();
+    }
+  }, [segundos]);
 
   const opciones = [pregunta.opcionA, pregunta.opcionB, pregunta.opcionC, pregunta.opcionD];
 
