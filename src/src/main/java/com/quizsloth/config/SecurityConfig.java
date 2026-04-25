@@ -34,7 +34,9 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/files/**").permitAll()
+                .requestMatchers("/salas/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/categorias").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/categorias").authenticated()
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/categorias/**").authenticated()
