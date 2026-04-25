@@ -200,6 +200,7 @@ public class QuizService {
         }
         if (req.orden() != null) p.setOrden(req.orden());
         if (req.peso() != null) p.setPeso(BigDecimal.valueOf(req.peso()));
+        if (req.segundos() != null) p.setSegundos(Math.max(5, Math.min(300, req.segundos())));
         return preguntaRepository.save(p);
     }
 
@@ -222,6 +223,7 @@ public class QuizService {
             String respuestaCorrecta,
             String dificultad,
             Integer orden,
-            Double peso
+            Double peso,
+            Integer segundos
     ) {}
 }

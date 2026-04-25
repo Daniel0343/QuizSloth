@@ -52,4 +52,7 @@ public class Pregunta {
 
     @Column(name = "peso", precision = 5, scale = 2)
     private BigDecimal peso = BigDecimal.ONE;
+
+    @Column(name = "segundos")
+    private Integer segundos = 30;
 }
