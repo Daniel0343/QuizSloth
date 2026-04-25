@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { getQuizzesDeColeccion, quitarQuizDeColeccion, getApuntesDeColeccion } from '@/core/colecciones/actions/colecciones';
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
+import QuizOpcionesModal from '@/components/QuizOpcionesModal';
 
 const DIFICULTAD_COLOR: Record<string, string> = {
   facil: '#24833D', normal: '#844A31', dificil: '#c1623e', extremo: '#571D11',
@@ -20,6 +21,7 @@ export default function ColeccionDetalleScreen() {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [apuntes, setApuntes] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [quizOpciones, setQuizOpciones] = useState<any | null>(null);
   const [alerta, setAlerta] = useState<{ visible: boolean; titulo: string; mensaje?: string; botones?: any[] }>({ visible: false, titulo: '' });
   const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
 
@@ -102,7 +104,7 @@ export default function ColeccionDetalleScreen() {
                 <Text style={styles.sectionLabel}>Quizzes ({quizzes.length})</Text>
               </View>
               {quizzes.map(quiz => (
-                <View key={`quiz-${quiz.id}`} style={styles.card}>
+                <Pressable key={`quiz-${quiz.id}`} style={styles.card} onPress={() => setQuizOpciones(quiz)}>
                   <Image source={require('@/assets/imagen-quizz-foto.png')} style={styles.cardThumb} />
                   <View style={styles.cardInfo}>
                     <Text style={styles.cardTitle} numberOfLines={2}>{quiz.titulo}</Text>
@@ -114,10 +116,10 @@ export default function ColeccionDetalleScreen() {
                       <Text style={styles.metaTag}>{quiz.categoria?.nombre ?? 'Sin categoría'}</Text>
                     </View>
                   </View>
-                  <Pressable style={styles.removeBtn} onPress={() => handleQuitarQuiz(quiz)} hitSlop={8}>
+                  <Pressable style={styles.removeBtn} onPress={(e) => { e.stopPropagation(); handleQuitarQuiz(quiz); }} hitSlop={8}>
                     <Ionicons name="remove-circle-outline" size={22} color="#c0392b" />
                   </Pressable>
-                </View>
+                </Pressable>
               ))}
             </>
           )}
@@ -154,6 +156,13 @@ export default function ColeccionDetalleScreen() {
         </ScrollView>
       )}
 
+      <QuizOpcionesModal
+        visible={quizOpciones !== null}
+        quizId={quizOpciones?.id ?? null}
+        quizTitulo={quizOpciones?.titulo}
+        esCreador
+        onClose={() => setQuizOpciones(null)}
+      />
       <AppAlert
         visible={alerta.visible}
         variante="peligro"

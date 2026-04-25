@@ -54,11 +54,7 @@ export default function EditarApunteScreen() {
     setGuardando(true);
     try {
       await actualizarApunte(apunteId, titulo, JSON.stringify(contenido));
-      if (nuevo === 'true') {
-        setModalColeccion(true);
-      } else {
-        Alert.alert('Guardado', 'Apunte actualizado correctamente.');
-      }
+      setModalColeccion(true);
     } catch {
       Alert.alert('Error', 'No se pudo guardar el apunte.');
     } finally {
@@ -323,7 +319,7 @@ export default function EditarApunteScreen() {
 
           <Pressable style={styles.omitirBtn} onPress={() => {
             setModalColeccion(false);
-            router.replace('/(stack)/(tabs)/biblioteca' as any);
+            if (nuevo === 'true') router.replace('/(stack)/(tabs)/biblioteca' as any);
           }}>
             <Text style={styles.omitirText}>Omitir por ahora</Text>
           </Pressable>
