@@ -28,13 +28,22 @@ export function useSalaWs({ codigo, participanteId, esHost }: UseSalaWsOptions) 
   const [totalJugadores, setTotalJugadores] = useState(0);
 
   useEffect(() => {
-    let token = '';
-    SecureStorage.getItem('token').then(t => { token = t ?? ''; });
+    const wsUrl = getWsUrl();
+    console.log('[WS] Conectando a:', wsUrl);
+    let timeoutId: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      if (!clientRef.current?.connected) { console.log('[WS] Timeout sin conectar'); setFase('error'); }
+    }, 12000);
+
+    const clearTO = () => { if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; } };
 
     const client = new Client({
-      brokerURL: getWsUrl(),
-      reconnectDelay: 3000,
+      webSocketFactory: () => new WebSocket(wsUrl),
+      forceBinaryWSFrames: true,
+      appendMissingNULLonIncoming: true,
+      reconnectDelay: 0,
       onConnect: () => {
+        console.log('[WS] Conectado OK');
+        clearTO();
         setConectado(true);
 
         client.subscribe(`/topic/sala/${codigo}/jugadores`, msg => {
@@ -44,11 +53,17 @@ export function useSalaWs({ codigo, participanteId, esHost }: UseSalaWsOptions) 
         });
 
         client.subscribe(`/topic/sala/${codigo}/pregunta`, msg => {
-          const data: PreguntaWsDTO = JSON.parse(msg.body);
-          setPreguntaActual(data);
-          setResultado(null);
-          setRespondidos(0);
-          setFase('pregunta');
+          console.log('[WS] pregunta recibida, body:', msg.body);
+          try {
+            const data: PreguntaWsDTO = JSON.parse(msg.body);
+            console.log('[WS] pregunta parseada ok:', data.idx);
+            setPreguntaActual(data);
+            setResultado(null);
+            setRespondidos(0);
+            setFase('pregunta');
+          } catch(e) {
+            console.log('[WS] error parseando pregunta:', e);
+          }
         });
 
         client.subscribe(`/topic/sala/${codigo}/progreso`, msg => {
@@ -70,14 +85,15 @@ export function useSalaWs({ codigo, participanteId, esHost }: UseSalaWsOptions) 
           setFase('podio');
         });
       },
-      onDisconnect: () => setConectado(false),
-      onStompError: () => setFase('error'),
+      onDisconnect: () => { console.log('[WS] Desconectado'); setConectado(false); },
+      onStompError: (frame) => { console.log('[WS] STOMP error:', frame); clearTO(); setFase('error'); },
+      onWebSocketError: (evt) => { console.log('[WS] WebSocket error:', evt); clearTO(); setFase('error'); },
     });
 
     client.activate();
     clientRef.current = client;
 
-    return () => { client.deactivate(); };
+    return () => { clearTO(); client.deactivate(); };
   }, [codigo]);
 
   const getToken = async () => (await SecureStorage.getItem('token')) ?? '';

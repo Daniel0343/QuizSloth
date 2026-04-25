@@ -72,5 +72,5 @@ export const guardarCalificacionSolo = async (
 
 export const getWsUrl = (): string => {
   const base = (quizslothApi.defaults.baseURL ?? '').replace(/\/api$/, '');
-  return base.replace(/^http/, 'ws') + '/ws';
+  return base.replace(/^http/, 'ws') + '/api/ws';
 };
