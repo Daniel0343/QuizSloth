@@ -76,8 +76,8 @@ public class SalaService {
         p.setUsuario(usuario);
         p.setNickname(nickname != null && !nickname.isBlank() ? nickname
                 : (usuario != null ? usuario.getNombre().split(" ")[0] : "Invitado"));
+        p = participanteRepository.save(p);
         sala.getParticipantes().add(p);
-        sala = salaRepository.save(sala);
 
         SalaInfoDTO info = toSalaInfo(sala);
         broker.convertAndSend("/topic/sala/" + codigo + "/jugadores", info.jugadores());

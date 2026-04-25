@@ -51,7 +51,8 @@ public class CursoService {
 
     private void verificarProfesor(Curso curso, String email) {
         if (curso.getProfesor() != null && curso.getProfesor().getEmail().equals(email)) return;
-        boolean esProfesorInvitado = curso.getAlumnos().stream()
+        List<Usuario> alumnos = curso.getAlumnos();
+        boolean esProfesorInvitado = alumnos != null && alumnos.stream()
                 .anyMatch(u -> u.getEmail().equals(email) && u.getRol() == Usuario.Rol.profesor);
         if (esProfesorInvitado) return;
         throw new RuntimeException("No tienes permiso");

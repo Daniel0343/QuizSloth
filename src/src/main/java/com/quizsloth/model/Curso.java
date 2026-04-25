@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -42,7 +43,7 @@ public class Curso {
         joinColumns = @JoinColumn(name = "id_curso"),
         inverseJoinColumns = @JoinColumn(name = "id_alumno")
     )
-    private List<Usuario> alumnos;
+    private List<Usuario> alumnos = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
