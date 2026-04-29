@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, TouchableOpacity, View, StyleSheet, Dimensions } from 'react-native';
 import CrearModal from '@/components/CrearModal';
+import { useThemeStore } from '@/presentation/theme/useThemeStore';
 
 const TAB_BAR_HEIGHT = 84;
 const BUTTON_SIZE = 78;
@@ -10,6 +11,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function TabsLayout() {
   const [modalVisible, setModalVisible] = useState(false);
+  const { primaryColor } = useThemeStore();
 
   return (
     <View style={{ flex: 1 }}>
@@ -17,7 +19,7 @@ export default function TabsLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: '#571D11',
+            backgroundColor: primaryColor,
             borderTopWidth: 0,
             height: TAB_BAR_HEIGHT,
           },

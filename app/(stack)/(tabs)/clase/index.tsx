@@ -8,6 +8,7 @@ import {
   getMisCursos,
 } from '@/core/cursos/actions/get-cursos';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { useThemeStore } from '@/presentation/theme/useThemeStore';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -28,6 +29,7 @@ const COLORES = ['#24833D', '#571D11', '#1a6fa8', '#7c3aed', '#b45309', '#c1623e
 
 export default function ClaseScreen() {
   const { user } = useAuthStore();
+  const { primaryColor } = useThemeStore();
   const esProfesor = user?.rol === 'profesor';
   const [clases, setClases] = useState<CursoResumen[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -112,7 +114,7 @@ export default function ClaseScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.bannerHeader}>
+      <View style={[styles.bannerHeader, { backgroundColor: primaryColor }]}>
         <View style={styles.bannerCircle1} />
         <View style={styles.bannerCircle2} />
         <View style={styles.bannerCircle3} />

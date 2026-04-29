@@ -11,6 +11,7 @@ import { QuizResumen } from '@/core/auth/interface/quiz';
 import { añadirQuizAColeccion, ColeccionDTO, crearColeccion, eliminarColeccion, getMisColecciones, renombrarColeccion } from '@/core/colecciones/actions/colecciones';
 import { eliminarQuiz, getMisQuizzes } from '@/core/quizzes/actions/get-quizzes';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { useThemeStore } from '@/presentation/theme/useThemeStore';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -33,6 +34,7 @@ type Filtro = 'todos' | 'quizzes' | 'apuntes';
 
 export default function BibliotecaScreen() {
   const { user } = useAuthStore();
+  const { primaryColor } = useThemeStore();
   const [tab, setTab] = useState<Tab>('biblioteca');
   const [search, setSearch] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
@@ -219,7 +221,7 @@ export default function BibliotecaScreen() {
       </View>
 
       <View style={styles.searchWrap}>
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, { backgroundColor: primaryColor, shadowColor: primaryColor }]}>
           <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.7)" />
           <TextInput
             style={styles.searchInput}

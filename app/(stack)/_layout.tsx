@@ -2,12 +2,15 @@ import { Redirect, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { useThemeStore } from '@/presentation/theme/useThemeStore';
 
 export default function StackLayout() {
   const { status, checkStatus } = useAuthStore();
+  const { loadColor } = useThemeStore();
 
   useEffect(() => {
     if (status === 'checking') checkStatus();
+    loadColor();
   }, []);
 
   if (status === 'checking') {

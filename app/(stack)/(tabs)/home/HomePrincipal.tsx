@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { useThemeStore } from '@/presentation/theme/useThemeStore';
 import { getCategorias, crearCategoria, eliminarCategoria } from '@/core/categorias/actions/get-categorias';
 import { getQuizzes } from '@/core/quizzes/actions/get-quizzes';
 import { getMisCursos } from '@/core/cursos/actions/get-cursos';
@@ -93,6 +94,7 @@ export default function HomePrincipal() {
     getQuizzes(id ?? undefined).then(setQuizzes).catch(() => {});
   };
 
+  const { primaryColor } = useThemeStore();
   const displayName = user?.nombre ?? (esProfesor ? 'Profesor' : 'Alumno');
   const rolLabel    = esProfesor ? 'Profesor' : 'Alumno';
 
@@ -123,7 +125,7 @@ export default function HomePrincipal() {
 
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.searchWrap}>
-            <View style={styles.searchBar}>
+            <View style={[styles.searchBar, { backgroundColor: primaryColor, shadowColor: primaryColor }]}>
               <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.7)" />
               <TextInput
                 style={styles.searchInput}
@@ -171,7 +173,7 @@ export default function HomePrincipal() {
             )}
           </View>
 
-          <View style={styles.quizzesSection}>
+          <View style={[styles.quizzesSection, { backgroundColor: primaryColor, shadowColor: primaryColor }]}>
             <View style={styles.catsTitleRow}>
               <Text style={styles.catsTitle}>Categorías</Text>
               {esProfesor && (
