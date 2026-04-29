@@ -166,7 +166,6 @@ export default function HomePrincipal() {
               <Text style={styles.headerRole}>{rolLabel}</Text>
             </View>
           </View>
-          <Ionicons name="notifications-outline" size={22} color="#571D11" />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
