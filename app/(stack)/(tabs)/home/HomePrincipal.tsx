@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView,
   TextInput, Pressable, Image, ImageBackground,
@@ -87,16 +88,19 @@ export default function HomePrincipal() {
   const [guardandoCat,  setGuardandoCat]  = useState(false);
   const [eliminandoCat, setEliminandoCat] = useState<number | null>(null);
   const [quizOpciones, setQuizOpciones] = useState<QuizResumen | null>(null);
+  const [todosLosQuizzes, setTodosLosQuizzes] = useState<QuizResumen[]>([]);
   const [alerta, setAlerta] = useState<{ visible: boolean; titulo: string; mensaje?: string; variante?: 'peligro'|'exito'|'info'; botones?: any[] }>({ visible: false, titulo: '' });
   const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     getCategorias().then(setCategories).catch(() => {});
-    if (user) {
-      getMisCursos().then(setCursos).catch(() => {});
-    }
-    getQuizzes().then(setQuizzes).catch(() => {});
-  }, []);
+    if (user) getMisCursos().then(setCursos).catch(() => {});
+    getQuizzes().then(qs => { setQuizzes(qs); setTodosLosQuizzes(qs); }).catch(() => {});
+  }, []));
+
+  const resultadosBusqueda = search.length >= 3
+    ? todosLosQuizzes.filter(q => q.titulo.toLowerCase().includes(search.toLowerCase()))
+    : [];
 
   const handleCrearCategoria = async () => {
     if (!nuevaCat.trim()) return;
@@ -169,15 +173,53 @@ export default function HomePrincipal() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.searchBar}>
-            <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.7)" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscador"
-              placeholderTextColor="rgba(255,255,255,0.5)"
-              value={search}
-              onChangeText={setSearch}
-            />
+          <View style={styles.searchWrap}>
+            <View style={styles.searchBar}>
+              <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.7)" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar quizzes..."
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={search}
+                onChangeText={setSearch}
+              />
+              {search.length > 0 && (
+                <Pressable onPress={() => setSearch('')} hitSlop={8}>
+                  <Ionicons name="close-circle" size={17} color="rgba(255,255,255,0.5)" />
+                </Pressable>
+              )}
+            </View>
+
+            {resultadosBusqueda.length > 0 && (
+              <View style={styles.searchDropdown}>
+                {resultadosBusqueda.map(q => (
+                  <Pressable
+                    key={q.id}
+                    style={styles.searchResultRow}
+                    onPress={() => { setSearch(''); setQuizOpciones(q); }}
+                  >
+                    <View style={[styles.searchResultIcon, { backgroundColor: q.color || CARD_COLORS[q.id % CARD_COLORS.length] }]}>
+                      <Text style={styles.searchResultInicialText}>
+                        {q.titulo.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.searchResultTitle} numberOfLines={1}>{q.titulo}</Text>
+                      {q.categoria?.nombre && (
+                        <Text style={styles.searchResultCat}>{q.categoria.nombre}</Text>
+                      )}
+                    </View>
+                    <Ionicons name="chevron-forward" size={14} color="rgba(65,46,46,0.3)" />
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            {search.length >= 3 && resultadosBusqueda.length === 0 && (
+              <View style={styles.searchDropdown}>
+                <Text style={styles.searchEmpty}>Sin resultados para "{search}"</Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.quizzesSection}>
@@ -406,10 +448,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(83,181,94,0.7)',
   },
-  searchBar: {
-    flexDirection: 'row',
+  searchWrap: {
     marginHorizontal: 20,
     marginBottom: 12,
+    zIndex: 10,
+  },
+  searchBar: {
+    flexDirection: 'row',
     height: 38,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -426,6 +471,56 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '500',
+  },
+  searchDropdown: {
+    backgroundColor: '#fdfaf7',
+    borderRadius: 14,
+    marginTop: 6,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(87,29,17,0.08)',
+    shadowColor: 'rgba(0,0,0,0.12)',
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  searchResultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(87,29,17,0.06)',
+  },
+  searchResultIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchResultInicialText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  searchResultTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#412E2E',
+  },
+  searchResultCat: {
+    fontSize: 11,
+    color: '#844A31',
+    opacity: 0.7,
+    marginTop: 1,
+  },
+  searchEmpty: {
+    textAlign: 'center',
+    color: 'rgba(65,46,46,0.5)',
+    fontSize: 13,
+    paddingVertical: 16,
   },
   quizzesSection: {
     marginHorizontal: 20,
