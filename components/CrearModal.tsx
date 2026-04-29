@@ -4,15 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
-  Animated, Image,
+  ActivityIndicator, Animated, Image,
   Modal, Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { crearQuizVacio } from '@/core/quizzes/actions/crear-quiz';
 
-type SubType = 'prediseñados' | 'texto-ia' | 'url' | 'texto-pdf' | 'sloth-ia' | null;
+type SubType = 'prediseñados' | 'texto-ia' | 'url' | 'texto-pdf' | null;
 
 const QUIZ_OPTIONS = [
   { key: 'prediseñados' as SubType, icon: 'grid-outline', label: 'Prediseñados', sub: 'Plantillas listas', color: '#53b55e', bg: 'rgba(83,181,94,0.10)' },
@@ -21,7 +22,6 @@ const QUIZ_OPTIONS = [
 
 const NOTES_OPTIONS = [
   { key: 'texto-pdf' as SubType, icon: 'document-attach-outline', label: 'Texto o PDF', sub: 'Con ayuda IA', color: '#844A31', bg: 'rgba(132,74,49,0.08)' },
-  { key: 'sloth-ia' as SubType, icon: 'sparkles-outline', label: 'Sloth IA', sub: 'Deja a Sloth ayudar', color: '#53b55e', bg: 'rgba(83,181,94,0.10)' },
 ] as const;
 
 const SUB_CONFIG: Record<string, { title: string; desc: string; icon: string; color: string }> = {
@@ -45,20 +45,33 @@ const SUB_CONFIG: Record<string, { title: string; desc: string; icon: string; co
     desc: 'Sube un archivo PDF o pega texto para generar apuntes estructurados con ayuda de la IA.',
     icon: 'document-attach-outline', color: '#844A31',
   },
-  'sloth-ia': {
-    title: 'Dejar a Sloth ayudar',
-    desc: 'Indica el tema y Sloth generará apuntes completos utilizando inteligencia artificial.',
-    icon: 'sparkles-outline', color: '#53b55e',
-  },
 };
 
 export default function CrearModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { user } = useAuthStore();
   const [sub, setSub] = useState<SubType>(null);
+  const [modalVacio, setModalVacio] = useState(false);
+  const [tituloVacio, setTituloVacio] = useState('');
+  const [creandoVacio, setCreandoVacio] = useState(false);
 
   const handleClose = () => {
     setSub(null);
+    setModalVacio(false);
+    setTituloVacio('');
     onClose();
+  };
+
+  const handleCrearVacio = async () => {
+    if (!tituloVacio.trim() || creandoVacio) return;
+    setCreandoVacio(true);
+    try {
+      const quiz = await crearQuizVacio(tituloVacio.trim());
+      setCreandoVacio(false);
+      handleClose();
+      router.push(`/crear-quiz/editar?id=${quiz.id}&nuevo=true` as any);
+    } catch {
+      setCreandoVacio(false);
+    }
   };
 
   return (
@@ -96,6 +109,22 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
                   <Ionicons name="close" size={18} color="#844A31" />
                 </Pressable>
               </View>
+
+              {/* Card Crea desde cero */}
+              <Pressable style={styles.desdeCeroCard} onPress={() => setModalVacio(true)}>
+                <View style={styles.desdeCeroLeft}>
+                  <View style={styles.desdeCeroIconBox}>
+                    <Ionicons name="create-outline" size={22} color="white" />
+                  </View>
+                  <View>
+                    <Text style={styles.desdeCeroLabel}>Crea Quiz desde cero</Text>
+                    <Text style={styles.desdeCeroSub}>Diseña tú las preguntas</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
+              </Pressable>
+
+              <View style={styles.divider} />
 
               <View style={styles.sectionHeader}>
                 <View style={[styles.sectionDot, { backgroundColor: '#844A31' }]}>
@@ -140,17 +169,57 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
                     opt={opt}
                     onPress={() => {
                       handleClose();
-                      if (opt.key === 'texto-pdf') {
-                        router.push('/crear-apunte?modo=pdf' as any);
-                      } else {
-                        router.push('/crear-apunte?modo=texto' as any);
-                      }
+                      router.push('/crear-apunte?modo=pdf' as any);
                     }}
                   />
                 ))}
               </View>
 
             </Pressable>
+
+            {/* Modal título quiz vacío */}
+            {modalVacio && (
+              <Modal visible transparent animationType="fade" onRequestClose={() => setModalVacio(false)}>
+                <Pressable style={styles.subBackdrop} onPress={() => setModalVacio(false)}>
+                  <Pressable style={styles.subCard} onPress={() => {}}>
+                    <View style={styles.subIconWrap}>
+                      <View style={[styles.subIconBox, { backgroundColor: 'rgba(87,29,17,0.08)' }]}>
+                        <Ionicons name="create-outline" size={30} color="#571D11" />
+                      </View>
+                    </View>
+                    <Text style={styles.subTitle}>Nuevo Quiz</Text>
+                    <Text style={styles.subDesc}>Ponle un título y empieza a crear las preguntas que quieras.</Text>
+                    <View style={styles.inputRow}>
+                      <Ionicons name="text-outline" size={16} color="#844A31" />
+                      <TextInput
+                        style={styles.inputField}
+                        placeholder="Título del quiz..."
+                        placeholderTextColor="#9ca3af"
+                        value={tituloVacio}
+                        onChangeText={setTituloVacio}
+                        autoFocus
+                        maxLength={120}
+                      />
+                    </View>
+                    <View style={styles.subBtns}>
+                      <Pressable style={styles.subCancelBtn} onPress={() => setModalVacio(false)}>
+                        <Text style={styles.subCancelText}>Cancelar</Text>
+                      </Pressable>
+                      <Pressable
+                        style={[styles.subConfirmBtn, { backgroundColor: '#571D11' }, (!tituloVacio.trim() || creandoVacio) && { opacity: 0.5 }]}
+                        onPress={handleCrearVacio}
+                        disabled={!tituloVacio.trim() || creandoVacio}
+                      >
+                        {creandoVacio
+                          ? <ActivityIndicator size="small" color="white" />
+                          : <Text style={styles.subConfirmText}>Crear Quiz</Text>
+                        }
+                      </Pressable>
+                    </View>
+                  </Pressable>
+                </Pressable>
+              </Modal>
+            )}
           </Pressable>
 
           {sub !== null && (
@@ -247,20 +316,6 @@ function SubContent({ type }: { type: SubType }) {
       <View style={styles.dropZone}>
         <Ionicons name="cloud-upload-outline" size={30} color="#844A31" style={{ opacity: 0.45 }} />
         <Text style={styles.dropText}>Toca para seleccionar archivo o pegar texto</Text>
-      </View>
-    );
-  }
-
-  if (type === 'sloth-ia') {
-    return (
-      <View style={styles.textAreaBox}>
-        <TextInput
-          style={styles.textAreaField}
-          placeholder="Describe el tema..."
-          placeholderTextColor="#9ca3af"
-          multiline
-          numberOfLines={3}
-        />
       </View>
     );
   }
@@ -396,6 +451,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.6,
   },
+  desdeCeroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#571D11',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 18,
+  },
+  desdeCeroLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  desdeCeroIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  desdeCeroLabel: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  desdeCeroSub: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 1,
+  },
   divider: {
     height: 1,
     backgroundColor: 'rgba(87,29,17,0.07)',
@@ -503,21 +593,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     opacity: 0.65,
     textAlign: 'center',
-  },
-  textAreaBox: {
-    backgroundColor: 'rgba(83,181,94,0.05)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(83,181,94,0.14)',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    minHeight: 80,
-    marginBottom: 20,
-  },
-  textAreaField: {
-    color: '#412E2E',
-    fontSize: 14,
-    textAlignVertical: 'top',
   },
   subBtns: {
     flexDirection: 'row',
