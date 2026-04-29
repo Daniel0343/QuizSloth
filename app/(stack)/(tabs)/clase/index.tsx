@@ -29,7 +29,6 @@ const COLORES = ['#24833D', '#571D11', '#1a6fa8', '#7c3aed', '#b45309', '#c1623e
 export default function ClaseScreen() {
   const { user } = useAuthStore();
   const esProfesor = user?.rol === 'profesor';
-  const [search, setSearch] = useState('');
   const [clases, setClases] = useState<CursoResumen[]>([]);
   const [cargando, setCargando] = useState(false);
   const [modalCrear, setModalCrear] = useState(false);
@@ -104,10 +103,6 @@ export default function ClaseScreen() {
     });
   };
 
-  const clasesFiltradas = clases.filter(c =>
-    c.nombre.toLowerCase().includes(search.toLowerCase())
-  );
-
   if (!user) return (
     <PantallaInvitado
       titulo="Accede a tus clases"
@@ -117,19 +112,24 @@ export default function ClaseScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mis clases</Text>
-      </View>
+      <View style={styles.bannerHeader}>
+        <View style={styles.bannerCircle1} />
+        <View style={styles.bannerCircle2} />
+        <View style={styles.bannerCircle3} />
+        <View style={styles.bannerTopRow}>
+          <View>
+            <Text style={styles.bannerTitle}>Mis clases</Text>
+            <Text style={styles.bannerSub}>
+              {cargando ? 'Cargando...' : clases.length === 0
+                ? 'Sin clases aún'
+                : `${clases.length} ${clases.length === 1 ? 'clase activa' : 'clases activas'}`}
+            </Text>
+          </View>
+          <View style={styles.bannerIconBox}>
+            <Ionicons name="school" size={28} color="rgba(255,255,255,0.9)" />
+          </View>
+        </View>
 
-      <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.7)" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscador"
-          placeholderTextColor="rgba(255,255,255,0.5)"
-          value={search}
-          onChangeText={setSearch}
-        />
       </View>
 
       <View style={styles.contentArea}>
@@ -137,14 +137,14 @@ export default function ClaseScreen() {
           <ActivityIndicator style={{ marginTop: 60 }} color="#844A31" size="large" />
         ) : esProfesor ? (
           <VistaProfesor
-            clases={clasesFiltradas}
+            clases={clases}
             onCrear={abrirCrear}
             onMenu={setMenuClase}
             onTap={id => router.push(`/clase/${id}` as any)}
           />
         ) : (
           <VistaAlumno
-            clases={clasesFiltradas}
+            clases={clases}
             onTap={id => router.push(`/clase/${id}` as any)}
           />
         )}
@@ -358,15 +358,52 @@ function EmptyState({ mensaje, sub }: { mensaje: string; sub: string }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#d7b59f' },
-  header: { height: 52, paddingHorizontal: 20, justifyContent: 'center' },
-  headerTitle: { color: '#412E2E', fontSize: 20, fontWeight: '700' },
-  searchBar: {
-    flexDirection: 'row', marginHorizontal: 20, marginBottom: 12,
-    height: 38, paddingHorizontal: 16, alignItems: 'center', gap: 10,
-    borderRadius: 16, backgroundColor: '#571D11',
-    shadowColor: 'rgba(87,29,17,0.35)', shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 4,
+  bannerHeader: {
+    backgroundColor: '#571D11',
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 14,
+    borderRadius: 20,
+    padding: 20,
+    paddingBottom: 18,
+    overflow: 'hidden',
+    shadowColor: 'rgba(87,29,17,0.5)',
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
   },
-  searchInput: { flex: 1, color: 'white', fontSize: 14, fontWeight: '500' },
+  bannerCircle1: {
+    position: 'absolute', width: 140, height: 140, borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.06)', top: -40, right: -30,
+  },
+  bannerCircle2: {
+    position: 'absolute', width: 80, height: 80, borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.07)', bottom: -20, left: 20,
+  },
+  bannerCircle3: {
+    position: 'absolute', width: 50, height: 50, borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.05)', top: 10, right: 90,
+  },
+  bannerTopRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
+  bannerTitle: { color: 'white', fontSize: 22, fontWeight: '800', marginBottom: 4 },
+  bannerSub: { color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: '500' },
+  bannerIconBox: {
+    width: 52, height: 52, borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+  },
+  bannerStats: {
+    flexDirection: 'row', alignItems: 'center',
+    marginTop: 16, paddingTop: 14,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.12)',
+  },
+  bannerStat: { flex: 1, alignItems: 'center' },
+  bannerStatNum: { color: 'white', fontSize: 20, fontWeight: '800' },
+  bannerStatLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '600', marginTop: 2 },
+  bannerStatDiv: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.15)' },
   contentArea: { flex: 1, backgroundColor: 'rgba(217,217,217,1)' },
   scrollContent: { padding: 16, gap: 16 },
   actionBtn: {
