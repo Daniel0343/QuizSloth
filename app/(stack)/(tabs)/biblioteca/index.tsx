@@ -4,6 +4,7 @@ import BibliotecaQuizCard from '@/components/BibliotecaQuizCard';
 import ColeccionRow from '@/components/ColeccionRow';
 import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
 import QuizOpcionesModal from '@/components/QuizOpcionesModal';
+import { CARD_COLORS } from '@/components/QuizCard';
 import { eliminarApunte, getMisApuntes } from '@/core/apuntes/actions/apuntes';
 import { ApunteResumen } from '@/core/auth/interface/apunte';
 import { QuizResumen } from '@/core/auth/interface/quiz';
@@ -199,6 +200,11 @@ export default function BibliotecaScreen() {
     a.titulo.toLowerCase().includes(search.toLowerCase())
   );
 
+  const resultadosBusqueda = search.length >= 3 ? [
+    ...quizzes.filter(q => q.titulo.toLowerCase().includes(search.toLowerCase())).map(q => ({ tipo: 'quiz' as const, item: q })),
+    ...apuntes.filter(a => a.titulo.toLowerCase().includes(search.toLowerCase())).map(a => ({ tipo: 'apunte' as const, item: a })),
+  ] : [];
+
   if (!user) return (
     <PantallaInvitado
       titulo="Tu biblioteca te espera"
@@ -212,15 +218,66 @@ export default function BibliotecaScreen() {
         <Text style={styles.headerTitle}>Mi biblioteca</Text>
       </View>
 
-      <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.7)" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscador"
-          placeholderTextColor="rgba(255,255,255,0.5)"
-          value={search}
-          onChangeText={setSearch}
-        />
+      <View style={styles.searchWrap}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.7)" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar en mi biblioteca..."
+            placeholderTextColor="rgba(255,255,255,0.5)"
+            value={search}
+            onChangeText={setSearch}
+          />
+          {search.length > 0 && (
+            <Pressable onPress={() => setSearch('')} hitSlop={8}>
+              <Ionicons name="close-circle" size={17} color="rgba(255,255,255,0.5)" />
+            </Pressable>
+          )}
+        </View>
+
+        {resultadosBusqueda.length > 0 && (
+          <View style={styles.searchDropdown}>
+            {resultadosBusqueda.map(({ tipo, item }) =>
+              tipo === 'quiz' ? (
+                <Pressable
+                  key={`q-${item.id}`}
+                  style={styles.searchResultRow}
+                  onPress={() => { setSearch(''); setQuizOpciones(item as any); }}
+                >
+                  <View style={[styles.searchResultIcon, { backgroundColor: (item as any).color || CARD_COLORS[item.id % CARD_COLORS.length] }]}>
+                    <Text style={styles.searchResultInicialText}>{item.titulo.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.searchResultTitle} numberOfLines={1}>{item.titulo}</Text>
+                    <Text style={styles.searchResultSub}>{(item as any).categoria?.nombre ?? 'Sin categoría'}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={14} color="rgba(65,46,46,0.3)" />
+                </Pressable>
+              ) : (
+                <Pressable
+                  key={`a-${item.id}`}
+                  style={styles.searchResultRow}
+                  onPress={() => { setSearch(''); router.push(`/crear-apunte/editar?id=${item.id}` as any); }}
+                >
+                  <View style={[styles.searchResultIcon, { backgroundColor: 'rgba(83,181,94,0.2)' }]}>
+                    <Ionicons name="document-text-outline" size={18} color="#24833D" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.searchResultTitle} numberOfLines={1}>{item.titulo}</Text>
+                    <Text style={[styles.searchResultSub, { color: '#24833D' }]}>Apunte</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={14} color="rgba(65,46,46,0.3)" />
+                </Pressable>
+              )
+            )}
+          </View>
+        )}
+
+        {search.length >= 3 && resultadosBusqueda.length === 0 && (
+          <View style={styles.searchDropdown}>
+            <Text style={styles.searchEmpty}>Sin resultados para "{search}"</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.tabRow}>
@@ -573,6 +630,61 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#d7b59f',
   },
+  searchWrap: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    zIndex: 10,
+  },
+  searchDropdown: {
+    backgroundColor: '#fdfaf7',
+    borderRadius: 14,
+    marginTop: 6,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(87,29,17,0.08)',
+    shadowColor: 'rgba(0,0,0,0.12)',
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  searchResultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(87,29,17,0.06)',
+  },
+  searchResultIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchResultInicialText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  searchResultTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#412E2E',
+  },
+  searchResultSub: {
+    fontSize: 11,
+    color: '#844A31',
+    opacity: 0.7,
+    marginTop: 1,
+  },
+  searchEmpty: {
+    textAlign: 'center',
+    color: 'rgba(65,46,46,0.5)',
+    fontSize: 13,
+    paddingVertical: 16,
+  },
   header: {
     height: 52,
     paddingHorizontal: 20,
@@ -586,8 +698,6 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 12,
     height: 38,
     paddingHorizontal: 16,
     alignItems: 'center',
