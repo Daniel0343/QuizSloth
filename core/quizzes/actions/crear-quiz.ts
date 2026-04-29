@@ -51,9 +51,14 @@ export const generarQuizDesdeArchivo = async (
   return response.json();
 };
 
+export const crearQuizVacio = async (titulo: string): Promise<QuizDetalle> => {
+  const { data } = await quizslothApi.post<QuizDetalle>('/quizzes', { titulo });
+  return data;
+};
+
 export const actualizarQuiz = async (
   id: number,
-  campos: { titulo?: string; dificultad?: string; categoriaId?: number },
+  campos: { titulo?: string; dificultad?: string; categoriaId?: number; color?: string },
 ): Promise<QuizDetalle> => {
   const { data } = await quizslothApi.put<QuizDetalle>(`/quizzes/${id}`, campos);
   return data;

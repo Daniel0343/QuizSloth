@@ -4,6 +4,7 @@ export interface QuizResumen {
   dificultad: string;
   categoria?: { id: number; nombre: string };
   numPreguntas?: number;
+  color?: string;
 }
 
 export interface QuizDetalle {
@@ -12,6 +13,7 @@ export interface QuizDetalle {
   dificultad: 'facil' | 'normal' | 'dificil' | 'extremo';
   categoria?: { id: number; nombre: string };
   fechaCreacion?: string;
+  color?: string;
 }
 
 export interface PreguntaDetalle {

@@ -170,7 +170,16 @@ public class QuizService {
         return new QuizConPreguntas(savedClon, preguntas);
     }
 
-    public Quiz actualizarQuiz(Integer id, String titulo, String dificultad, Integer categoriaId) {
+    public Quiz crearVacio(String titulo, Integer categoriaId, String emailCreador) {
+        Quiz quiz = new Quiz();
+        quiz.setTitulo(titulo != null && !titulo.isBlank() ? titulo : "Nuevo Quiz");
+        quiz.setDificultad(Quiz.Dificultad.normal);
+        if (categoriaId != null) categoriaRepository.findById(categoriaId).ifPresent(quiz::setCategoria);
+        if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
+        return quizRepository.save(quiz);
+    }
+
+    public Quiz actualizarQuiz(Integer id, String titulo, String dificultad, Integer categoriaId, String color) {
         Quiz quiz = obtener(id);
         if (titulo != null && !titulo.isBlank()) quiz.setTitulo(titulo);
         if (dificultad != null) {
@@ -181,6 +190,7 @@ public class QuizService {
         if (categoriaId != null) {
             categoriaRepository.findById(categoriaId).ifPresent(quiz::setCategoria);
         }
+        if (color != null && !color.isBlank()) quiz.setColor(color);
         return quizRepository.save(quiz);
     }
 

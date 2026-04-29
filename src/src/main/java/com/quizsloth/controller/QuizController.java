@@ -39,6 +39,18 @@ public class QuizController {
         return ResponseEntity.ok(quizService.listarTodos());
     }
 
+    @PostMapping
+    public ResponseEntity<Quiz> crear(@RequestBody CrearQuizRequest req, HttpServletRequest request) {
+        Quiz quiz = quizService.crearVacio(req.getTitulo(), req.getCategoriaId(), emailFromRequest(request));
+        return ResponseEntity.ok(quiz);
+    }
+
+    @Data
+    static class CrearQuizRequest {
+        private String titulo;
+        private Integer categoriaId;
+    }
+
     @GetMapping("/mis-quizzes")
     public ResponseEntity<List<QuizService.QuizResumenDTO>> misQuizzes(Authentication authentication) {
         return ResponseEntity.ok(quizService.listarPorCreadorDTO(authentication.getName()));
@@ -118,7 +130,7 @@ public class QuizController {
             @PathVariable Integer id,
             @RequestBody ActualizarQuizRequest req) {
         Quiz quiz = quizService.actualizarQuiz(
-                id, req.getTitulo(), req.getDificultad(), req.getCategoriaId());
+                id, req.getTitulo(), req.getDificultad(), req.getCategoriaId(), req.getColor());
         return ResponseEntity.ok(quiz);
     }
 
@@ -142,5 +154,6 @@ public class QuizController {
         private String titulo;
         private String dificultad;
         private Integer categoriaId;
+        private String color;
     }
 }

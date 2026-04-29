@@ -19,6 +19,10 @@ import {
 
 const DIFICULTADES = ['facil', 'normal', 'dificil', 'extremo'] as const;
 const OPCIONES: ('A' | 'B' | 'C' | 'D')[] = ['A', 'B', 'C', 'D'];
+const CARD_COLORS = [
+  '#E8B84B', '#E05C9A', '#7DC95E', '#C4A576',
+  '#E07B3F', '#5B9BD5', '#4EC9C9', '#9B6DB5',
+];
 
 export default function EditarQuizScreen() {
   const { id, nuevo } = useLocalSearchParams<{ id: string; nuevo?: string }>();
@@ -141,6 +145,7 @@ export default function EditarQuizScreen() {
         titulo: quiz.titulo,
         dificultad: quiz.dificultad,
         categoriaId: quiz.categoria?.id,
+        color: quiz.color,
       });
 
       await Promise.all(
@@ -227,6 +232,20 @@ export default function EditarQuizScreen() {
                     {d.charAt(0).toUpperCase() + d.slice(1)}
                   </Text>
                 </Pressable>
+              ))}
+            </View>
+            <Text style={styles.cardSectionLabel}>Color de la tarjeta</Text>
+            <View style={styles.colorRow}>
+              {CARD_COLORS.map(c => (
+                <Pressable
+                  key={c}
+                  onPress={() => setQuiz(q => q ? { ...q, color: c } : q)}
+                  style={[
+                    styles.colorDot,
+                    { backgroundColor: c },
+                    (quiz.color ?? CARD_COLORS[0]) === c && styles.colorDotSelected,
+                  ]}
+                />
               ))}
             </View>
           </View>
@@ -544,6 +563,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+  },
+  colorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 2,
+  },
+  colorDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  colorDotSelected: {
+    borderWidth: 3,
+    borderColor: 'white',
+    shadowColor: 'rgba(0,0,0,0.35)',
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
   },
   chip: {
     paddingHorizontal: 14,

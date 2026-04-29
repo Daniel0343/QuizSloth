@@ -42,6 +42,9 @@ public class Quiz {
     @Enumerated(EnumType.STRING)
     private Dificultad dificultad = Dificultad.normal;
 
+    @Column(length = 20)
+    private String color = "#E8B84B";
+
     @Column(name = "es_plantilla", nullable = false)
     private boolean esPlantilla = false;
 
