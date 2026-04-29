@@ -11,11 +11,8 @@ import { guardarCalificacionSolo } from '@/core/salas/actions/sala';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 
 const OPCIONES = ['A', 'B', 'C', 'D'] as const;
-const OPCION_COLORS = ['#571D11', '#24833D', '#844A31', '#1a6fa8'];
-const OPCION_BG = [
-  'rgba(87,29,17,0.08)', 'rgba(36,131,61,0.08)',
-  'rgba(132,74,49,0.08)', 'rgba(26,111,168,0.08)',
-];
+const OPCION_COLORS = ['#c0392b', '#27ae60', '#d35400', '#2980b9'];
+const OPCION_BG = ['#fadbd8', '#d5f5e3', '#fdebd0', '#d6eaf8'];
 export default function SoloQuizScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const quizId = Number(id);
@@ -152,19 +149,16 @@ export default function SoloQuizScreen() {
               key={letra}
               style={[
                 styles.opcionBtn,
-                { backgroundColor: OPCION_BG[i], borderColor: OPCION_COLORS[i] + '40' },
-                esCorrecta && { backgroundColor: '#24833D', borderColor: '#24833D' },
-                esIncorrecta && { backgroundColor: '#c1623e', borderColor: '#c1623e' },
+                { backgroundColor: OPCION_BG[i], borderColor: OPCION_COLORS[i] },
+                esCorrecta && { backgroundColor: '#27ae60', borderColor: '#27ae60' },
+                esIncorrecta && { backgroundColor: '#c0392b', borderColor: '#c0392b' },
                 esElegida && !mostrarResultado && { backgroundColor: OPCION_COLORS[i], borderColor: OPCION_COLORS[i] },
                 mostrarResultado && !esCorrecta && !esElegida && { opacity: 0.4 },
               ]}
               onPress={() => handleResponder(letra)}
               disabled={respuestaElegida !== null || mostrarResultado}
             >
-              <View style={[styles.opcionLetraBox, {
-                backgroundColor: esCorrecta || esIncorrecta || (esElegida && !mostrarResultado)
-                  ? 'rgba(255,255,255,0.2)' : OPCION_COLORS[i],
-              }]}>
+              <View style={[styles.opcionLetraBox, { backgroundColor: OPCION_COLORS[i] }]}>
                 {esCorrecta ? (
                   <Ionicons name="checkmark" size={16} color="white" />
                 ) : esIncorrecta ? (
@@ -289,14 +283,14 @@ const styles = StyleSheet.create({
   },
   opcionBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderRadius: 14, padding: 14, borderWidth: 1.5, flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14, padding: 14, borderWidth: 2, flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.92)',
   },
   opcionLetraBox: {
-    width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center',
+    width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center',
   },
-  opcionLetra: { color: 'white', fontSize: 14, fontWeight: '800' },
-  opcionTexto: { flex: 1, color: 'white', fontSize: 14, fontWeight: '600', lineHeight: 18 },
+  opcionLetra: { color: 'white', fontSize: 15, fontWeight: '800' },
+  opcionTexto: { flex: 1, color: '#1a1a1a', fontSize: 14, fontWeight: '600', lineHeight: 18 },
   btnSiguiente: {
     margin: 16, height: 52, borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.15)',
