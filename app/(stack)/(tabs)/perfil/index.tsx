@@ -10,6 +10,8 @@ import { router } from 'expo-router';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { useThemeStore, THEME_PRESETS } from '@/presentation/theme/useThemeStore';
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
+import { getSubscripcion } from '@/core/auth/actions/subscripcion';
+import { Subscripcion } from '@/core/auth/interface/subscripcion';
 
 const ROL_LABEL: Record<string, string> = {
   profesor: 'Profesor',
@@ -32,6 +34,19 @@ export default function PerfilScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [editError, setEditError] = useState('');
+
+  const [modalSub, setModalSub] = useState(false);
+  const [sub, setSub] = useState<Subscripcion | null>(null);
+  const [cargandoSub, setCargandoSub] = useState(false);
+
+  const abrirSubscripcion = async () => {
+    setModalSub(true);
+    if (sub) return;
+    setCargandoSub(true);
+    const data = await getSubscripcion();
+    setSub(data);
+    setCargandoSub(false);
+  };
 
   const abrirEditar = () => {
     setNombre(user?.nombre ?? '');
@@ -106,7 +121,7 @@ export default function PerfilScreen() {
         {/* App */}
         <Text style={[styles.sectionLabel, { color: primaryColor }]}>Aplicación</Text>
         <View style={styles.card}>
-          <SettingRow icon="star-outline" label="Suscripción" primaryColor={primaryColor} />
+          <SettingRow icon="star-outline" label="Suscripción" primaryColor={primaryColor} onPress={abrirSubscripcion} />
           <View style={styles.divider} />
           {/* Color picker row */}
           <Pressable style={styles.settingRow} onPress={() => setModalColor(true)}>
@@ -134,8 +149,83 @@ export default function PerfilScreen() {
           </Pressable>
         )}
 
-        <Text style={styles.version}>QuizSloth · v1.0.0</Text>
       </ScrollView>
+
+      {/* Modal suscripción */}
+      <Modal visible={modalSub} transparent animationType="slide" onRequestClose={() => setModalSub(false)}>
+        <Pressable style={styles.overlay} onPress={() => setModalSub(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <View style={styles.handle} />
+            <Text style={styles.sheetTitle}>Mi suscripción</Text>
+
+            {cargandoSub ? (
+              <View style={styles.subLoading}>
+                <ActivityIndicator size="large" color={primaryColor} />
+                <Text style={styles.subLoadingText}>Consultando Odoo...</Text>
+              </View>
+            ) : sub === null ? (
+              <View style={styles.subLoading}>
+                <Ionicons name="alert-circle-outline" size={36} color="rgba(65,46,46,0.3)" />
+                <Text style={styles.subEmptyText}>No se pudo obtener la información de tu suscripción.</Text>
+              </View>
+            ) : (
+              <View style={styles.subContent}>
+                <View style={[styles.subEstadoBadge, {
+                  backgroundColor: sub.estado === 'activa' ? 'rgba(36,131,61,0.1)' :
+                    sub.estado === 'expirada' ? 'rgba(192,57,43,0.1)' : 'rgba(65,46,46,0.07)',
+                }]}>
+                  <View style={[styles.subEstadoDot, {
+                    backgroundColor: sub.estado === 'activa' ? '#24833D' :
+                      sub.estado === 'expirada' ? '#c0392b' : '#9ca3af',
+                  }]} />
+                  <Text style={[styles.subEstadoText, {
+                    color: sub.estado === 'activa' ? '#24833D' :
+                      sub.estado === 'expirada' ? '#c0392b' : '#6b7280',
+                  }]}>
+                    {sub.estado === 'activa' ? 'Activa' :
+                      sub.estado === 'expirada' ? 'Expirada' : 'Sin suscripción'}
+                  </Text>
+                </View>
+
+                {sub.plan && (
+                  <View style={styles.subRow}>
+                    <Ionicons name="ribbon-outline" size={18} color={primaryColor} />
+                    <Text style={styles.subRowLabel}>Plan</Text>
+                    <Text style={styles.subRowValue}>{sub.plan}</Text>
+                  </View>
+                )}
+                {sub.fechaInicio && (
+                  <View style={styles.subRow}>
+                    <Ionicons name="calendar-outline" size={18} color={primaryColor} />
+                    <Text style={styles.subRowLabel}>Inicio</Text>
+                    <Text style={styles.subRowValue}>{new Date(sub.fechaInicio).toLocaleDateString('es-ES')}</Text>
+                  </View>
+                )}
+                {sub.fechaFin && (
+                  <View style={styles.subRow}>
+                    <Ionicons name="time-outline" size={18} color={primaryColor} />
+                    <Text style={styles.subRowLabel}>Vencimiento</Text>
+                    <Text style={[styles.subRowValue, sub.estado === 'expirada' && { color: '#c0392b' }]}>
+                      {new Date(sub.fechaFin).toLocaleDateString('es-ES')}
+                    </Text>
+                  </View>
+                )}
+                {sub.odooId && (
+                  <View style={styles.subRow}>
+                    <Ionicons name="finger-print-outline" size={18} color={primaryColor} />
+                    <Text style={styles.subRowLabel}>ID Odoo</Text>
+                    <Text style={styles.subRowValue}>#{sub.odooId}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            <Pressable style={[styles.cancelBtn, { marginTop: 16 }]} onPress={() => setModalSub(false)}>
+              <Text style={styles.cancelBtnText}>Cerrar</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Modal editar perfil */}
       <Modal visible={modalEditar} transparent animationType="slide" onRequestClose={() => setModalEditar(false)}>
@@ -410,4 +500,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2, shadowRadius: 4, elevation: 4,
   },
   colorLabel: { fontSize: 12, fontWeight: '600', color: '#412E2E' },
+
+  /* Suscripción */
+  subLoading: { alignItems: 'center', gap: 12, paddingVertical: 28 },
+  subLoadingText: { fontSize: 13, color: 'rgba(65,46,46,0.5)', fontWeight: '500' },
+  subEmptyText: { fontSize: 13, color: 'rgba(65,46,46,0.5)', textAlign: 'center', lineHeight: 20 },
+  subContent: { gap: 4, marginBottom: 4 },
+  subEstadoBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    alignSelf: 'flex-start', borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 8, marginBottom: 12,
+  },
+  subEstadoDot: { width: 8, height: 8, borderRadius: 4 },
+  subEstadoText: { fontSize: 14, fontWeight: '700' },
+  subRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(65,46,46,0.06)',
+  },
+  subRowLabel: { flex: 1, fontSize: 14, color: 'rgba(65,46,46,0.5)', fontWeight: '500' },
+  subRowValue: { fontSize: 14, fontWeight: '600', color: '#412E2E' },
 });
