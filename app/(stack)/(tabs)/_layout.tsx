@@ -62,7 +62,6 @@ export default function TabsLayout() {
           }}
         />
 
-        <Tabs.Screen name="home/[id]" options={{ href: null }} />
         <Tabs.Screen name="home/HomeInvitado" options={{ href: null }} />
         <Tabs.Screen name="home/HomePrincipal" options={{ href: null }} />
         <Tabs.Screen name="biblioteca/favoritas" options={{ href: null }} />
