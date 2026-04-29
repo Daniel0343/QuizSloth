@@ -18,59 +18,8 @@ import { Categoria } from '@/core/auth/interface/categoria';
 import { QuizResumen } from '@/core/auth/interface/quiz';
 import { CursoResumen } from '@/core/auth/interface/curso';
 import QuizOpcionesModal from '@/components/QuizOpcionesModal';
-
-const CARD_COLORS = [
-  '#E8B84B', '#E05C9A', '#7DC95E', '#C4A576',
-  '#E07B3F', '#5B9BD5', '#4EC9C9', '#9B6DB5',
-];
-const STRIPES = Array.from({ length: 12 });
-
-function QuizCard({ quiz, idx, onPress }: { quiz: QuizResumen; idx: number; onPress: () => void }) {
-  const color = quiz.color || CARD_COLORS[idx % CARD_COLORS.length];
-  return (
-    <Pressable style={[styles.quizCard, { backgroundColor: color }]} onPress={onPress}>
-      {/* Líneas diagonales de fondo */}
-      <View style={styles.stripesWrap}>
-        {STRIPES.map((_, i) => <View key={i} style={styles.stripe} />)}
-      </View>
-      {/* Círculo decorativo esquina superior derecha */}
-      <View style={styles.quizCircle} />
-      {/* Segundo círculo más pequeño desplazado */}
-      <View style={styles.quizCircle2} />
-      {/* Contenido */}
-      <View style={styles.quizCardContent}>
-        {quiz.categoria?.nombre ? (
-          <Text style={styles.quizCardCat} numberOfLines={1}>{quiz.categoria.nombre.toUpperCase()}</Text>
-        ) : null}
-        <Text style={styles.quizTitle} numberOfLines={4}>{quiz.titulo}</Text>
-      </View>
-    </Pressable>
-  );
-}
-
-const FALLBACK_COLORS = ['#24833D', '#571D11', '#1a6fa8', '#7c3aed', '#b45309', '#c1623e'];
-
-function ClassCard({ curso, idx }: { curso: CursoResumen; idx: number }) {
-  const bannerColor = curso.color || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-  const iniciales = curso.nombre.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('');
-  return (
-    <Pressable style={styles.classCard} onPress={() => router.push(`/clase/${curso.id}` as any)}>
-      <View style={[styles.classCardBanner, { backgroundColor: bannerColor }]}>
-        <View style={styles.classCardIniciales}>
-          <Text style={styles.classCardInicialesText}>{iniciales}</Text>
-        </View>
-      </View>
-      <View style={styles.classCardBody}>
-        <Text style={styles.classCardName} numberOfLines={1}>{curso.nombre}</Text>
-        {curso.profesor ? (
-          <Text style={styles.classCardSub} numberOfLines={1}>{curso.profesor.nombre}</Text>
-        ) : (
-          <Text style={styles.classCardSub} numberOfLines={1}>{curso.numAlumnos} estudiantes</Text>
-        )}
-      </View>
-    </Pressable>
-  );
-}
+import QuizCard, { CARD_COLORS } from '@/components/QuizCard';
+import ClassCard from '@/components/ClassCard';
 
 export default function HomePrincipal() {
   const { user } = useAuthStore();
@@ -590,67 +539,6 @@ const styles = StyleSheet.create({
   quizCardsContent: {
     paddingHorizontal: 14,
     gap: 10,
-  },
-  quizCard: {
-    width: 122,
-    height: 110,
-    borderRadius: 14,
-    overflow: 'hidden',
-    shadowColor: 'rgba(0,0,0,0.28)',
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
-  },
-  stripesWrap: {
-    position: 'absolute',
-    top: -40,
-    left: -40,
-    width: 240,
-    height: 240,
-    transform: [{ rotate: '40deg' }],
-    flexDirection: 'row',
-  },
-  stripe: {
-    width: 9,
-    height: '100%',
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    marginRight: 9,
-  },
-  quizCircle: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.13)',
-    top: -26,
-    right: -22,
-  },
-  quizCircle2: {
-    position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.09)',
-    bottom: -12,
-    left: -10,
-  },
-  quizCardContent: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'flex-end',
-  },
-  quizCardCat: {
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.9,
-    marginBottom: 5,
-  },
-  quizTitle: {
-    color: 'white',
-    fontSize: 13,
-    fontWeight: '800',
-    lineHeight: 17,
   },
   emptyLight: {
     color: 'rgba(255,255,255,0.6)',

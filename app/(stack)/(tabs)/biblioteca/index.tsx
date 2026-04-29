@@ -1,4 +1,7 @@
 import AppAlert from '@/components/AppAlert';
+import ApunteCard from '@/components/ApunteCard';
+import BibliotecaQuizCard from '@/components/BibliotecaQuizCard';
+import ColeccionRow from '@/components/ColeccionRow';
 import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
 import QuizOpcionesModal from '@/components/QuizOpcionesModal';
 import { eliminarApunte, getMisApuntes } from '@/core/apuntes/actions/apuntes';
@@ -13,7 +16,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -26,13 +28,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Tab = 'biblioteca' | 'colecciones';
 type Filtro = 'todos' | 'quizzes' | 'apuntes';
-
-const DIFICULTAD_COLOR: Record<string, string> = {
-  facil: '#24833D',
-  normal: '#844A31',
-  dificil: '#c1623e',
-  extremo: '#571D11',
-};
 
 export default function BibliotecaScreen() {
   const { user } = useAuthStore();
@@ -469,7 +464,7 @@ function TabBiblioteca({
       ) : (
         <>
           {showQuizzes && quizzes.map(q => (
-            <QuizCard key={`quiz-${q.id}`} quiz={q} onOpciones={onOpciones} onJugar={onJugar} />
+            <BibliotecaQuizCard key={`quiz-${q.id}`} quiz={q} onOpciones={onOpciones} onJugar={onJugar} />
           ))}
           {showApuntes && apuntes.map(a => (
             <ApunteCard key={`apunte-${a.id}`} apunte={a} onEliminar={onEliminarApunte} />
@@ -477,71 +472,6 @@ function TabBiblioteca({
         </>
       )}
     </ScrollView>
-  );
-}
-
-function ApunteCard({ apunte, onEliminar }: { apunte: ApunteResumen; onEliminar: (a: ApunteResumen) => void }) {
-  return (
-    <Pressable style={styles.card} onPress={() => router.push(`/crear-apunte/editar?id=${apunte.id}` as any)}>
-      <View style={[styles.cardThumb, { backgroundColor: 'rgba(83,181,94,0.15)', alignItems: 'center', justifyContent: 'center' }]}>
-        <Ionicons name="document-text-outline" size={28} color="#24833D" />
-      </View>
-      <View style={styles.cardInfo}>
-        <Text style={styles.cardTitle} numberOfLines={2}>{apunte.titulo}</Text>
-        <View style={styles.cardMetaRow}>
-          <Ionicons name="sparkles-outline" size={11} color="#53b55e" />
-          <Text style={[styles.cardMetaTag, { color: '#24833D' }]}>Apuntes</Text>
-        </View>
-      </View>
-      <Pressable
-        style={styles.cardMenu}
-        onPress={() => Alert.alert(apunte.titulo, '¿Qué quieres hacer?', [
-          { text: 'Editar', onPress: () => router.push(`/crear-apunte/editar?id=${apunte.id}` as any) },
-          { text: 'Eliminar', style: 'destructive', onPress: () => onEliminar(apunte) },
-          { text: 'Cancelar', style: 'cancel' },
-        ])}
-        hitSlop={8}
-      >
-        <Ionicons name="ellipsis-vertical" size={18} color="#412E2E" />
-      </Pressable>
-    </Pressable>
-  );
-}
-
-function QuizCard({ quiz, onOpciones, onJugar }: { quiz: QuizResumen; onOpciones: (q: QuizResumen) => void; onJugar: (q: QuizResumen) => void }) {
-  const dificultadColor = DIFICULTAD_COLOR[quiz.dificultad] ?? '#844A31';
-
-  return (
-    <Pressable style={styles.card} onPress={() => onJugar(quiz)}>
-      <Image source={require('@/assets/imagen-quizz-foto.png')} style={styles.cardThumb} />
-
-      <View style={styles.cardInfo}>
-        <Text style={styles.cardTitle} numberOfLines={2}>{quiz.titulo}</Text>
-        <View style={styles.cardMetaRow}>
-          <Text style={[styles.cardMetaTag, { color: dificultadColor }]}>
-            {quiz.dificultad}
-          </Text>
-          <Text style={styles.cardDot}>•</Text>
-          <Text style={styles.cardMetaTag}>
-            {quiz.categoria?.nombre ?? 'Sin categoría'}
-          </Text>
-        </View>
-        <View style={styles.cardMetaRow}>
-          <Text style={styles.cardMetaTag}>
-            {quiz.numPreguntas ?? 0} preguntas
-          </Text>
-          <Text style={styles.cardDot}>•</Text>
-        </View>
-      </View>
-
-      <Pressable
-        style={styles.cardMenu}
-        onPress={(e) => { e.stopPropagation(); onOpciones(quiz); }}
-        hitSlop={8}
-      >
-        <Ionicons name="ellipsis-vertical" size={18} color="#412E2E" />
-      </Pressable>
-    </Pressable>
   );
 }
 
@@ -577,6 +507,7 @@ function TabColecciones({
           />
         ) : (
           colecciones.map(col => <ColeccionRow key={col.id} col={col} onLongPress={onLongPress} />)
+
         )}
       </ScrollView>
 
@@ -610,22 +541,6 @@ function TabColecciones({
         </Pressable>
       </Modal>
     </>
-  );
-}
-
-function ColeccionRow({ col, onLongPress }: { col: ColeccionDTO; onLongPress: (col: ColeccionDTO) => void }) {
-  return (
-    <Pressable
-      style={styles.colRow}
-      onPress={() => router.push({ pathname: '/(stack)/coleccion/[id]', params: { id: col.id, nombre: col.nombre } } as any)}
-      onLongPress={() => onLongPress(col)}
-    >
-      <Text style={styles.colNombre}>{col.nombre}</Text>
-      <View style={styles.colRight}>
-        <Text style={styles.colCount}>{col.cantidad}</Text>
-        <Ionicons name="chevron-forward" size={16} color="#412E2E" />
-      </View>
-    </Pressable>
   );
 }
 
@@ -771,73 +686,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(65,46,46,0.12)',
     marginHorizontal: 16,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(65,46,46,0.08)',
-    backgroundColor: 'rgba(217,217,217,1)',
-  },
-  cardThumb: {
-    width: 64,
-    height: 64,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  cardInfo: {
-    flex: 1,
-    gap: 3,
-  },
-  cardTitle: {
-    color: '#1a1a1a',
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 20,
-  },
-  cardMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  cardMetaTag: {
-    color: '#555',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  cardDot: {
-    color: '#555',
-    fontSize: 12,
-  },
-  cardMenu: {
-    padding: 4,
-  },
-  colRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(65,46,46,0.08)',
-  },
-  colNombre: {
-    color: '#412E2E',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  colRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  colCount: {
-    color: '#412E2E',
-    fontSize: 14,
-    fontWeight: '500',
   },
   emptyState: {
     alignItems: 'center',

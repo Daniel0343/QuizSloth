@@ -13,6 +13,7 @@ import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 const OPCIONES = ['A', 'B', 'C', 'D'] as const;
 const OPCION_COLORS = ['#c0392b', '#27ae60', '#d35400', '#2980b9'];
 const OPCION_BG = ['#fadbd8', '#d5f5e3', '#fdebd0', '#d6eaf8'];
+
 export default function SoloQuizScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const quizId = Number(id);

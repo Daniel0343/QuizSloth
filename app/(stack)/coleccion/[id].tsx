@@ -6,8 +6,7 @@ import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { getQuizzesDeColeccion, quitarQuizDeColeccion, getApuntesDeColeccion } from '@/core/colecciones/actions/colecciones';
-import { quizslothApi } from '@/core/auth/api/quizslothApi';
+import { getQuizzesDeColeccion, quitarQuizDeColeccion, getApuntesDeColeccion, quitarApunteDeColeccion } from '@/core/colecciones/actions/colecciones';
 import QuizOpcionesModal from '@/components/QuizOpcionesModal';
 
 const DIFICULTAD_COLOR: Record<string, string> = {
@@ -65,7 +64,7 @@ export default function ColeccionDetalleScreen() {
         { texto: 'Quitar', estilo: 'destructivo', onPress: async () => {
           cerrar();
           try {
-            await quizslothApi.delete(`/colecciones/${coleccionId}/apuntes/${apunte.id}`);
+            await quitarApunteDeColeccion(coleccionId, apunte.id);
             setApuntes(prev => prev.filter(a => a.id !== apunte.id));
           } catch {
             setAlerta({ visible: true, titulo: 'Error', mensaje: 'No se pudo quitar el apunte.' });

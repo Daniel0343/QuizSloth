@@ -36,6 +36,10 @@ export const getApuntesDeColeccion = async (coleccionId: number): Promise<any[]>
   return data;
 };
 
+export const quitarApunteDeColeccion = async (coleccionId: number, apunteId: number): Promise<void> => {
+  await quizslothApi.delete(`/colecciones/${coleccionId}/apuntes/${apunteId}`);
+};
+
 export const eliminarColeccion = async (coleccionId: number): Promise<void> => {
   await quizslothApi.delete(`/colecciones/${coleccionId}`);
 };
