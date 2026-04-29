@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
   ActivityIndicator, TextInput, Modal, Linking,
@@ -670,10 +670,59 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
   onDeleteElemento: (e: ElementoCurso, seccionId: number) => void;
 }) {
   const [colapsadas, setColapsadas] = useState<Record<number, boolean>>({});
+  const [search, setSearch] = useState('');
+  const scrollRef = useRef<ScrollView>(null);
+  const layoutsRef = useRef<Record<number, number>>({});
   const toggle = (id: number) => setColapsadas(p => ({ ...p, [id]: !p[id] }));
 
+  const resultados = search.length >= 3
+    ? secciones.filter(s => s.titulo.toLowerCase().includes(search.toLowerCase()))
+    : [];
+
+  const irASeccion = (sec: SeccionCurso) => {
+    setSearch('');
+    setColapsadas(p => ({ ...p, [sec.id]: false }));
+    const y = layoutsRef.current[sec.id] ?? 0;
+    setTimeout(() => scrollRef.current?.scrollTo({ y, animated: true }), 50);
+  };
+
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+    <View style={{ flex: 1 }}>
+      <View style={styles.seccionSearchWrap}>
+        <View style={styles.seccionSearchBar}>
+          <Ionicons name="search-outline" size={16} color="rgba(65,46,46,0.4)" />
+          <TextInput
+            style={styles.seccionSearchInput}
+            placeholder="Buscar sección..."
+            placeholderTextColor="rgba(65,46,46,0.35)"
+            value={search}
+            onChangeText={setSearch}
+          />
+          {search.length > 0 && (
+            <Pressable onPress={() => setSearch('')} hitSlop={8}>
+              <Ionicons name="close-circle" size={16} color="rgba(65,46,46,0.35)" />
+            </Pressable>
+          )}
+        </View>
+        {resultados.length > 0 && (
+          <View style={styles.seccionDropdown}>
+            {resultados.map(sec => (
+              <Pressable key={sec.id} style={styles.seccionDropRow} onPress={() => irASeccion(sec)}>
+                <Ionicons name="folder-outline" size={15} color="#571D11" />
+                <Text style={styles.seccionDropTitulo} numberOfLines={1}>{sec.titulo}</Text>
+                <Text style={styles.seccionDropSub}>{sec.elementos.length} elem.</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+        {search.length >= 3 && resultados.length === 0 && (
+          <View style={styles.seccionDropdown}>
+            <Text style={styles.seccionDropVacio}>Sin resultados</Text>
+          </View>
+        )}
+      </View>
+
+    <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
       {secciones.length === 0 && !tienePermisosEdicion && (
         <View style={styles.emptyTab}>
           <Ionicons name="folder-open-outline" size={40} color="rgba(65,46,46,0.2)" />
@@ -682,7 +731,8 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
       )}
 
       {secciones.map(sec => (
-        <View key={sec.id} style={styles.seccionCard}>
+        <View key={sec.id} style={styles.seccionCard}
+          onLayout={e => { layoutsRef.current[sec.id] = e.nativeEvent.layout.y; }}>
           <Pressable style={styles.seccionHeader} onPress={() => toggle(sec.id)}>
             <Ionicons
               name={colapsadas[sec.id] ? 'chevron-forward' : 'chevron-down'}
@@ -755,6 +805,7 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
         </Pressable>
       )}
     </ScrollView>
+    </View>
   );
 }
 
@@ -991,4 +1042,27 @@ const styles = StyleSheet.create({
   bibItemSeleccionado: { backgroundColor: 'rgba(65,46,46,0.07)' },
   bibItemTitulo: { flex: 1, fontSize: 13, color: '#412E2E', fontWeight: '500' },
   bibVacio: { fontSize: 13, color: 'rgba(65,46,46,0.45)', textAlign: 'center', paddingVertical: 20 },
+  seccionSearchWrap: { marginHorizontal: 12, marginTop: 12, marginBottom: 4, zIndex: 10 },
+  seccionSearchBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: 'white', borderRadius: 12,
+    borderWidth: 1.5, borderColor: 'rgba(65,46,46,0.15)',
+    paddingHorizontal: 12, paddingVertical: 11,
+  },
+  seccionSearchInput: { flex: 1, fontSize: 14, color: '#412E2E', paddingVertical: 0 },
+  seccionDropdown: {
+    backgroundColor: 'white', borderRadius: 12, marginTop: 6,
+    borderWidth: 1.5, borderColor: 'rgba(65,46,46,0.12)',
+    shadowColor: '#412E2E', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, shadowRadius: 8, elevation: 4,
+    overflow: 'hidden',
+  },
+  seccionDropRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 14, paddingVertical: 13,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(65,46,46,0.06)',
+  },
+  seccionDropTitulo: { flex: 1, fontSize: 13, fontWeight: '600', color: '#412E2E' },
+  seccionDropSub: { fontSize: 12, color: 'rgba(65,46,46,0.38)', fontWeight: '500' },
+  seccionDropVacio: { fontSize: 13, color: 'rgba(65,46,46,0.4)', textAlign: 'center', paddingVertical: 14 },
 });
