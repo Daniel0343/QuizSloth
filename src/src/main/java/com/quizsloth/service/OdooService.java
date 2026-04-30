@@ -1,5 +1,6 @@
 package com.quizsloth.service;
 
+import com.quizsloth.dto.SubscripcionDTO;
 import com.quizsloth.model.Usuario;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.xmlrpc.client.XmlRpcClient;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +169,51 @@ public class OdooService {
 
         Object[] ids = (Object[]) result;
         return ids.length > 0 ? (int) ids[0] : null;
+    }
+
+    // ----------------------------------------------------------------
+    // Consultar suscripción del alumno
+    // ----------------------------------------------------------------
+
+    public SubscripcionDTO getSubscripcion(int odooPartnerId) throws Exception {
+        int uid = authenticate();
+        XmlRpcClient client = buildClient("/xmlrpc/2/object");
+
+        Map<String, Object> kwargs = new HashMap<>();
+        kwargs.put("fields", new Object[]{"name", "state", "date_order"});
+        kwargs.put("limit", 1);
+        kwargs.put("order", "id desc");
+
+        Object result = client.execute("execute_kw", List.of(
+                odooDb, uid, odooPassword,
+                "sale.order", "search_read",
+                List.of(List.of(List.of("partner_id", "=", odooPartnerId))),
+                kwargs
+        ));
+
+        Object[] orders = (Object[]) result;
+        if (orders.length == 0) {
+            return new SubscripcionDTO("sin_subscripcion", null, null, null, odooPartnerId);
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> order = (Map<String, Object>) orders[0];
+        String state = (String) order.get("state");
+        String dateOrder = order.get("date_order") instanceof String s ? s : null;
+
+        String estado = switch (state) {
+            case "sale", "done" -> "activa";
+            case "cancel"       -> "expirada";
+            default             -> "sin_subscripcion";
+        };
+
+        String fechaFin = null;
+        if (dateOrder != null) {
+            LocalDateTime inicio = LocalDateTime.parse(dateOrder, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            fechaFin = inicio.plusDays(30).toString();
+        }
+
+        return new SubscripcionDTO(estado, PRODUCT_NAME, dateOrder, fechaFin, odooPartnerId);
     }
 
     // ----------------------------------------------------------------

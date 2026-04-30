@@ -3,15 +3,18 @@ package com.quizsloth.service;
 import com.quizsloth.dto.AuthResponse;
 import com.quizsloth.dto.LoginRequest;
 import com.quizsloth.dto.RegisterRequest;
+import com.quizsloth.dto.SubscripcionDTO;
 import com.quizsloth.model.Usuario;
 import com.quizsloth.repository.UsuarioRepository;
 import com.quizsloth.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -61,5 +64,21 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(saved.getEmail());
         return AuthResponse.from(saved, token);
+    }
+
+    public SubscripcionDTO getSubscripcion(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (usuario.getOdooId() == null) {
+            return new SubscripcionDTO("sin_subscripcion", null, null, null, null);
+        }
+
+        try {
+            return odooService.getSubscripcion(usuario.getOdooId());
+        } catch (Exception e) {
+            log.warn("No se pudo consultar Odoo para usuario {}: {}", email, e.getMessage());
+            return new SubscripcionDTO("sin_subscripcion", null, null, null, null);
+        }
     }
 }
