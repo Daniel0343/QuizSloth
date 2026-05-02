@@ -18,3 +18,12 @@ export const cancelarSubscripcion = async (): Promise<boolean> => {
     return false;
   }
 };
+
+export const reactivarSubscripcion = async (): Promise<boolean> => {
+  try {
+    await quizslothApi.post('/auth/me/subscripcion');
+    return true;
+  } catch {
+    return false;
+  }
+};

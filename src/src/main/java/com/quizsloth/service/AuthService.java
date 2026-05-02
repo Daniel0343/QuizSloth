@@ -66,6 +66,21 @@ public class AuthService {
         return AuthResponse.from(saved, token);
     }
 
+    public void reactivarSubscripcion(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (usuario.getOdooId() == null) {
+            throw new RuntimeException("Este usuario no tiene partner en Odoo");
+        }
+
+        try {
+            odooService.reactivarSubscripcion(usuario.getOdooId());
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo reactivar la suscripcion: " + e.getMessage());
+        }
+    }
+
     public void cancelarSubscripcion(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));

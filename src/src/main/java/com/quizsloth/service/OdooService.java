@@ -154,6 +154,17 @@ public class OdooService {
     }
 
     // ----------------------------------------------------------------
+    // Reactivar suscripción del alumno
+    // ----------------------------------------------------------------
+
+    public void reactivarSubscripcion(int odooPartnerId) throws Exception {
+        int uid = authenticate();
+        XmlRpcClient client = buildClient("/xmlrpc/2/object");
+        crearFacturaMensual(uid, client, odooPartnerId);
+        log.info("Suscripcion reactivada en Odoo para partner ID={}", odooPartnerId);
+    }
+
+    // ----------------------------------------------------------------
     // Cancelar suscripción del alumno
     // ----------------------------------------------------------------
 

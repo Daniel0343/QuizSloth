@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { useThemeStore, THEME_PRESETS } from '@/presentation/theme/useThemeStore';
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
-import { getSubscripcion, cancelarSubscripcion } from '@/core/auth/actions/subscripcion';
+import { getSubscripcion, cancelarSubscripcion, reactivarSubscripcion } from '@/core/auth/actions/subscripcion';
 import { Subscripcion } from '@/core/auth/interface/subscripcion';
 
 const ROL_LABEL: Record<string, string> = {
@@ -41,6 +41,9 @@ export default function PerfilScreen() {
   const [cancelando, setCancelando] = useState(false);
   const [alertaCancelar, setAlertaCancelar] = useState(false);
   const [errorCancelar, setErrorCancelar] = useState('');
+  const [modalTerminos, setModalTerminos] = useState(false);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [reactivando, setReactivando] = useState(false);
 
   const abrirSubscripcion = async () => {
     setModalSub(true);
@@ -240,6 +243,19 @@ export default function PerfilScreen() {
               </Pressable>
             )}
 
+            {(sub?.estado === 'expirada' || sub?.estado === 'sin_subscripcion') && (
+              <Pressable
+                style={[styles.activarSubBtn, { backgroundColor: primaryColor }, reactivando && { opacity: 0.6 }]}
+                disabled={reactivando}
+                onPress={() => { setAceptaTerminos(false); setModalTerminos(true); }}
+              >
+                {reactivando
+                  ? <ActivityIndicator size="small" color="white" />
+                  : <Text style={styles.activarSubBtnText}>Activar suscripción</Text>
+                }
+              </Pressable>
+            )}
+
             <Pressable style={[styles.cancelBtn, { marginTop: 8 }]} onPress={() => setModalSub(false)}>
               <Text style={styles.cancelBtnText}>Cerrar</Text>
             </Pressable>
@@ -334,6 +350,65 @@ export default function PerfilScreen() {
             </View>
             <Pressable style={styles.cancelBtn} onPress={() => setModalColor(false)}>
               <Text style={styles.cancelBtnText}>Cerrar</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Modal términos para reactivar */}
+      <Modal visible={modalTerminos} transparent animationType="slide" onRequestClose={() => setModalTerminos(false)}>
+        <Pressable style={styles.overlay} onPress={() => setModalTerminos(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <View style={styles.handle} />
+
+            <View style={styles.precioBadge}>
+              <Text style={styles.precioAmount}>29,99€</Text>
+              <Text style={styles.precioMes}>/ mes</Text>
+            </View>
+
+            <Text style={styles.sheetTitle}>Suscripción QuizSloth</Text>
+            <Text style={styles.sheetSub}>Al activar la suscripción se creará un nuevo pedido mensual.</Text>
+
+            <View style={styles.beneficiosList}>
+              {['Acceso completo a todas las clases', 'Quizzes y apuntes ilimitados', 'Participa en salas en tiempo real', 'Soporte prioritario'].map(b => (
+                <View key={b} style={styles.beneficioRow}>
+                  <Ionicons name="checkmark-circle" size={17} color="#24833D" />
+                  <Text style={styles.beneficioText}>{b}</Text>
+                </View>
+              ))}
+            </View>
+
+            <Pressable style={styles.checkRow} onPress={() => setAceptaTerminos(p => !p)}>
+              <View style={[styles.checkbox, aceptaTerminos && styles.checkboxActive]}>
+                {aceptaTerminos && <Ionicons name="checkmark" size={13} color="white" />}
+              </View>
+              <Text style={styles.checkLabel}>Acepto los términos y condiciones de la suscripción</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.confirmBtn, { backgroundColor: primaryColor }, (!aceptaTerminos || reactivando) && { opacity: 0.4 }]}
+              disabled={!aceptaTerminos || reactivando}
+              onPress={async () => {
+                setModalTerminos(false);
+                setReactivando(true);
+                setModalSub(true);
+                const ok = await reactivarSubscripcion();
+                setReactivando(false);
+                if (ok) {
+                  const data = await getSubscripcion();
+                  setSub(data);
+                } else {
+                  setErrorCancelar('No se pudo activar. Inténtalo de nuevo.');
+                }
+              }}
+            >
+              <Text style={styles.confirmBtnText}>
+                {reactivando ? 'Activando...' : 'Aceptar y activar'}
+              </Text>
+            </Pressable>
+
+            <Pressable style={styles.cancelBtn} onPress={() => setModalTerminos(false)}>
+              <Text style={styles.cancelBtnText}>Cancelar</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -570,4 +645,29 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   cancelSubBtnText: { fontSize: 14, fontWeight: '600', color: '#c0392b' },
+  activarSubBtn: {
+    height: 46, borderRadius: 12, marginTop: 16,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  activarSubBtnText: { fontSize: 14, fontWeight: '700', color: 'white' },
+  precioBadge: {
+    flexDirection: 'row', alignItems: 'flex-end', gap: 4,
+    alignSelf: 'center', marginBottom: 8,
+  },
+  precioAmount: { fontSize: 40, fontWeight: '800', color: '#571D11' },
+  precioMes: { fontSize: 15, fontWeight: '600', color: 'rgba(65,46,46,0.5)', paddingBottom: 6 },
+  beneficiosList: { gap: 10, marginBottom: 20 },
+  beneficioRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  beneficioText: { fontSize: 14, color: '#412E2E', fontWeight: '500', flex: 1 },
+  checkRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(65,46,46,0.04)', borderRadius: 12,
+    padding: 12, marginBottom: 16,
+  },
+  checkbox: {
+    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
+    borderColor: 'rgba(65,46,46,0.3)', alignItems: 'center', justifyContent: 'center',
+  },
+  checkboxActive: { backgroundColor: '#571D11', borderColor: '#571D11' },
+  checkLabel: { flex: 1, fontSize: 13, color: '#412E2E', fontWeight: '500', lineHeight: 18 },
 });

@@ -33,6 +33,12 @@ public class AuthController {
         return ResponseEntity.ok(authService.getSubscripcion(authentication.getName()));
     }
 
+    @PostMapping("/me/subscripcion")
+    public ResponseEntity<Void> reactivarSubscripcion(Authentication authentication) {
+        authService.reactivarSubscripcion(authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/me/subscripcion")
     public ResponseEntity<Void> cancelarSubscripcion(Authentication authentication) {
         authService.cancelarSubscripcion(authentication.getName());
