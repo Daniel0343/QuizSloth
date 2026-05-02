@@ -11,11 +11,12 @@ export const generarQuizDesdeTexto = async (
   titulo: string,
   texto: string,
   numPreguntas: number,
+  dificultad: string,
   categoriaId?: number,
 ): Promise<QuizConPreguntas | { error: string }> => {
   const { data } = await quizslothApi.post<QuizConPreguntas>(
     '/quizzes/generar-desde-texto',
-    { titulo, texto, numPreguntas, categoriaId },
+    { titulo, texto, numPreguntas, dificultad, categoriaId },
     { timeout: 120_000 },
   );
   return data;
@@ -25,6 +26,7 @@ export const generarQuizDesdeArchivo = async (
   archivo: { uri: string; name: string; type: string },
   titulo: string,
   numPreguntas: number,
+  dificultad: string,
   categoriaId?: number,
 ): Promise<QuizConPreguntas> => {
   const token = await SecureStorage.getItem('token');
@@ -33,6 +35,7 @@ export const generarQuizDesdeArchivo = async (
   form.append('archivo', { uri: archivo.uri, name: archivo.name, type: archivo.type } as any);
   form.append('titulo', titulo);
   form.append('numPreguntas', String(numPreguntas));
+  form.append('dificultad', dificultad);
   if (categoriaId) form.append('categoriaId', String(categoriaId));
 
   const response = await fetch(`${API_URL}/quizzes/generar-desde-archivo`, {

@@ -95,8 +95,8 @@ public class QuizController {
     public ResponseEntity<QuizService.QuizConPreguntas> generarDesdeTexto(
             @RequestBody GenerarDesdeTextoRequest req, HttpServletRequest request) {
         QuizService.QuizConPreguntas resultado = quizService.generarDesdeTexto(
-                req.getTitulo(), req.getTexto(), req.getNumPreguntas(), req.getCategoriaId(),
-                emailFromRequest(request));
+                req.getTitulo(), req.getTexto(), req.getNumPreguntas(), req.getDificultad(),
+                req.getCategoriaId(), emailFromRequest(request));
         return ResponseEntity.ok(resultado);
     }
 
@@ -105,6 +105,7 @@ public class QuizController {
             @RequestParam("archivo") MultipartFile archivo,
             @RequestParam("titulo") String titulo,
             @RequestParam("numPreguntas") int numPreguntas,
+            @RequestParam(value = "dificultad", defaultValue = "normal") String dificultad,
             @RequestParam(value = "categoriaId", required = false) Integer categoriaId,
             HttpServletRequest request) throws Exception {
 
@@ -121,7 +122,7 @@ public class QuizController {
         }
 
         QuizService.QuizConPreguntas resultado = quizService.generarDesdeTexto(
-                titulo, texto, numPreguntas, categoriaId, emailFromRequest(request));
+                titulo, texto, numPreguntas, dificultad, categoriaId, emailFromRequest(request));
         return ResponseEntity.ok(resultado);
     }
 
@@ -146,6 +147,7 @@ public class QuizController {
         private String titulo;
         private String texto;
         private int numPreguntas = 5;
+        private String dificultad = "normal";
         private Integer categoriaId;
     }
 

@@ -53,17 +53,18 @@ public class IAService {
     public List<Pregunta> generarPreguntas(Documento documento, int numPreguntas) {
         try {
             String texto = leerTextoDocumento(documento.getRutaAlmacenamiento());
-            return generarPreguntasDesdeTexto(texto, numPreguntas);
+            return generarPreguntasDesdeTexto(texto, numPreguntas, "normal");
         } catch (Exception e) {
             log.error("Error generando preguntas para documento {}: {}", documento.getId(), e.getMessage());
             throw new RuntimeException("Error al generar preguntas con IA: " + e.getMessage(), e);
         }
     }
 
-    public List<Pregunta> generarPreguntasDesdeTexto(String texto, int numPreguntas) {
+    public List<Pregunta> generarPreguntasDesdeTexto(String texto, int numPreguntas, String dificultad) {
         try {
             String textoLimitado = texto.length() > 9000 ? texto.substring(0, 9000) : texto;
-            String prompt = construirPrompt(textoLimitado, numPreguntas);
+            String nivel = (dificultad != null && !dificultad.isBlank()) ? dificultad : "normal";
+            String prompt = construirPrompt(textoLimitado, numPreguntas, nivel);
             String respuestaJson = llamarOpenAI(prompt);
             return parsearPreguntas(respuestaJson);
         } catch (Exception e) {
@@ -103,35 +104,44 @@ public class IAService {
         return contenido.length() > 12000 ? contenido.substring(0, 12000) : contenido;
     }
 
-    private String construirPrompt(String texto, int numPreguntas) {
+    private String construirPrompt(String texto, int numPreguntas, String dificultad) {
+        String descripcionDificultad = switch (dificultad) {
+            case "facil"   -> "FACIL: preguntas directas sobre datos concretos del texto, opciones incorrectas claramente distintas.";
+            case "dificil" -> "DIFICIL: preguntas que requieren comprension profunda, comparacion entre conceptos o deduccion. Las opciones incorrectas deben ser plausibles y parecidas a la correcta.";
+            case "extremo" -> "EXTREMO: preguntas muy especificas sobre detalles, excepciones o implicaciones del texto. Todas las opciones deben parecer posibles a primera vista. Solo una es correcta.";
+            default        -> "NORMAL: preguntas de comprension general del texto. Opciones incorrectas razonables pero distinguibles.";
+        };
+
         return String.format("""
             Eres un generador de cuestionarios educativos. A partir del siguiente texto,
             genera exactamente %d preguntas de tipo test con 4 opciones (A, B, C, D) y
             una sola respuesta correcta.
 
-            IMPORTANTE: distribuye las respuestas correctas aleatoriamente entre A, B, C y D.
-            No pongas todas las respuestas correctas en la misma opción.
-            Varía la posición correcta de forma que no haya un patrón predecible.
+            NIVEL DE DIFICULTAD: %s
+            %s
 
-            Responde ÚNICAMENTE con un array JSON con esta estructura exacta, sin texto adicional:
+            IMPORTANTE: distribuye las respuestas correctas aleatoriamente entre A, B, C y D.
+            No pongas todas las respuestas correctas en la misma opcion.
+            Varia la posicion correcta de forma que no haya un patron predecible.
+
+            Responde UNICAMENTE con un array JSON con esta estructura exacta, sin texto adicional:
             [
               {
                 "enunciado": "Texto de la pregunta",
-                "opcion_a": "Primera opción",
-                "opcion_b": "Segunda opción",
-                "opcion_c": "Tercera opción",
-                "opcion_d": "Cuarta opción",
+                "opcion_a": "Primera opcion",
+                "opcion_b": "Segunda opcion",
+                "opcion_c": "Tercera opcion",
+                "opcion_d": "Cuarta opcion",
                 "respuesta_correcta": "B",
-                "dificultad": "normal"
+                "dificultad": "%s"
               }
             ]
 
-            Los valores de "dificultad" pueden ser: facil, normal, dificil, extremo.
             Los valores de "respuesta_correcta" deben ser: A, B, C o D, variando entre preguntas.
 
             TEXTO:
             %s
-            """, numPreguntas, texto);
+            """, numPreguntas, dificultad.toUpperCase(), descripcionDificultad, dificultad, texto);
     }
 
     private String llamarOpenAI(String prompt) throws Exception {

@@ -23,7 +23,7 @@ export default function CrearQuizScreen() {
   const [titulo, setTitulo] = useState('');
   const [texto, setTexto] = useState('');
   const [archivo, setArchivo] = useState<{ uri: string; name: string; type: string } | null>(null);
-  const [numPreguntas, setNumPreguntas] = useState(10);
+  const [numPreguntas, setNumPreguntas] = useState('10');
   const [dificultad, setDificultad] = useState<string>('normal');
   const [categoriaId, setCategoriaId] = useState<number | undefined>();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -53,9 +53,10 @@ export default function CrearQuizScreen() {
     setGenerando(true);
 
     try {
+      const n = Math.min(30, Math.max(1, parseInt(numPreguntas) || 10));
       const resultado = tab === 'texto'
-        ? await generarQuizDesdeTexto(titulo.trim(), texto.trim(), numPreguntas, categoriaId)
-        : await generarQuizDesdeArchivo(archivo!, titulo.trim(), numPreguntas, categoriaId);
+        ? await generarQuizDesdeTexto(titulo.trim(), texto.trim(), n, dificultad, categoriaId)
+        : await generarQuizDesdeArchivo(archivo!, titulo.trim(), n, dificultad, categoriaId);
 
       setGenerando(false);
       router.replace(`/crear-quiz/editar?id=${(resultado as any).quiz.id}&nuevo=true`);
@@ -140,11 +141,16 @@ export default function CrearQuizScreen() {
         <Text style={styles.label}>Número de preguntas (máx. 30)</Text>
         <TextInput
           style={styles.inputTitulo}
-          value={String(numPreguntas)}
+          value={numPreguntas}
           onChangeText={v => {
-            const n = parseInt(v.replace(/[^0-9]/g, ''), 10);
-            if (!isNaN(n)) setNumPreguntas(Math.min(30, Math.max(1, n)));
-            if (v === '') setNumPreguntas(1);
+            const clean = v.replace(/[^0-9]/g, '');
+            setNumPreguntas(clean);
+          }}
+          onBlur={() => {
+            const n = parseInt(numPreguntas);
+            if (!n || n < 1) setNumPreguntas('1');
+            else if (n > 30) setNumPreguntas('30');
+            else setNumPreguntas(String(n));
           }}
           keyboardType="numeric"
           maxLength={2}

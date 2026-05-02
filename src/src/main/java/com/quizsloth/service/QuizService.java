@@ -111,13 +111,16 @@ public class QuizService {
 
     @Transactional
     public QuizConPreguntas generarDesdeTexto(
-            String titulo, String texto, int numPreguntas, Integer categoriaId, String emailCreador) {
+            String titulo, String texto, int numPreguntas, String dificultad, Integer categoriaId, String emailCreador) {
 
-        List<Pregunta> generadas = iaService.generarPreguntasDesdeTexto(texto, numPreguntas);
+        List<Pregunta> generadas = iaService.generarPreguntasDesdeTexto(texto, numPreguntas, dificultad);
+
+        Quiz.Dificultad nivel = Quiz.Dificultad.normal;
+        try { if (dificultad != null) nivel = Quiz.Dificultad.valueOf(dificultad); } catch (Exception ignored) {}
 
         Quiz quiz = new Quiz();
         quiz.setTitulo(titulo);
-        quiz.setDificultad(Quiz.Dificultad.normal);
+        quiz.setDificultad(nivel);
         categoriaRepository.findById(categoriaId != null ? categoriaId : -1)
                 .ifPresent(quiz::setCategoria);
         if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
