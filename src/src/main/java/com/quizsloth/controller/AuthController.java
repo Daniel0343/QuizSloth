@@ -32,4 +32,10 @@ public class AuthController {
     public ResponseEntity<SubscripcionDTO> getSubscripcion(Authentication authentication) {
         return ResponseEntity.ok(authService.getSubscripcion(authentication.getName()));
     }
+
+    @DeleteMapping("/me/subscripcion")
+    public ResponseEntity<Void> cancelarSubscripcion(Authentication authentication) {
+        authService.cancelarSubscripcion(authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
 }

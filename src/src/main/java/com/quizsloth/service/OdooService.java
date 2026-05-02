@@ -38,7 +38,7 @@ public class OdooService {
     private String odooPassword;
 
     private static final double PRECIO_MENSUAL = 29.99;
-    private static final String PRODUCT_NAME = "Suscripción QuizSloth";
+    private static final String PRODUCT_NAME = "Suscripcion QuizSloth";
 
     // ----------------------------------------------------------------
     // Autenticación
@@ -154,6 +154,41 @@ public class OdooService {
     }
 
     // ----------------------------------------------------------------
+    // Cancelar suscripción del alumno
+    // ----------------------------------------------------------------
+
+    public void cancelarSubscripcion(int odooPartnerId) throws Exception {
+        int uid = authenticate();
+        XmlRpcClient client = buildClient("/xmlrpc/2/object");
+
+        Object result = client.execute("execute_kw", List.of(
+                odooDb, uid, odooPassword,
+                "sale.order", "search",
+                List.of(List.of(
+                        List.of("partner_id", "=", odooPartnerId),
+                        List.of("state", "in", new Object[]{"sale", "done"})
+                ))
+        ));
+
+        Object[] orderIds = (Object[]) result;
+        if (orderIds.length == 0) {
+            throw new RuntimeException("No se encontró suscripción activa para cancelar");
+        }
+
+        int orderId = (int) orderIds[0];
+
+        // Cancelar vía write directo (action_cancel puede bloquearse si hay facturas)
+        Map<String, Object> writeData = new HashMap<>();
+        writeData.put("state", "cancel");
+        Object writeResult = client.execute("execute_kw", List.of(
+                odooDb, uid, odooPassword,
+                "sale.order", "write",
+                List.of(List.of(orderId), writeData)
+        ));
+        log.info("Suscripción cancelada en Odoo para partner ID={}, orderId={}, writeResult={}", odooPartnerId, orderId, writeResult);
+    }
+
+    // ----------------------------------------------------------------
     // Actualizar odoo_id si se pierde la referencia
     // ----------------------------------------------------------------
 
@@ -192,6 +227,7 @@ public class OdooService {
         ));
 
         Object[] orders = (Object[]) result;
+        log.info("getSubscripcion partnerId={} -> {} ordenes encontradas", odooPartnerId, orders.length);
         if (orders.length == 0) {
             return new SubscripcionDTO("sin_subscripcion", null, null, null, odooPartnerId);
         }
@@ -200,6 +236,7 @@ public class OdooService {
         Map<String, Object> order = (Map<String, Object>) orders[0];
         String state = (String) order.get("state");
         String dateOrder = order.get("date_order") instanceof String s ? s : null;
+        log.info("getSubscripcion partnerId={} -> state='{}' dateOrder='{}'", odooPartnerId, state, dateOrder);
 
         String estado = switch (state) {
             case "sale", "done" -> "activa";
