@@ -44,8 +44,8 @@ export interface UnirseResponseDTO {
   sala: SalaInfoDTO;
 }
 
-export const crearSala = async (quizId: number): Promise<SalaInfoDTO> => {
-  const { data } = await quizslothApi.post<SalaInfoDTO>('/salas', { quizId });
+export const crearSala = async (quizId: number, participar: boolean): Promise<SalaInfoDTO> => {
+  const { data } = await quizslothApi.post<SalaInfoDTO>('/salas', { quizId, participar });
   return data;
 };
 

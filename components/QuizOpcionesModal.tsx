@@ -14,14 +14,18 @@ interface Props {
 
 export default function QuizOpcionesModal({ visible, quizId, quizTitulo, esCreador = false, onClose }: Props) {
   const [creandoSala, setCreandoSala] = useState(false);
+  const [participar, setParticipar] = useState(false);
 
   const handleCrearSala = async () => {
     if (!quizId) return;
     setCreandoSala(true);
     try {
-      const sala = await crearSala(quizId);
+      const sala = await crearSala(quizId, participar);
       onClose();
-      router.push(`/sala/${sala.codigo}?host=1&participanteId=${sala.hostParticipanteId}` as any);
+      const params = participar && sala.hostParticipanteId
+        ? `?host=1&participanteId=${sala.hostParticipanteId}`
+        : `?host=1`;
+      router.push(`/sala/${sala.codigo}${params}` as any);
     } catch (e: any) {
       console.error(e);
     } finally {
@@ -47,6 +51,16 @@ export default function QuizOpcionesModal({ visible, quizId, quizTitulo, esCread
         <Pressable style={styles.sheet} onPress={() => {}}>
           <View style={styles.handle} />
           {quizTitulo ? <Text style={styles.titulo} numberOfLines={2}>{quizTitulo}</Text> : null}
+
+          <Pressable style={styles.checkRow} onPress={() => setParticipar(p => !p)}>
+            <View style={[styles.checkbox, participar && styles.checkboxActive]}>
+              {participar && <Ionicons name="checkmark" size={13} color="white" />}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.checkLabel}>Participar como jugador</Text>
+              <Text style={styles.checkSub}>Si no participas, solo gestionas la partida</Text>
+            </View>
+          </Pressable>
 
           <Opcion
             icon="people-outline"
@@ -133,4 +147,15 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginTop: 4,
   },
   cancelText: { fontSize: 14, fontWeight: '600', color: '#412E2E' },
+  checkRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(65,46,46,0.04)', borderRadius: 12, padding: 12,
+  },
+  checkbox: {
+    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
+    borderColor: 'rgba(65,46,46,0.3)', alignItems: 'center', justifyContent: 'center',
+  },
+  checkboxActive: { backgroundColor: '#571D11', borderColor: '#571D11' },
+  checkLabel: { fontSize: 14, fontWeight: '600', color: '#412E2E' },
+  checkSub: { fontSize: 11, color: 'rgba(65,46,46,0.5)', marginTop: 2 },
 });
