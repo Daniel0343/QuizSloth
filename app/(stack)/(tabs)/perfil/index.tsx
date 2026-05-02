@@ -127,8 +127,12 @@ export default function PerfilScreen() {
         {/* App */}
         <Text style={[styles.sectionLabel, { color: primaryColor }]}>Aplicación</Text>
         <View style={styles.card}>
-          <SettingRow icon="star-outline" label="Suscripción" primaryColor={primaryColor} onPress={abrirSubscripcion} />
-          <View style={styles.divider} />
+          {rol === 'alumno' && (
+            <>
+              <SettingRow icon="star-outline" label="Suscripción" primaryColor={primaryColor} onPress={abrirSubscripcion} />
+              <View style={styles.divider} />
+            </>
+          )}
           {/* Color picker row */}
           <Pressable style={styles.settingRow} onPress={() => setModalColor(true)}>
             <View style={styles.settingLeft}>
