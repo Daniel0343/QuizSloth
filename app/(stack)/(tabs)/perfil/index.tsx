@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { useThemeStore, THEME_PRESETS } from '@/presentation/theme/useThemeStore';
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
-import { getSubscripcion } from '@/core/auth/actions/subscripcion';
+import { getSubscripcion, cancelarSubscripcion } from '@/core/auth/actions/subscripcion';
 import { Subscripcion } from '@/core/auth/interface/subscripcion';
 
 const ROL_LABEL: Record<string, string> = {
@@ -38,10 +38,13 @@ export default function PerfilScreen() {
   const [modalSub, setModalSub] = useState(false);
   const [sub, setSub] = useState<Subscripcion | null>(null);
   const [cargandoSub, setCargandoSub] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
+  const [alertaCancelar, setAlertaCancelar] = useState(false);
+  const [errorCancelar, setErrorCancelar] = useState('');
 
   const abrirSubscripcion = async () => {
     setModalSub(true);
-    if (sub) return;
+    setErrorCancelar('');
     setCargandoSub(true);
     const data = await getSubscripcion();
     setSub(data);
@@ -220,7 +223,24 @@ export default function PerfilScreen() {
               </View>
             )}
 
-            <Pressable style={[styles.cancelBtn, { marginTop: 16 }]} onPress={() => setModalSub(false)}>
+            {errorCancelar.length > 0 && (
+              <Text style={styles.errorText}>{errorCancelar}</Text>
+            )}
+
+            {sub?.estado === 'activa' && (
+              <Pressable
+                style={[styles.cancelSubBtn, cancelando && { opacity: 0.6 }]}
+                disabled={cancelando}
+                onPress={() => { setErrorCancelar(''); setAlertaCancelar(true); }}
+              >
+                {cancelando
+                  ? <ActivityIndicator size="small" color="#c0392b" />
+                  : <Text style={styles.cancelSubBtnText}>Cancelar suscripción</Text>
+                }
+              </Pressable>
+            )}
+
+            <Pressable style={[styles.cancelBtn, { marginTop: 8 }]} onPress={() => setModalSub(false)}>
               <Text style={styles.cancelBtnText}>Cerrar</Text>
             </Pressable>
           </Pressable>
@@ -318,6 +338,30 @@ export default function PerfilScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <AppAlert
+        visible={alertaCancelar}
+        variante="peligro"
+        titulo="Cancelar suscripción"
+        mensaje="¿Estás seguro? Perderás el acceso al finalizar el periodo actual."
+        botones={[
+          { texto: 'Mantener', estilo: 'cancelar', onPress: () => setAlertaCancelar(false) },
+          {
+            texto: 'Cancelar suscripción', estilo: 'destructivo', onPress: async () => {
+              setAlertaCancelar(false);
+              setCancelando(true);
+              const ok = await cancelarSubscripcion();
+              setCancelando(false);
+              if (ok) {
+                setSub(p => p ? { ...p, estado: 'expirada' } : p);
+              } else {
+                setErrorCancelar('No se pudo cancelar. Inténtalo de nuevo.');
+              }
+            }
+          },
+        ]}
+        onClose={() => setAlertaCancelar(false)}
+      />
 
       <AppAlert
         visible={alertaLogout}
@@ -519,4 +563,11 @@ const styles = StyleSheet.create({
   },
   subRowLabel: { flex: 1, fontSize: 14, color: 'rgba(65,46,46,0.5)', fontWeight: '500' },
   subRowValue: { fontSize: 14, fontWeight: '600', color: '#412E2E' },
+  cancelSubBtn: {
+    height: 46, borderRadius: 12, marginTop: 16,
+    borderWidth: 1.5, borderColor: 'rgba(192,57,43,0.3)',
+    backgroundColor: 'rgba(192,57,43,0.06)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  cancelSubBtnText: { fontSize: 14, fontWeight: '600', color: '#c0392b' },
 });

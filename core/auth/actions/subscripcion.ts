@@ -9,3 +9,12 @@ export const getSubscripcion = async (): Promise<Subscripcion | null> => {
     return null;
   }
 };
+
+export const cancelarSubscripcion = async (): Promise<boolean> => {
+  try {
+    await quizslothApi.delete('/auth/me/subscripcion');
+    return true;
+  } catch {
+    return false;
+  }
+};

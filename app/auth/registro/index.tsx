@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
   View, Text, TextInput, Pressable, Image,
-  KeyboardAvoidingView, ScrollView, Platform, StyleSheet, Animated,
+  KeyboardAvoidingView, ScrollView, Platform, StyleSheet, Animated, Modal,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,10 +19,12 @@ export default function Registro() {
   const { role } = useLocalSearchParams<{ role: string }>();
   const { register, loginAsGuest } = useAuthStore();
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm,  setShowConfirm]  = useState(false);
-  const [isPosting,    setIsPosting]    = useState(false);
-  const [errors,       setErrors]       = useState<FormErrors>({});
+  const [showPassword,   setShowPassword]   = useState(false);
+  const [showConfirm,    setShowConfirm]    = useState(false);
+  const [isPosting,      setIsPosting]      = useState(false);
+  const [errors,         setErrors]         = useState<FormErrors>({});
+  const [modalSub,       setModalSub]       = useState(false);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [form, setForm] = useState({
     nombre: '', apellidos: '', email: '', password: '', confirmPassword: '',
   });
@@ -46,6 +48,15 @@ export default function Registro() {
 
   const handleRegister = async () => {
     if (!validate()) return;
+    if (role !== 'teacher') {
+      setAceptaTerminos(false);
+      setModalSub(true);
+      return;
+    }
+    await doRegister();
+  };
+
+  const doRegister = async () => {
     setIsPosting(true);
     const nombreCompleto = `${form.nombre.trim()} ${form.apellidos.trim()}`.trim();
     const rol: Rol = role === 'teacher' ? 'profesor' : 'alumno';
@@ -200,6 +211,52 @@ export default function Registro() {
 
         </View>
       </ScrollView>
+      <Modal visible={modalSub} transparent animationType="slide" onRequestClose={() => setModalSub(false)}>
+        <Pressable style={styles.overlay} onPress={() => setModalSub(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <View style={styles.handle} />
+
+            <View style={styles.precioBadge}>
+              <Text style={styles.precioAmount}>29,99€</Text>
+              <Text style={styles.precioMes}>/ mes</Text>
+            </View>
+
+            <Text style={styles.sheetTitle}>Suscripción QuizSloth</Text>
+            <Text style={styles.sheetSub}>Al registrarte como alumno se creará una suscripción mensual.</Text>
+
+            <View style={styles.beneficiosList}>
+              {['Acceso completo a todas las clases', 'Quizzes y apuntes ilimitados', 'Participa en salas en tiempo real', 'Soporte prioritario'].map(b => (
+                <View key={b} style={styles.beneficioRow}>
+                  <Ionicons name="checkmark-circle" size={17} color="#24833D" />
+                  <Text style={styles.beneficioText}>{b}</Text>
+                </View>
+              ))}
+            </View>
+
+            <Pressable style={styles.checkRow} onPress={() => setAceptaTerminos(p => !p)}>
+              <View style={[styles.checkbox, aceptaTerminos && styles.checkboxActive]}>
+                {aceptaTerminos && <Ionicons name="checkmark" size={13} color="white" />}
+              </View>
+              <Text style={styles.checkLabel}>Acepto los términos y condiciones de la suscripción</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.confirmBtn, !aceptaTerminos && { opacity: 0.4 }]}
+              disabled={!aceptaTerminos || isPosting}
+              onPress={() => { setModalSub(false); doRegister(); }}
+            >
+              <Text style={styles.confirmBtnText}>
+                {isPosting ? 'Creando cuenta...' : 'Aceptar y registrarse'}
+              </Text>
+            </Pressable>
+
+            <Pressable style={styles.cancelBtn} onPress={() => setModalSub(false)}>
+              <Text style={styles.cancelBtnText}>Cancelar</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
     </KeyboardAvoidingView>
   );
 }
@@ -232,16 +289,48 @@ function ErrorMsg({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
-  errorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 6,
-    marginLeft: 4,
+  errorRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6, marginLeft: 4 },
+  errorText: { color: '#dc2626', fontSize: 11, fontWeight: '500' },
+
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingHorizontal: 20, paddingBottom: 36, paddingTop: 12,
   },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 11,
-    fontWeight: '500',
+  handle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: 'rgba(65,46,46,0.2)', alignSelf: 'center', marginBottom: 20,
   },
+  precioBadge: {
+    flexDirection: 'row', alignItems: 'flex-end', gap: 4,
+    alignSelf: 'center', marginBottom: 8,
+  },
+  precioAmount: { fontSize: 40, fontWeight: '800', color: '#571D11' },
+  precioMes: { fontSize: 15, fontWeight: '600', color: 'rgba(65,46,46,0.5)', paddingBottom: 6 },
+  sheetTitle: { fontSize: 18, fontWeight: '800', color: '#412E2E', textAlign: 'center', marginBottom: 4 },
+  sheetSub: { fontSize: 13, color: 'rgba(65,46,46,0.55)', textAlign: 'center', marginBottom: 16, lineHeight: 18 },
+  beneficiosList: { gap: 10, marginBottom: 20 },
+  beneficioRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  beneficioText: { fontSize: 14, color: '#412E2E', fontWeight: '500', flex: 1 },
+  checkRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(65,46,46,0.04)', borderRadius: 12,
+    padding: 12, marginBottom: 16,
+  },
+  checkbox: {
+    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
+    borderColor: 'rgba(65,46,46,0.3)', alignItems: 'center', justifyContent: 'center',
+  },
+  checkboxActive: { backgroundColor: '#571D11', borderColor: '#571D11' },
+  checkLabel: { flex: 1, fontSize: 13, color: '#412E2E', fontWeight: '500', lineHeight: 18 },
+  confirmBtn: {
+    height: 52, borderRadius: 14, backgroundColor: '#53b55e',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 10,
+  },
+  confirmBtnText: { color: 'white', fontSize: 15, fontWeight: '700' },
+  cancelBtn: {
+    height: 48, borderRadius: 14, backgroundColor: 'rgba(65,46,46,0.07)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  cancelBtnText: { fontSize: 14, fontWeight: '600', color: '#412E2E' },
 });
