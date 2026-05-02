@@ -53,11 +53,16 @@ export default function AppAlert({ visible, variante = 'info', titulo, mensaje, 
                 ]}
                 onPress={() => { btn.onPress?.(); onClose(); }}
               >
-                <Text style={[
-                  styles.botonTexto,
-                  btn.estilo === 'destructivo' && styles.botonTextoDestructivo,
-                  btn.estilo === 'cancelar'    && styles.botonTextoCancelar,
-                ]}>
+                <Text
+                  style={[
+                    styles.botonTexto,
+                    btn.estilo === 'destructivo' && styles.botonTextoDestructivo,
+                    btn.estilo === 'cancelar'    && styles.botonTextoCancelar,
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                >
                   {btn.texto}
                 </Text>
               </Pressable>
@@ -120,7 +125,9 @@ const styles = StyleSheet.create({
   },
   boton: {
     flex: 1,
-    height: 46,
+    minHeight: 46,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
     borderRadius: 12,
     backgroundColor: '#571D11',
     alignItems: 'center',
