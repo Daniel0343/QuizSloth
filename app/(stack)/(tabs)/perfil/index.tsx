@@ -488,7 +488,7 @@ function SettingRow({ icon, label, value, primaryColor, onPress }: {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f5f0eb' },
+  safe: { flex: 1, backgroundColor: '#d7b59f' },
   scroll: { paddingBottom: 48 },
 
   banner: {
