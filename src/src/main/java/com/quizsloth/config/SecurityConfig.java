@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/ws").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/files/**").permitAll()
                 .requestMatchers("/salas").permitAll()
                 .requestMatchers("/salas/**").permitAll()

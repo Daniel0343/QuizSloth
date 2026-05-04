@@ -79,6 +79,26 @@ export const eliminarElemento = async (elementoId: number): Promise<void> => {
   await quizslothApi.delete(`/cursos/elementos/${elementoId}`);
 };
 
+export interface CalificacionAlumno {
+  alumnoNombre: string;
+  alumnoEmail: string;
+  puntuacion: number;
+  porcentaje: number;
+  fecha: string | null;
+}
+
+export interface CalificacionQuiz {
+  quizId: number;
+  quizTitulo: string;
+  seccionTitulo: string;
+  calificaciones: CalificacionAlumno[];
+}
+
+export const getCalificacionesCurso = async (cursoId: number): Promise<CalificacionQuiz[]> => {
+  const { data } = await quizslothApi.get<CalificacionQuiz[]>(`/cursos/${cursoId}/calificaciones`);
+  return data;
+};
+
 export const uploadPdf = async (uri: string, nombre: string): Promise<string> => {
   const formData = new FormData();
   formData.append('file', { uri, name: nombre, type: 'application/pdf' } as any);

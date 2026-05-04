@@ -41,6 +41,13 @@ public class CursoController {
         return ResponseEntity.ok(cursoService.obtener(id));
     }
 
+    @GetMapping("/{id}/calificaciones")
+    public ResponseEntity<List<CursoService.CalificacionQuizDTO>> calificaciones(@PathVariable Integer id, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(cursoService.getCalificaciones(id));
+    }
+
     @PostMapping
     public ResponseEntity<CursoService.CursoDTO> crear(@RequestBody CrearCursoRequest req, HttpServletRequest request) {
         String email = emailFromRequest(request);

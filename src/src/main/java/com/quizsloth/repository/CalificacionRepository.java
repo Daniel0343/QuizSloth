@@ -17,4 +17,6 @@ public interface CalificacionRepository extends JpaRepository<Calificacion, Inte
     List<Calificacion> findByQuiz(Quiz quiz);
 
     Optional<Calificacion> findByUsuarioAndQuiz(Usuario usuario, Quiz quiz);
+
+    List<Calificacion> findByQuizIn(List<Quiz> quizzes);
 }

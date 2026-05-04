@@ -6,6 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.quizsloth.repository.CalificacionRepository;
+import com.quizsloth.repository.QuizRepository;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,6 +21,8 @@ public class CursoService {
     private final UsuarioRepository usuarioRepository;
     private final SeccionCursoRepository seccionRepository;
     private final ElementoCursoRepository elementoRepository;
+    private final CalificacionRepository calificacionRepository;
+    private final QuizRepository quizRepository;
 
     public record CursoDTO(Integer id, String nombre, String descripcion, String color,
                            int numAlumnos, ProfesorInfo profesor) {}
@@ -24,6 +30,8 @@ public class CursoService {
     public record SeccionDTO(Integer id, String titulo, Integer orden, List<ElementoDTO> elementos) {}
     public record ElementoDTO(Integer id, String tipo, String titulo, String contenido, Integer orden) {}
     public record ParticipanteDTO(Integer id, String nombre, String email, String rol) {}
+    public record CalificacionAlumnoDTO(String alumnoNombre, String alumnoEmail, double puntuacion, int porcentaje, String fecha) {}
+    public record CalificacionQuizDTO(Integer quizId, String quizTitulo, String seccionTitulo, List<CalificacionAlumnoDTO> calificaciones) {}
 
     private CursoDTO toDTO(Curso c) {
         int num = c.getAlumnos() != null ? c.getAlumnos().size() : 0;
@@ -189,5 +197,40 @@ public class CursoService {
                 .orElseThrow(() -> new RuntimeException("Elemento no encontrado"));
         verificarProfesor(elem.getSeccion().getCurso(), email);
         elementoRepository.delete(elem);
+    }
+
+    public List<CalificacionQuizDTO> getCalificaciones(Integer cursoId) {
+        List<SeccionCurso> secciones = seccionRepository.findByCurso_IdOrderByOrdenAsc(cursoId);
+
+        List<CalificacionQuizDTO> resultado = new ArrayList<>();
+
+        for (SeccionCurso seccion : secciones) {
+            for (ElementoCurso elem : seccion.getElementos()) {
+                if (elem.getTipo() != ElementoCurso.Tipo.QUIZ || elem.getContenido() == null) continue;
+
+                Integer quizId;
+                try { quizId = Integer.parseInt(elem.getContenido()); } catch (NumberFormatException e) { continue; }
+
+                Quiz quiz = quizRepository.findById(quizId).orElse(null);
+                if (quiz == null) continue;
+
+                List<Calificacion> cals = calificacionRepository.findByQuiz(quiz);
+
+                List<CalificacionAlumnoDTO> alumnos = cals.stream()
+                        .map(c -> new CalificacionAlumnoDTO(
+                                c.getUsuario().getNombre(),
+                                c.getUsuario().getEmail(),
+                                c.getPuntuacion().doubleValue(),
+                                (int) Math.round(c.getPuntuacion().doubleValue() * 10),
+                                c.getFechaCompletado() != null ? c.getFechaCompletado().toLocalDate().toString() : null
+                        ))
+                        .sorted((a, b) -> Double.compare(b.puntuacion(), a.puntuacion()))
+                        .toList();
+
+                resultado.add(new CalificacionQuizDTO(quiz.getId(), quiz.getTitulo(), seccion.getTitulo(), alumnos));
+            }
+        }
+
+        return resultado;
     }
 }

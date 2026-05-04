@@ -7,11 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import AppAlert from '@/components/AppAlert';
+import QuizOpcionesModal from '@/components/QuizOpcionesModal';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import {
   getCurso, getParticipantes, invitarAlumno, quitarAlumno,
   getSecciones, crearSeccion, eliminarSeccion, editarSeccion,
   crearElemento, eliminarElemento, editarElemento, uploadPdf,
+  getCalificacionesCurso, CalificacionQuiz,
 } from '@/core/cursos/actions/get-cursos';
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
 import * as DocumentPicker from 'expo-document-picker';
@@ -323,7 +325,7 @@ export default function ClaseDetalleScreen() {
 
       {/* Tabs */}
       <View style={styles.tabRow}>
-        {(['curso', 'participantes', 'calificaciones'] as Tab[]).map(t => (
+        {(['curso', 'participantes', ...(tienePermisosEdicion ? ['calificaciones'] : [])] as Tab[]).map(t => (
           <Pressable key={t} style={styles.tabItem} onPress={() => setTab(t)}>
             <Text style={[styles.tabLabel, tab === t && styles.tabLabelActive]}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -355,7 +357,7 @@ export default function ClaseDetalleScreen() {
             onQuitar={handleQuitarAlumno}
           />
         )}
-        {tab === 'calificaciones' && <TabCalificaciones />}
+        {tab === 'calificaciones' && <TabCalificaciones cursoId={Number(id)} />}
       </View>
     </SafeAreaView>
 
@@ -670,6 +672,7 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
   onDeleteElemento: (e: ElementoCurso, seccionId: number) => void;
 }) {
   const [colapsadas, setColapsadas] = useState<Record<number, boolean>>({});
+  const [quizModal, setQuizModal] = useState<{ id: number; titulo: string } | null>(null);
   const [search, setSearch] = useState('');
   const scrollRef = useRef<ScrollView>(null);
   const layoutsRef = useRef<Record<number, number>>({});
@@ -763,7 +766,7 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
                     } else if (elem.contenido && (elem.tipo === 'ENLACE' || elem.tipo === 'PDF')) {
                       Linking.openURL(resolveUrl(elem.contenido));
                     } else if (elem.tipo === 'QUIZ' && elem.contenido) {
-                      router.push(`/crear-quiz/editar?id=${elem.contenido}` as any);
+                      setQuizModal({ id: Number(elem.contenido), titulo: elem.titulo });
                     } else if (elem.tipo === 'APUNTE' && elem.contenido) {
                       router.push(`/apunte/${elem.contenido}` as any);
                     }
@@ -805,6 +808,14 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
         </Pressable>
       )}
     </ScrollView>
+
+    <QuizOpcionesModal
+      visible={quizModal !== null}
+      quizId={quizModal?.id ?? null}
+      quizTitulo={quizModal?.titulo}
+      esCreador={tienePermisosEdicion}
+      onClose={() => setQuizModal(null)}
+    />
     </View>
   );
 }
@@ -887,12 +898,78 @@ function FilaParticipante({ p, tienePermisosEdicion, onQuitar, color }: {
   );
 }
 
-function TabCalificaciones() {
+function TabCalificaciones({ cursoId }: { cursoId: number }) {
+  const [datos, setDatos] = useState<CalificacionQuiz[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [expandido, setExpandido] = useState<number | null>(null);
+
+  useEffect(() => {
+    getCalificacionesCurso(cursoId)
+      .then(setDatos)
+      .finally(() => setCargando(false));
+  }, [cursoId]);
+
+  if (cargando) {
+    return (
+      <View style={styles.emptyTab}>
+        <ActivityIndicator size="large" color="rgba(65,46,46,0.3)" />
+      </View>
+    );
+  }
+
+  if (datos.length === 0) {
+    return (
+      <View style={styles.emptyTab}>
+        <Ionicons name="stats-chart-outline" size={40} color="rgba(65,46,46,0.2)" />
+        <Text style={styles.emptyTabText}>No hay quizzes con calificaciones en esta clase</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.emptyTab}>
-      <Ionicons name="stats-chart-outline" size={40} color="rgba(65,46,46,0.2)" />
-      <Text style={styles.emptyTabText}>Calificaciones próximamente</Text>
-    </View>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 40 }}>
+      {datos.map((q) => {
+        const abierto = expandido === q.quizId;
+        return (
+          <View key={q.quizId} style={styles.calCard}>
+            <Pressable style={styles.calHeader} onPress={() => setExpandido(abierto ? null : q.quizId)}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.calQuizTitulo}>{q.quizTitulo}</Text>
+                <Text style={styles.calSeccion}>{q.seccionTitulo} · {q.calificaciones.length} {q.calificaciones.length === 1 ? 'alumno' : 'alumnos'}</Text>
+              </View>
+              <Ionicons name={abierto ? 'chevron-up' : 'chevron-down'} size={18} color="rgba(65,46,46,0.4)" />
+            </Pressable>
+
+            {abierto && (
+              <View style={styles.calLista}>
+                {q.calificaciones.length === 0 ? (
+                  <Text style={styles.calVacio}>Ningún alumno ha completado este quiz aún</Text>
+                ) : (
+                  q.calificaciones.map((c, i) => {
+                    const pct = Math.min(100, c.porcentaje);
+                    const color = pct >= 70 ? '#24833D' : pct >= 50 ? '#d97706' : '#c0392b';
+                    return (
+                      <View key={i} style={styles.calFila}>
+                        <View style={styles.calAlumnoInfo}>
+                          <Text style={styles.calNombre}>{c.alumnoNombre}</Text>
+                          {c.fecha && <Text style={styles.calFecha}>{new Date(c.fecha).toLocaleDateString('es-ES')}</Text>}
+                        </View>
+                        <View style={styles.calBarraWrap}>
+                          <View style={styles.calBarraFondo}>
+                            <View style={[styles.calBarraRelleno, { width: `${pct}%` as any, backgroundColor: color }]} />
+                          </View>
+                          <Text style={[styles.calNota, { color }]}>{c.puntuacion.toFixed(1)}</Text>
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </ScrollView>
   );
 }
 
@@ -1065,4 +1142,25 @@ const styles = StyleSheet.create({
   seccionDropTitulo: { flex: 1, fontSize: 13, fontWeight: '600', color: '#412E2E' },
   seccionDropSub: { fontSize: 12, color: 'rgba(65,46,46,0.38)', fontWeight: '500' },
   seccionDropVacio: { fontSize: 13, color: 'rgba(65,46,46,0.4)', textAlign: 'center', paddingVertical: 14 },
+  calCard: {
+    backgroundColor: 'white', borderRadius: 12, overflow: 'hidden',
+    borderWidth: 1, borderColor: 'rgba(65,46,46,0.08)',
+  },
+  calHeader: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 14, paddingVertical: 14,
+    backgroundColor: 'rgba(65,46,46,0.03)',
+  },
+  calQuizTitulo: { fontSize: 14, fontWeight: '700', color: '#412E2E' },
+  calSeccion: { fontSize: 12, color: 'rgba(65,46,46,0.5)', marginTop: 2 },
+  calLista: { paddingHorizontal: 14, paddingBottom: 10 },
+  calVacio: { fontSize: 13, color: 'rgba(65,46,46,0.4)', paddingVertical: 14, textAlign: 'center' },
+  calFila: { paddingVertical: 10, borderTopWidth: 1, borderTopColor: 'rgba(65,46,46,0.06)', gap: 6 },
+  calAlumnoInfo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  calNombre: { fontSize: 13, fontWeight: '600', color: '#412E2E' },
+  calFecha: { fontSize: 11, color: 'rgba(65,46,46,0.45)' },
+  calBarraWrap: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  calBarraFondo: { flex: 1, height: 6, borderRadius: 3, backgroundColor: 'rgba(65,46,46,0.1)', overflow: 'hidden' },
+  calBarraRelleno: { height: 6, borderRadius: 3 },
+  calNota: { fontSize: 13, fontWeight: '700', minWidth: 34, textAlign: 'right' },
 });
