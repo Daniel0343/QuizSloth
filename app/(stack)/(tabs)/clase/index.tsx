@@ -17,6 +17,7 @@ import {
   Image,
   Modal,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -143,11 +144,15 @@ export default function ClaseScreen() {
             onCrear={abrirCrear}
             onMenu={setMenuClase}
             onTap={id => router.push(`/clase/${id}` as any)}
+            onRefresh={cargar}
+            cargando={cargando}
           />
         ) : (
           <VistaAlumno
             clases={clases}
             onTap={id => router.push(`/clase/${id}` as any)}
+            onRefresh={cargar}
+            cargando={cargando}
           />
         )}
       </View>
@@ -247,14 +252,20 @@ export default function ClaseScreen() {
   );
 }
 
-function VistaProfesor({ clases, onCrear, onMenu, onTap }: {
+function VistaProfesor({ clases, onCrear, onMenu, onTap, onRefresh, cargando }: {
   clases: CursoResumen[];
   onCrear: () => void;
   onMenu: (c: CursoResumen) => void;
   onTap: (id: number) => void;
+  onRefresh: () => void;
+  cargando: boolean;
 }) {
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+      refreshControl={<RefreshControl refreshing={cargando} onRefresh={onRefresh} tintColor="#844A31" />}
+    >
       <Pressable style={styles.actionBtn} onPress={onCrear}>
         <Ionicons name="add-outline" size={16} color="#412E2E" />
         <Text style={styles.actionBtnText}>Crear una clase nueva</Text>
@@ -273,9 +284,13 @@ function VistaProfesor({ clases, onCrear, onMenu, onTap }: {
   );
 }
 
-function VistaAlumno({ clases, onTap }: { clases: CursoResumen[]; onTap: (id: number) => void }) {
+function VistaAlumno({ clases, onTap, onRefresh, cargando }: { clases: CursoResumen[]; onTap: (id: number) => void; onRefresh: () => void; cargando: boolean }) {
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+      refreshControl={<RefreshControl refreshing={cargando} onRefresh={onRefresh} tintColor="#844A31" />}
+    >
       {clases.length === 0 ? (
         <EmptyState mensaje="No estás en ninguna clase" sub="Tu profesor te invitará cuando cree una clase" />
       ) : (
@@ -392,10 +407,9 @@ const styles = StyleSheet.create({
   bannerTitle: { color: 'white', fontSize: 22, fontWeight: '800', marginBottom: 4 },
   bannerSub: { color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: '500' },
   bannerIconBox: {
-    width: 52, height: 52, borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
   bannerStats: {
     flexDirection: 'row', alignItems: 'center',
