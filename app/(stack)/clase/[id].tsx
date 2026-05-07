@@ -57,24 +57,20 @@ export default function ClaseDetalleScreen() {
   const [alerta, setAlerta] = useState<{ visible: boolean; titulo: string; mensaje?: string; botones?: any[] }>({ visible: false, titulo: '' });
   const cerrarAlerta = () => setAlerta(p => ({ ...p, visible: false }));
 
-  // Modal nueva sección
   const [modalSeccion, setModalSeccion] = useState(false);
   const [tituloSeccion, setTituloSeccion] = useState('');
   const [guardandoSec, setGuardandoSec] = useState(false);
 
-  // Modal editar sección
   const [modalEditarSec, setModalEditarSec] = useState<SeccionCurso | null>(null);
   const [tituloEditarSec, setTituloEditarSec] = useState('');
   const [guardandoEditSec, setGuardandoEditSec] = useState(false);
 
-  // Modal editar elemento (solo TEXTO)
   const [modalEditarElem, setModalEditarElem] = useState<{ elem: ElementoCurso; secId: number } | null>(null);
   const [tituloEditarElem, setTituloEditarElem] = useState('');
   const [contenidoEditarElem, setContenidoEditarElem] = useState('');
   const [guardandoEditElem, setGuardandoEditElem] = useState(false);
 
-  // Modal nuevo elemento
-  const [modalElemento, setModalElemento] = useState<number | null>(null); // seccionId
+  const [modalElemento, setModalElemento] = useState<number | null>(null);
   const [modoModal, setModoModal] = useState<ModoModal>('TEXTO');
   const [tipoElemento, setTipoElemento] = useState<TipoElemento>('TEXTO');
   const [tituloElemento, setTituloElemento] = useState('');
@@ -83,13 +79,11 @@ export default function ClaseDetalleScreen() {
   const [pdfNombre, setPdfNombre] = useState('');
   const [subiendoPdf, setSubiendoPdf] = useState(false);
 
-  // Biblioteca picker
   const [bibQuizzes, setBibQuizzes] = useState<QuizResumen[]>([]);
   const [bibApuntes, setBibApuntes] = useState<ApunteResumen[]>([]);
   const [cargandoBib, setCargandoBib] = useState(false);
   const [bibSeleccionado, setBibSeleccionado] = useState<{ tipo: 'QUIZ' | 'APUNTE'; id: number; titulo: string } | null>(null);
 
-  // Modal invitar alumno
   const [modalInvitar, setModalInvitar] = useState(false);
   const [emailInvitar, setEmailInvitar] = useState('');
   const [invitando, setInvitando] = useState(false);
@@ -112,7 +106,6 @@ export default function ClaseDetalleScreen() {
     cargar();
   }, [cursoId]);
 
-  // -- Editar sección --
   const abrirEditarSec = (sec: SeccionCurso) => {
     setTituloEditarSec(sec.titulo);
     setModalEditarSec(sec);
@@ -132,7 +125,6 @@ export default function ClaseDetalleScreen() {
     }
   };
 
-  // -- Editar elemento (TEXTO) --
   const abrirEditarElem = (elem: ElementoCurso, secId: number) => {
     setTituloEditarElem(elem.titulo);
     setContenidoEditarElem(elem.contenido ?? '');
@@ -159,7 +151,6 @@ export default function ClaseDetalleScreen() {
     }
   };
 
-  // -- Secciones --
   const handleCrearSeccion = async () => {
     if (!tituloSeccion.trim()) return;
     setGuardandoSec(true);
@@ -188,7 +179,6 @@ export default function ClaseDetalleScreen() {
     });
   };
 
-  // -- Biblioteca --
   const cargarBiblioteca = async () => {
     if (bibQuizzes.length > 0 || bibApuntes.length > 0) return;
     setCargandoBib(true);
@@ -200,7 +190,6 @@ export default function ClaseDetalleScreen() {
     finally { setCargandoBib(false); }
   };
 
-  // -- Subir PDF --
   const handlePickPdf = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
@@ -211,14 +200,13 @@ export default function ClaseDetalleScreen() {
       setContenidoElemento(url);
       setPdfNombre(asset.name);
     } catch (e: any) {
-      const msg = e?.response?.data?.error ?? e?.message ?? 'Error desconocido';
+      const msg = e?.message ?? 'Error desconocido';
       setAlerta({ visible: true, titulo: 'Error al subir', mensaje: msg });
     } finally {
       setSubiendoPdf(false);
     }
   };
 
-  // -- Elementos --
   const handleCrearElemento = async () => {
     if (modalElemento === null) return;
     let tipo = tipoElemento;
@@ -264,7 +252,6 @@ export default function ClaseDetalleScreen() {
     });
   };
 
-  // -- Participantes --
   const handleInvitar = async () => {
     if (!emailInvitar.trim()) return;
     setInvitando(true);
@@ -308,7 +295,6 @@ export default function ClaseDetalleScreen() {
   return (
     <>
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Top bar */}
       <View style={styles.topBar}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#412E2E" />
@@ -317,13 +303,11 @@ export default function ClaseDetalleScreen() {
         <View style={{ width: 38 }} />
       </View>
 
-      {/* Banner */}
       <View style={[styles.banner, { backgroundColor: clase?.color ?? '#24833D' }]}>
         <Text style={styles.bannerNombre}>{clase?.nombre ?? ''}</Text>
         {clase?.descripcion ? <Text style={styles.bannerDesc}>{clase.descripcion}</Text> : null}
       </View>
 
-      {/* Tabs */}
       <View style={styles.tabRow}>
         {(['curso', 'participantes', ...(tienePermisosEdicion ? ['calificaciones'] : [])] as Tab[]).map(t => (
           <Pressable key={t} style={styles.tabItem} onPress={() => setTab(t)}>
@@ -335,7 +319,6 @@ export default function ClaseDetalleScreen() {
         ))}
       </View>
 
-      {/* Contenido */}
       <View style={styles.content}>
         {tab === 'curso' && (
           <TabCurso
@@ -361,7 +344,6 @@ export default function ClaseDetalleScreen() {
       </View>
     </SafeAreaView>
 
-    {/* Modal nueva sección */}
     <Modal visible={modalSeccion} transparent animationType="slide" onRequestClose={() => setModalSeccion(false)}>
       <Pressable style={styles.overlay} onPress={() => setModalSeccion(false)}>
         <Pressable style={styles.sheet} onPress={() => {}}>
@@ -392,7 +374,6 @@ export default function ClaseDetalleScreen() {
       </Pressable>
     </Modal>
 
-    {/* Modal nuevo elemento */}
     <Modal visible={modalElemento !== null} transparent animationType="slide" onRequestClose={() => setModalElemento(null)}>
       <Pressable style={styles.overlay} onPress={() => setModalElemento(null)}>
         <Pressable style={styles.sheet} onPress={() => {}}>
@@ -546,7 +527,6 @@ export default function ClaseDetalleScreen() {
       </Pressable>
     </Modal>
 
-    {/* Modal invitar alumno */}
     <Modal visible={modalInvitar} transparent animationType="slide" onRequestClose={() => setModalInvitar(false)}>
       <Pressable style={styles.overlay} onPress={() => setModalInvitar(false)}>
         <Pressable style={styles.sheet} onPress={() => {}}>
@@ -580,7 +560,6 @@ export default function ClaseDetalleScreen() {
       </Pressable>
     </Modal>
 
-    {/* Modal editar sección */}
     <Modal visible={modalEditarSec !== null} transparent animationType="slide" onRequestClose={() => setModalEditarSec(null)}>
       <Pressable style={styles.overlay} onPress={() => setModalEditarSec(null)}>
         <Pressable style={styles.sheet} onPress={() => {}}>
@@ -611,7 +590,6 @@ export default function ClaseDetalleScreen() {
       </Pressable>
     </Modal>
 
-    {/* Modal editar elemento TEXTO */}
     <Modal visible={modalEditarElem !== null} transparent animationType="slide" onRequestClose={() => setModalEditarElem(null)}>
       <Pressable style={styles.overlay} onPress={() => setModalEditarElem(null)}>
         <Pressable style={styles.sheet} onPress={() => {}}>

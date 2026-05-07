@@ -200,6 +200,10 @@ public class CursoService {
     }
 
     public List<CalificacionQuizDTO> getCalificaciones(Integer cursoId) {
+        Curso curso = cursoRepository.findById(cursoId).orElse(null);
+        if (curso == null) return List.of();
+        String profesorEmail = curso.getProfesor() != null ? curso.getProfesor().getEmail() : null;
+
         List<SeccionCurso> secciones = seccionRepository.findByCurso_IdOrderByOrdenAsc(cursoId);
 
         List<CalificacionQuizDTO> resultado = new ArrayList<>();
@@ -217,6 +221,7 @@ public class CursoService {
                 List<Calificacion> cals = calificacionRepository.findByQuiz(quiz);
 
                 List<CalificacionAlumnoDTO> alumnos = cals.stream()
+                        .filter(c -> profesorEmail == null || !profesorEmail.equals(c.getUsuario().getEmail()))
                         .map(c -> new CalificacionAlumnoDTO(
                                 c.getUsuario().getNombre(),
                                 c.getUsuario().getEmail(),
