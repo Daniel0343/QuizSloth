@@ -4,7 +4,7 @@ import {
   Pressable, ActivityIndicator, Modal, Alert,
 } from 'react-native';
 import AppAlert from '@/components/AppAlert';
-import PreguntaCard from '@/components/PreguntaCard';
+import PreguntaCard from '@/components/Pregunta/PreguntaCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';

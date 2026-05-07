@@ -19,8 +19,8 @@ import { Categoria } from '@/core/auth/interface/categoria';
 import { QuizResumen } from '@/core/auth/interface/quiz';
 import { CursoResumen } from '@/core/auth/interface/curso';
 import QuizOpcionesModal from '@/components/QuizOpcionesModal';
-import QuizCard, { CARD_COLORS } from '@/components/QuizCard';
-import ClassCard from '@/components/ClassCard';
+import QuizCard, { CARD_COLORS } from '@/components/Quiz/QuizCard';
+import ClassCard from '@/components/Clase/ClassCard';
 
 export default function HomePrincipal() {
   const { user } = useAuthStore();

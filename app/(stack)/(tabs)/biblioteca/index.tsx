@@ -1,10 +1,10 @@
 import AppAlert from '@/components/AppAlert';
-import ApunteCard from '@/components/ApunteCard';
-import BibliotecaQuizCard from '@/components/BibliotecaQuizCard';
-import ColeccionRow from '@/components/ColeccionRow';
+import ApunteCard from '@/components/Apunte/ApunteCard';
+import BibliotecaQuizCard from '@/components/Quiz/BibliotecaQuizCard';
+import ColeccionRow from '@/components/Coleccion/ColeccionRow';
 import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
 import QuizOpcionesModal from '@/components/QuizOpcionesModal';
-import { CARD_COLORS } from '@/components/QuizCard';
+import { CARD_COLORS } from '@/components/Quiz/QuizCard';
 import { eliminarApunte, getMisApuntes } from '@/core/apuntes/actions/apuntes';
 import { ApunteResumen } from '@/core/auth/interface/apunte';
 import { QuizResumen } from '@/core/auth/interface/quiz';

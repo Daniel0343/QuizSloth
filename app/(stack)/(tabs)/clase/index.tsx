@@ -1,5 +1,7 @@
 import AppAlert from '@/components/AppAlert';
 import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
+import TarjetaProfesor from '@/components/Clase/TarjetaProfesor';
+import TarjetaAlumno from '@/components/Clase/TarjetaAlumno';
 import {
   actualizarCurso,
   crearCurso,
@@ -309,60 +311,6 @@ function VistaAlumno({ clases, onTap, onRefresh, cargando }: { clases: CursoResu
   );
 }
 
-function TarjetaProfesor({ clase, onMenu, onTap }: { clase: CursoResumen; onMenu: () => void; onTap: () => void }) {
-  return (
-    <Pressable style={styles.cardProfesor} onPress={onTap}>
-      <View style={[styles.cardProfesorTop, { backgroundColor: clase.color ?? '#24833D' }]}>
-        <Pressable style={styles.cardMenu} onPress={onMenu} hitSlop={8}>
-          <Ionicons name="ellipsis-vertical" size={16} color="white" />
-        </Pressable>
-      </View>
-      <View style={styles.cardProfesorBody}>
-        <Text style={styles.cardNombre} numberOfLines={1}>{clase.nombre}</Text>
-        <Text style={styles.cardDescripcion} numberOfLines={1}>{clase.descripcion ?? ''}</Text>
-        <View style={styles.cardEstudiantes}>
-          <Ionicons name="people-outline" size={13} color="#6a7282" />
-          <Text style={styles.cardEstudiantesText}>{clase.numAlumnos} estudiantes</Text>
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
-function TarjetaAlumno({ clase, onTap }: { clase: CursoResumen; onTap: () => void }) {
-  const iniciales = clase.nombre.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('');
-  return (
-    <Pressable style={styles.cardAlumno} onPress={onTap}>
-      <View style={[styles.cardAlumnoTop, { backgroundColor: clase.color ?? '#24833D' }]}>
-        <View style={styles.cardAlumnoIniciales}>
-          <Text style={styles.cardAlumnoInicialesText}>{iniciales}</Text>
-        </View>
-        <View style={styles.cardAlumnoChip}>
-          <Ionicons name="arrow-forward" size={12} color="white" />
-          <Text style={styles.cardAlumnoChipText}>Ver clase</Text>
-        </View>
-      </View>
-      <View style={styles.cardAlumnoBody}>
-        <Text style={styles.cardAlumnoNombre} numberOfLines={1}>{clase.nombre}</Text>
-        {clase.descripcion ? (
-          <Text style={styles.cardDescripcion} numberOfLines={2}>{clase.descripcion}</Text>
-        ) : null}
-        <View style={styles.cardAlumnoSeparador} />
-        <View style={styles.cardAlumnoFooter}>
-          <View style={styles.cardAlumnoFooterItem}>
-            <Ionicons name="person-outline" size={13} color="#6a7282" />
-            <Text style={styles.cardAlumnoFooterText}>{clase.profesor?.nombre ?? 'Desconocido'}</Text>
-          </View>
-          <View style={styles.cardAlumnoFooterItem}>
-            <Ionicons name="people-outline" size={13} color="#6a7282" />
-            <Text style={styles.cardAlumnoFooterText}>{clase.numAlumnos} {clase.numAlumnos === 1 ? 'estudiante' : 'estudiantes'}</Text>
-          </View>
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
 function EmptyState({ mensaje, sub }: { mensaje: string; sub: string }) {
   return (
     <View style={styles.emptyState}>
@@ -429,34 +377,7 @@ const styles = StyleSheet.create({
   actionBtnText: { color: '#412E2E', fontSize: 13, fontWeight: '500' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   list: { gap: 10 },
-  cardProfesor: { width: '47.5%', borderRadius: 12, backgroundColor: 'white', overflow: 'hidden' },
-  cardProfesorTop: { height: 72, alignItems: 'flex-end', paddingTop: 10, paddingRight: 10 },
-  cardMenu: { padding: 4 },
-  cardProfesorBody: { padding: 10, gap: 2 },
-  cardNombre: { color: '#412E2E', fontSize: 14, fontWeight: '600' },
-  cardDescripcion: { color: '#4a5565', fontSize: 12 },
-  cardEstudiantes: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  cardEstudiantesText: { color: '#6a7282', fontSize: 12 },
   listaHeader: { color: '#412E2E', fontSize: 13, fontWeight: '600', opacity: 0.6, marginBottom: 2 },
-  cardAlumno: { borderRadius: 12, backgroundColor: 'white', overflow: 'hidden', alignSelf: 'stretch' },
-  cardAlumnoTop: { height: 100, justifyContent: 'space-between', padding: 12 },
-  cardAlumnoIniciales: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center',
-  },
-  cardAlumnoInicialesText: { color: 'white', fontSize: 18, fontWeight: '700' },
-  cardAlumnoChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.18)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
-  },
-  cardAlumnoChipText: { color: 'white', fontSize: 11, fontWeight: '600' },
-  cardAlumnoBody: { padding: 14, gap: 5 },
-  cardAlumnoNombre: { color: '#412E2E', fontSize: 17, fontWeight: '700' },
-  cardAlumnoSeparador: { height: 1, backgroundColor: 'rgba(65,46,46,0.08)', marginVertical: 6 },
-  cardAlumnoFooter: { flexDirection: 'row', gap: 16 },
-  cardAlumnoFooterItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  cardAlumnoFooterText: { color: '#6a7282', fontSize: 12 },
-  cardProfesorNombre: { color: '#4a5565', fontSize: 13 },
   emptyState: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 32, gap: 10 },
   sloth: { width: 220, height: 165 },
   emptyTitle: { color: '#412E2E', fontSize: 15, fontWeight: '700', textAlign: 'center' },
