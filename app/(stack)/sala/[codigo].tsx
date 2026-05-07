@@ -90,6 +90,7 @@ export default function SalaScreen() {
       onUnirse={handleUnirse}
       cargando={uniendose}
       codigo={codigo}
+      nombreUsuario={user?.nombre}
     />;
   }
 
@@ -131,6 +132,7 @@ export default function SalaScreen() {
       pregunta={ws.preguntaActual}
       esHost={esHost}
       onSiguiente={ws.siguiente}
+      respuestaElegida={respuestaElegida}
     />;
   }
 

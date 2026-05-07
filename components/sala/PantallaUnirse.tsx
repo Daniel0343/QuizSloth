@@ -9,9 +9,16 @@ interface Props {
   onUnirse: () => void;
   cargando: boolean;
   codigo: string;
+  nombreUsuario?: string;
 }
 
-export default function PantallaUnirse({ nickname, onNickname, onUnirse, cargando, codigo }: Props) {
+export default function PantallaUnirse({ nickname, onNickname, onUnirse, cargando, codigo, nombreUsuario }: Props) {
+  const handleUsarNombreUsuario = () => {
+    if (!nombreUsuario) return;
+    onNickname(nombreUsuario);
+    setTimeout(onUnirse, 0);
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <Pressable style={styles.backBtn} onPress={() => router.back()}>
@@ -39,6 +46,16 @@ export default function PantallaUnirse({ nickname, onNickname, onUnirse, cargand
             : <Text style={styles.btnTextoBlanco}>Entrar a la sala</Text>
           }
         </Pressable>
+        {!!nombreUsuario && (
+          <Pressable
+            style={[styles.btnSecundario, cargando && { opacity: 0.4 }]}
+            onPress={handleUsarNombreUsuario}
+            disabled={cargando}
+          >
+            <Ionicons name="person-outline" size={15} color="rgba(65,46,46,0.45)" />
+            <Text style={styles.btnTextoSecundario}>Continuar con tu nombre de Usuario</Text>
+          </Pressable>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -71,4 +88,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   btnTextoBlanco: { color: 'white', fontSize: 15, fontWeight: '700' },
+  btnSecundario: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 10, paddingHorizontal: 16,
+  },
+  btnTextoSecundario: { color: 'rgba(65,46,46,0.45)', fontSize: 13, fontWeight: '600' },
 });
