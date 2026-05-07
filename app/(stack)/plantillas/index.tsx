@@ -140,7 +140,6 @@ export default function PlantillasScreen() {
         </ScrollView>
       )}
 
-      {/* Modal: Usar o Guardar */}
       <Modal visible={modalAccion} transparent animationType="slide" onRequestClose={() => setModalAccion(false)}>
         <Pressable style={styles.overlay} onPress={() => setModalAccion(false)}>
           <Pressable style={styles.sheet} onPress={() => {}}>
@@ -184,7 +183,6 @@ export default function PlantillasScreen() {
         </Pressable>
       </Modal>
 
-      {/* Modal: Añadir a colección */}
       <Modal visible={modalColeccion} transparent animationType="slide" onRequestClose={() => setModalColeccion(false)}>
         <Pressable style={styles.overlay} onPress={() => setModalColeccion(false)}>
           <Pressable style={styles.sheet} onPress={() => {}}>

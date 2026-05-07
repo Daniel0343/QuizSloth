@@ -159,7 +159,6 @@ export default function ClaseScreen() {
         )}
       </View>
 
-      {/* Modal crear / editar */}
       <Modal
         visible={modalCrear || modalEditar !== null}
         transparent
@@ -220,7 +219,6 @@ export default function ClaseScreen() {
         </Pressable>
       </Modal>
 
-      {/* Menú opciones tarjeta */}
       <Modal visible={menuClase !== null} transparent animationType="slide" onRequestClose={() => setMenuClase(null)}>
         <Pressable style={styles.overlay} onPress={() => setMenuClase(null)}>
           <Pressable style={styles.sheet} onPress={() => { }}>

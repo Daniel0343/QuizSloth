@@ -367,7 +367,6 @@ export default function BibliotecaScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-      {/* Menú colección (long press) */}
       <Modal visible={menuColeccion !== null} transparent animationType="slide" onRequestClose={() => setMenuColeccion(null)}>
         <Pressable style={styles.modalOverlay} onPress={() => setMenuColeccion(null)}>
           <Pressable style={styles.bottomSheet} onPress={() => { }}>
@@ -398,7 +397,6 @@ export default function BibliotecaScreen() {
         </Pressable>
       </Modal>
 
-      {/* Modal renombrar */}
       <Modal visible={modalRenombrar} transparent animationType="slide" onRequestClose={() => setModalRenombrar(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setModalRenombrar(false)}>
           <Pressable style={styles.bottomSheet} onPress={() => { }}>

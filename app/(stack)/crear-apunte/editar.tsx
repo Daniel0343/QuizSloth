@@ -25,7 +25,6 @@ export default function EditarApunteScreen() {
   const [contenido, setContenido] = useState<ApunteContenido | null>(null);
   const [apunteId, setApunteId] = useState<number>(0);
 
-  // Modal colección
   const [modalColeccion, setModalColeccion] = useState(false);
   const [colecciones, setColecciones] = useState<ColeccionDTO[]>([]);
   const [nuevaCol, setNuevaCol] = useState('');
@@ -142,7 +141,6 @@ export default function EditarApunteScreen() {
   return (
     <>
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Top bar */}
       <View style={styles.topBar}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#412E2E" />
@@ -168,7 +166,6 @@ export default function EditarApunteScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Título */}
         {editando ? (
           <TextInput
             style={styles.tituloInput}
@@ -180,7 +177,6 @@ export default function EditarApunteScreen() {
           <Text style={styles.titulo}>{titulo}</Text>
         )}
 
-        {/* Resumen */}
         <View style={styles.resumenCard}>
           <View style={styles.sectionHeader}>
             <Ionicons name="document-text-outline" size={16} color="#571D11" />
@@ -199,7 +195,6 @@ export default function EditarApunteScreen() {
           )}
         </View>
 
-        {/* Secciones */}
         {contenido.secciones.map((sec, si) => (
           <View key={si} style={styles.seccionCard}>
             {editando ? (
@@ -247,7 +242,6 @@ export default function EditarApunteScreen() {
           </View>
         ))}
 
-        {/* Referencias */}
         {contenido.referencias.length > 0 && (
           <View style={styles.refCard}>
             <View style={styles.sectionHeader}>
@@ -272,7 +266,6 @@ export default function EditarApunteScreen() {
       </ScrollView>
     </SafeAreaView>
 
-    {/* Modal colección */}
     <Modal visible={modalColeccion} transparent animationType="slide" onRequestClose={() => setModalColeccion(false)}>
       <Pressable style={styles.overlay} onPress={() => setModalColeccion(false)}>
         <Pressable style={styles.sheet} onPress={() => {}}>

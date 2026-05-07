@@ -28,7 +28,6 @@ export default function PerfilScreen() {
   const [modalColor, setModalColor] = useState(false);
   const rol = user?.rol ?? 'invitado';
 
-  // Edit profile state
   const [nombre, setNombre] = useState(user?.nombre ?? '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -83,7 +82,6 @@ export default function PerfilScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
-        {/* Banner */}
         <View style={[styles.banner, { backgroundColor: primaryColor }]}>
           <View style={styles.bannerCircle1} />
           <View style={styles.bannerCircle2} />
@@ -114,7 +112,6 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* Cuenta */}
         <Text style={[styles.sectionLabel, { color: primaryColor }]}>Cuenta</Text>
         <View style={styles.card}>
           <SettingRow icon="mail-outline" label="Correo electrónico" value={user?.email} primaryColor={primaryColor} />
@@ -124,7 +121,6 @@ export default function PerfilScreen() {
           <SettingRow icon="lock-closed-outline" label="Contraseña" value="••••••••" primaryColor={primaryColor} onPress={abrirEditar} />
         </View>
 
-        {/* App */}
         <Text style={[styles.sectionLabel, { color: primaryColor }]}>Aplicación</Text>
         <View style={styles.card}>
           {rol === 'alumno' && (
@@ -133,7 +129,6 @@ export default function PerfilScreen() {
               <View style={styles.divider} />
             </>
           )}
-          {/* Color picker row */}
           <Pressable style={styles.settingRow} onPress={() => setModalColor(true)}>
             <View style={styles.settingLeft}>
               <View style={[styles.settingIconBox, { backgroundColor: `${primaryColor}18` }]}>
@@ -148,7 +143,6 @@ export default function PerfilScreen() {
           </Pressable>
         </View>
 
-        {/* Logout */}
         {user && (
           <Pressable style={styles.logoutBtn} onPress={() => setAlertaLogout(true)}>
             <View style={styles.logoutIconBox}>
@@ -161,7 +155,6 @@ export default function PerfilScreen() {
 
       </ScrollView>
 
-      {/* Modal suscripción */}
       <Modal visible={modalSub} transparent animationType="slide" onRequestClose={() => setModalSub(false)}>
         <Pressable style={styles.overlay} onPress={() => setModalSub(false)}>
           <Pressable style={styles.sheet} onPress={() => {}}>
@@ -267,7 +260,6 @@ export default function PerfilScreen() {
         </Pressable>
       </Modal>
 
-      {/* Modal editar perfil */}
       <Modal visible={modalEditar} transparent animationType="slide" onRequestClose={() => setModalEditar(false)}>
         <Pressable style={styles.overlay} onPress={() => setModalEditar(false)}>
           <Pressable style={styles.sheet} onPress={() => {}}>
@@ -327,7 +319,6 @@ export default function PerfilScreen() {
         </Pressable>
       </Modal>
 
-      {/* Modal color de la app */}
       <Modal visible={modalColor} transparent animationType="slide" onRequestClose={() => setModalColor(false)}>
         <Pressable style={styles.overlay} onPress={() => setModalColor(false)}>
           <Pressable style={styles.sheet} onPress={() => {}}>
@@ -359,7 +350,6 @@ export default function PerfilScreen() {
         </Pressable>
       </Modal>
 
-      {/* Modal términos para reactivar */}
       <Modal visible={modalTerminos} transparent animationType="slide" onRequestClose={() => setModalTerminos(false)}>
         <Pressable style={styles.overlay} onPress={() => setModalTerminos(false)}>
           <Pressable style={styles.sheet} onPress={() => {}}>
@@ -577,7 +567,6 @@ const styles = StyleSheet.create({
     textAlign: 'center', marginTop: 28, fontWeight: '500',
   },
 
-  /* Modals */
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
@@ -607,7 +596,6 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: { fontSize: 14, fontWeight: '600', color: '#412E2E' },
 
-  /* Color picker */
   colorGrid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 16,
     justifyContent: 'center', paddingVertical: 16,
@@ -624,7 +612,6 @@ const styles = StyleSheet.create({
   },
   colorLabel: { fontSize: 12, fontWeight: '600', color: '#412E2E' },
 
-  /* Suscripción */
   subLoading: { alignItems: 'center', gap: 12, paddingVertical: 28 },
   subLoadingText: { fontSize: 13, color: 'rgba(65,46,46,0.5)', fontWeight: '500' },
   subEmptyText: { fontSize: 13, color: 'rgba(65,46,46,0.5)', textAlign: 'center', lineHeight: 20 },

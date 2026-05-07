@@ -110,7 +110,6 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
                 </Pressable>
               </View>
 
-              {/* Card Crea desde cero */}
               <Pressable style={styles.desdeCeroCard} onPress={() => setModalVacio(true)}>
                 <View style={styles.desdeCeroLeft}>
                   <View style={styles.desdeCeroIconBox}>
@@ -177,7 +176,6 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
 
             </Pressable>
 
-            {/* Modal título quiz vacío */}
             {modalVacio && (
               <Modal visible transparent animationType="fade" onRequestClose={() => setModalVacio(false)}>
                 <Pressable style={styles.subBackdrop} onPress={() => setModalVacio(false)}>

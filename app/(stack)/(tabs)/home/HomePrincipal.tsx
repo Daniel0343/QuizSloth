@@ -280,7 +280,6 @@ export default function HomePrincipal() {
         <Pressable style={styles.modalCard} onPress={() => {}}>
           <Text style={styles.modalTitle}>Categorías</Text>
 
-          {/* Nueva categoría */}
           <View style={styles.newCatRow}>
             <TextInput
               style={styles.newCatInput}
@@ -301,7 +300,6 @@ export default function HomePrincipal() {
             </Pressable>
           </View>
 
-          {/* Lista de categorías existentes */}
           {categories.length > 0 && (
             <FlatList
               data={categories}

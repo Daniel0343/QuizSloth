@@ -70,7 +70,6 @@ export default function CrearApunteScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Selector modo */}
         <View style={styles.modoRow}>
           <Pressable
             style={[styles.modoBtn, modo === 'texto' && styles.modoBtnActive]}
