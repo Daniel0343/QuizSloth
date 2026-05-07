@@ -131,7 +131,6 @@ public class Servidor {
         calificacionRepository.save(c);
     }
 
-    // ── Helpers accesibles desde Cliente (mismo paquete) ─────────────────────
 
     Sala getSala(String codigo) {
         return salaRepository.findByCodigo(codigo)
@@ -166,7 +165,6 @@ public class Servidor {
         );
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
 
     private void guardarCalificaciones(Sala sala, int totalPreguntas) {
         int maxPuntos = totalPreguntas * 100;

@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -52,8 +51,8 @@ public class QuizController {
     }
 
     @GetMapping("/mis-quizzes")
-    public ResponseEntity<List<QuizService.QuizResumenDTO>> misQuizzes(Authentication authentication) {
-        return ResponseEntity.ok(quizService.listarPorCreadorDTO(authentication.getName()));
+    public ResponseEntity<List<QuizService.QuizResumenDTO>> misQuizzes(HttpServletRequest request) {
+        return ResponseEntity.ok(quizService.listarPorCreadorDTO(emailFromRequest(request)));
     }
 
     @GetMapping("/plantillas")
@@ -68,8 +67,8 @@ public class QuizController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Integer id, Authentication authentication) {
-        quizService.eliminar(id, authentication.getName());
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id, HttpServletRequest request) {
+        quizService.eliminar(id, emailFromRequest(request));
         return ResponseEntity.noContent().build();
     }
 
@@ -84,10 +83,10 @@ public class QuizController {
     }
 
     @PostMapping("/generar")
-    public ResponseEntity<Quiz> generarConIA(@RequestBody GenerarQuizRequest request, Authentication authentication) {
+    public ResponseEntity<Quiz> generarConIA(@RequestBody GenerarQuizRequest req, HttpServletRequest request) {
         Quiz quiz = quizService.generarDesdeDocumento(
-                request.getDocumentoId(), request.getTitulo(), request.getNumPreguntas(),
-                authentication.getName());
+                req.getDocumentoId(), req.getTitulo(), req.getNumPreguntas(),
+                emailFromRequest(request));
         return ResponseEntity.ok(quiz);
     }
 

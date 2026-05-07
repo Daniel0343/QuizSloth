@@ -9,9 +9,6 @@ import com.quizsloth.repository.UsuarioRepository;
 import com.quizsloth.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -20,18 +17,16 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final AuthenticationManager authenticationManager;
     private final OdooService odooService;
 
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
-
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
+
+        if (!request.getPassword().equals(usuario.getPassword())) {
+            throw new RuntimeException("Credenciales incorrectas");
+        }
 
         String token = jwtUtil.generateToken(usuario.getEmail());
         return AuthResponse.from(usuario, token);
@@ -45,19 +40,17 @@ public class AuthService {
         Usuario usuario = new Usuario();
         usuario.setNombre(request.getNombre());
         usuario.setEmail(request.getEmail());
-        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+        usuario.setPassword(request.getPassword());
         usuario.setRol(request.getRol());
 
         Usuario saved = usuarioRepository.save(usuario);
 
-        //  registrar en Odoo si es alumno
         if (saved.getRol() == Usuario.Rol.alumno) {
             try {
                 Integer odooId = odooService.crearCliente(saved);
                 saved.setOdooId(odooId);
                 saved = usuarioRepository.save(saved);
             } catch (Exception e) {
-                // El registro no debe fallar si Odoo no está disponible
                 System.err.println("Odoo no disponible: " + e.getMessage());
             }
         }

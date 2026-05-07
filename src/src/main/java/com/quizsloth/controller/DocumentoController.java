@@ -5,10 +5,11 @@ import com.quizsloth.model.Usuario;
 import com.quizsloth.repository.CursoRepository;
 import com.quizsloth.repository.DocumentoRepository;
 import com.quizsloth.repository.UsuarioRepository;
+import com.quizsloth.security.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,9 +28,18 @@ public class DocumentoController {
     private final DocumentoRepository documentoRepository;
     private final UsuarioRepository usuarioRepository;
     private final CursoRepository cursoRepository;
+    private final JwtUtil jwtUtil;
 
     @Value("${app.upload.dir}")
     private String uploadDir;
+
+    private String emailFromRequest(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            try { return jwtUtil.extractEmail(header.substring(7)); } catch (Exception ignored) {}
+        }
+        return null;
+    }
 
     @GetMapping("/curso/{cursoId}")
     public ResponseEntity<List<Documento>> porCurso(@PathVariable Integer cursoId) {
@@ -40,18 +50,17 @@ public class DocumentoController {
 
     /**
      * Sube un documento (PDF o texto) para un curso.
-     * Multipart: archivo + cursoId
      */
     @PostMapping("/subir")
     public ResponseEntity<Documento> subir(
             @RequestParam("archivo") MultipartFile archivo,
             @RequestParam("cursoId") Integer cursoId,
-            Authentication auth) throws IOException {
+            HttpServletRequest request) throws IOException {
 
         var curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
 
-        Usuario usuario = usuarioRepository.findByEmail(auth.getName())
+        Usuario usuario = usuarioRepository.findByEmail(emailFromRequest(request))
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Guardar archivo en disco

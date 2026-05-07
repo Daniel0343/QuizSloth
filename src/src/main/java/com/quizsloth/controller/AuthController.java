@@ -4,11 +4,12 @@ import com.quizsloth.dto.AuthResponse;
 import com.quizsloth.dto.LoginRequest;
 import com.quizsloth.dto.RegisterRequest;
 import com.quizsloth.dto.SubscripcionDTO;
+import com.quizsloth.security.JwtUtil;
 import com.quizsloth.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,6 +18,15 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtUtil jwtUtil;
+
+    private String emailFromRequest(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            try { return jwtUtil.extractEmail(header.substring(7)); } catch (Exception ignored) {}
+        }
+        return null;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -29,19 +39,19 @@ public class AuthController {
     }
 
     @GetMapping("/me/subscripcion")
-    public ResponseEntity<SubscripcionDTO> getSubscripcion(Authentication authentication) {
-        return ResponseEntity.ok(authService.getSubscripcion(authentication.getName()));
+    public ResponseEntity<SubscripcionDTO> getSubscripcion(HttpServletRequest request) {
+        return ResponseEntity.ok(authService.getSubscripcion(emailFromRequest(request)));
     }
 
     @PostMapping("/me/subscripcion")
-    public ResponseEntity<Void> reactivarSubscripcion(Authentication authentication) {
-        authService.reactivarSubscripcion(authentication.getName());
+    public ResponseEntity<Void> reactivarSubscripcion(HttpServletRequest request) {
+        authService.reactivarSubscripcion(emailFromRequest(request));
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/me/subscripcion")
-    public ResponseEntity<Void> cancelarSubscripcion(Authentication authentication) {
-        authService.cancelarSubscripcion(authentication.getName());
+    public ResponseEntity<Void> cancelarSubscripcion(HttpServletRequest request) {
+        authService.cancelarSubscripcion(emailFromRequest(request));
         return ResponseEntity.noContent().build();
     }
 }
