@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 const OPCION_COLORS = ['#c0392b', '#27ae60', '#d35400', '#2980b9'];
 const OPCION_BG = ['#fadbd8', '#d5f5e3', '#fdebd0', '#d6eaf8'];
@@ -12,9 +13,10 @@ interface Props {
   pregunta: any;
   esHost: boolean;
   onSiguiente: () => void;
+  respuestaElegida?: string | null;
 }
 
-export default function PantallaResultado({ resultado, pregunta, esHost, onSiguiente }: Props) {
+export default function PantallaResultado({ resultado, pregunta, esHost, onSiguiente, respuestaElegida }: Props) {
   const [avanzando, setAvanzando] = useState(false);
 
   const handleSig = async () => {
@@ -31,8 +33,16 @@ export default function PantallaResultado({ resultado, pregunta, esHost, onSigui
     : {};
   const textoOpcion = opciones[letra] ?? '';
 
+  const acerto = respuestaElegida != null && respuestaElegida === letra;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: '#fdfaf7' }]}>
+      {respuestaElegida != null && (
+        <View style={[styles.feedbackBanner, acerto ? styles.feedbackCorrecto : styles.feedbackIncorrecto]}>
+          <Ionicons name={acerto ? 'checkmark-circle' : 'close-circle'} size={20} color="white" />
+          <Text style={styles.feedbackText}>{acerto ? '¡Correcto!' : 'Incorrecto'}</Text>
+        </View>
+      )}
       <View style={styles.resultadoHeader}>
         <Text style={styles.resultadoLabel}>Respuesta correcta</Text>
         <View style={[styles.respuestaCorrectaOpcion, { backgroundColor: bg, borderColor: color }]}>
@@ -111,4 +121,12 @@ const styles = StyleSheet.create({
     gap: 10, paddingVertical: 16,
   },
   esperandoHostText: { color: '#844A31', fontSize: 13, fontWeight: '600' },
+  feedbackBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginHorizontal: 16, marginTop: 12, marginBottom: -8,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12,
+  },
+  feedbackCorrecto: { backgroundColor: '#27ae60' },
+  feedbackIncorrecto: { backgroundColor: '#c0392b' },
+  feedbackText: { color: 'white', fontSize: 14, fontWeight: '700' },
 });

@@ -139,6 +139,25 @@ export default function SoloQuizScreen() {
         <Text style={styles.preguntaPuntos}>+{Math.round((pregunta.peso ?? 1) * 100)} pts</Text>
       </View>
 
+      {mostrarResultado && (
+        <View style={[
+          styles.feedbackBanner,
+          respuestaElegida === pregunta.respuestaCorrecta ? styles.feedbackCorrecto : styles.feedbackIncorrecto,
+        ]}>
+          <Ionicons
+            name={respuestaElegida === pregunta.respuestaCorrecta ? 'checkmark-circle' : 'close-circle'}
+            size={20} color="white"
+          />
+          <Text style={styles.feedbackText}>
+            {respuestaElegida === null
+              ? 'Tiempo agotado'
+              : respuestaElegida === pregunta.respuestaCorrecta
+                ? `¡Correcto! +${Math.round((pregunta.peso ?? 1) * 100)} pts`
+                : 'Incorrecto'}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.opcionesGrid}>
         {OPCIONES.map((letra, i) => {
           const esElegida = respuestaElegida === letra;
@@ -303,8 +322,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginHorizontal: 20,
   },
   btnBlanco: { color: 'white', fontSize: 15, fontWeight: '700' },
+  feedbackBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginHorizontal: 16, marginBottom: 10,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12,
+  },
+  feedbackCorrecto: { backgroundColor: '#27ae60' },
+  feedbackIncorrecto: { backgroundColor: '#c0392b' },
+  feedbackText: { color: 'white', fontSize: 14, fontWeight: '700' },
 
-  // Final
   finalContent: { alignItems: 'center', paddingTop: 40, paddingBottom: 40, gap: 20, paddingHorizontal: 20 },
   notaCirculo: {
     width: 140, height: 140, borderRadius: 70,
