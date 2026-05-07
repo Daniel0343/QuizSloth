@@ -2,20 +2,28 @@ package com.quizsloth.service;
 
 import com.quizsloth.model.*;
 import com.quizsloth.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class PlantillaService {
 
     private final PlantillaRepository plantillaRepository;
     private final QuizRepository quizRepository;
     private final PreguntaRepository preguntaRepository;
     private final UsuarioRepository usuarioRepository;
+
+    public PlantillaService(PlantillaRepository plantillaRepository,
+                            QuizRepository quizRepository,
+                            PreguntaRepository preguntaRepository,
+                            UsuarioRepository usuarioRepository) {
+        this.plantillaRepository = plantillaRepository;
+        this.quizRepository = quizRepository;
+        this.preguntaRepository = preguntaRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     public List<Plantilla> listar() {
         return plantillaRepository.findAll();

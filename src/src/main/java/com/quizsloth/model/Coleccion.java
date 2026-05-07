@@ -2,16 +2,12 @@ package com.quizsloth.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "colecciones")
-@Data
-@NoArgsConstructor
 public class Coleccion {
 
     @Id
@@ -41,4 +37,21 @@ public class Coleccion {
         inverseJoinColumns = @JoinColumn(name = "apunte_id")
     )
     private List<Apunte> apuntes = new ArrayList<>();
+
+    public Coleccion() {}
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public List<Quiz> getQuizzes() { return quizzes; }
+    public void setQuizzes(List<Quiz> quizzes) { this.quizzes = quizzes; }
+
+    public List<Apunte> getApuntes() { return apuntes; }
+    public void setApuntes(List<Apunte> apuntes) { this.apuntes = apuntes; }
 }

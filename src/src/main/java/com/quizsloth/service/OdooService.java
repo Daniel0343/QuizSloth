@@ -2,7 +2,8 @@ package com.quizsloth.service;
 
 import com.quizsloth.dto.SubscripcionDTO;
 import com.quizsloth.model.Usuario;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,9 +22,10 @@ import java.util.Map;
  crearFacturaMensual() — genera la factura mensual automática.
 
  */
-@Slf4j
 @Service
 public class OdooService {
+
+    private static final Logger log = LoggerFactory.getLogger(OdooService.class);
 
     @Value("${odoo.url}")
     private String odooUrl;

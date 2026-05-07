@@ -1,15 +1,9 @@
 package com.quizsloth.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "categorias")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Categoria {
 
     @Id
@@ -21,4 +15,21 @@ public class Categoria {
 
     @Column(name = "creado_por_email", length = 200)
     private String creadoPorEmail;
+
+    public Categoria() {}
+
+    public Categoria(Integer id, String nombre, String creadoPorEmail) {
+        this.id = id;
+        this.nombre = nombre;
+        this.creadoPorEmail = creadoPorEmail;
+    }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+
+    public String getCreadoPorEmail() { return creadoPorEmail; }
+    public void setCreadoPorEmail(String creadoPorEmail) { this.creadoPorEmail = creadoPorEmail; }
 }

@@ -3,8 +3,6 @@ package com.quizsloth.controller;
 import com.quizsloth.security.JwtUtil;
 import com.quizsloth.service.ColeccionService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,11 +11,15 @@ import com.quizsloth.model.Quiz;
 
 @RestController
 @RequestMapping("/colecciones")
-@RequiredArgsConstructor
 public class ColeccionController {
 
     private final ColeccionService coleccionService;
     private final JwtUtil jwtUtil;
+
+    public ColeccionController(ColeccionService coleccionService, JwtUtil jwtUtil) {
+        this.coleccionService = coleccionService;
+        this.jwtUtil = jwtUtil;
+    }
 
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -108,8 +110,10 @@ public class ColeccionController {
         return ResponseEntity.ok(coleccionService.renombrar(id, req.getNombre(), email));
     }
 
-    @Data
     static class CrearColeccionRequest {
         private String nombre;
+
+        public String getNombre() { return nombre; }
+        public void setNombre(String nombre) { this.nombre = nombre; }
     }
 }

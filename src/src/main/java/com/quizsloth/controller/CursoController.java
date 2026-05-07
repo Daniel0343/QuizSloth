@@ -3,8 +3,6 @@ package com.quizsloth.controller;
 import com.quizsloth.security.JwtUtil;
 import com.quizsloth.service.CursoService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,11 +11,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/cursos")
-@RequiredArgsConstructor
 public class CursoController {
 
     private final CursoService cursoService;
     private final JwtUtil jwtUtil;
+
+    public CursoController(CursoService cursoService, JwtUtil jwtUtil) {
+        this.cursoService = cursoService;
+        this.jwtUtil = jwtUtil;
+    }
 
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -156,6 +158,29 @@ public class CursoController {
         return ResponseEntity.noContent().build();
     }
 
-    @Data static class CrearCursoRequest { String nombre; String descripcion; String color; }
-    @Data static class CrearElementoRequest { String tipo; String titulo; String contenido; }
+    static class CrearCursoRequest {
+        String nombre;
+        String descripcion;
+        String color;
+
+        public String getNombre() { return nombre; }
+        public void setNombre(String nombre) { this.nombre = nombre; }
+        public String getDescripcion() { return descripcion; }
+        public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+        public String getColor() { return color; }
+        public void setColor(String color) { this.color = color; }
+    }
+
+    static class CrearElementoRequest {
+        String tipo;
+        String titulo;
+        String contenido;
+
+        public String getTipo() { return tipo; }
+        public void setTipo(String tipo) { this.tipo = tipo; }
+        public String getTitulo() { return titulo; }
+        public void setTitulo(String titulo) { this.titulo = titulo; }
+        public String getContenido() { return contenido; }
+        public void setContenido(String contenido) { this.contenido = contenido; }
+    }
 }

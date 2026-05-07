@@ -2,7 +2,6 @@ package com.quizsloth.controller;
 
 import com.quizsloth.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -21,13 +20,16 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequiredArgsConstructor
 public class FileController {
 
     @Value("${app.upload.dir}")
     private String uploadDir;
 
     private final JwtUtil jwtUtil;
+
+    public FileController(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
     private boolean isAuthenticated(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -63,7 +65,7 @@ public class FileController {
                 .body(resource);
     }
 
-    // Compatibilidad con URLs antiguas (uuid.pdf sin carpeta)
+
     @GetMapping("/files/{nombre}")
     public ResponseEntity<Resource> serveLegacy(@PathVariable String nombre) throws MalformedURLException {
         Path path = Path.of(uploadDir + "/pdfs/" + nombre);

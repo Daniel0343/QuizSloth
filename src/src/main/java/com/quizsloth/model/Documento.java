@@ -1,18 +1,12 @@
 package com.quizsloth.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "documentos")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Documento {
 
     @Id
@@ -39,8 +33,42 @@ public class Documento {
     @OneToMany(mappedBy = "documento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Quiz> quizzes;
 
+    public Documento() {}
+
+    public Documento(Integer id, String nombreArchivo, String rutaAlmacenamiento, LocalDateTime fechaSubida,
+                     Usuario usuario, Curso curso, List<Quiz> quizzes) {
+        this.id = id;
+        this.nombreArchivo = nombreArchivo;
+        this.rutaAlmacenamiento = rutaAlmacenamiento;
+        this.fechaSubida = fechaSubida;
+        this.usuario = usuario;
+        this.curso = curso;
+        this.quizzes = quizzes;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.fechaSubida = LocalDateTime.now();
     }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getNombreArchivo() { return nombreArchivo; }
+    public void setNombreArchivo(String nombreArchivo) { this.nombreArchivo = nombreArchivo; }
+
+    public String getRutaAlmacenamiento() { return rutaAlmacenamiento; }
+    public void setRutaAlmacenamiento(String rutaAlmacenamiento) { this.rutaAlmacenamiento = rutaAlmacenamiento; }
+
+    public LocalDateTime getFechaSubida() { return fechaSubida; }
+    public void setFechaSubida(LocalDateTime fechaSubida) { this.fechaSubida = fechaSubida; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public Curso getCurso() { return curso; }
+    public void setCurso(Curso curso) { this.curso = curso; }
+
+    public List<Quiz> getQuizzes() { return quizzes; }
+    public void setQuizzes(List<Quiz> quizzes) { this.quizzes = quizzes; }
 }

@@ -4,7 +4,6 @@ import com.quizsloth.model.Categoria;
 import com.quizsloth.repository.CategoriaRepository;
 import com.quizsloth.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,11 +11,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/categorias")
-@RequiredArgsConstructor
 public class CategoriaController {
 
     private final CategoriaRepository categoriaRepository;
     private final JwtUtil jwtUtil;
+
+    public CategoriaController(CategoriaRepository categoriaRepository, JwtUtil jwtUtil) {
+        this.categoriaRepository = categoriaRepository;
+        this.jwtUtil = jwtUtil;
+    }
 
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");

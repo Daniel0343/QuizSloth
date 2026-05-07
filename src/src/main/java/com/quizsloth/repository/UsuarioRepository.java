@@ -6,9 +6,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-/**
- * Gestiona la persistencia de profesores y alumnos.
- */
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 

@@ -4,18 +4,24 @@ import com.quizsloth.model.Apunte;
 import com.quizsloth.model.Usuario;
 import com.quizsloth.repository.ApunteRepository;
 import com.quizsloth.repository.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ApunteService {
 
     private final ApunteRepository apunteRepository;
     private final UsuarioRepository usuarioRepository;
     private final IAService iaService;
+
+    public ApunteService(ApunteRepository apunteRepository,
+                         UsuarioRepository usuarioRepository,
+                         IAService iaService) {
+        this.apunteRepository = apunteRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.iaService = iaService;
+    }
 
     public record ApunteResumenDTO(Integer id, String titulo, String fechaCreacion) {}
 

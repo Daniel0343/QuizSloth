@@ -7,7 +7,6 @@ import com.quizsloth.repository.DocumentoRepository;
 import com.quizsloth.repository.UsuarioRepository;
 import com.quizsloth.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +21,22 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/documentos")
-@RequiredArgsConstructor
 public class DocumentoController {
 
     private final DocumentoRepository documentoRepository;
     private final UsuarioRepository usuarioRepository;
     private final CursoRepository cursoRepository;
     private final JwtUtil jwtUtil;
+
+    public DocumentoController(DocumentoRepository documentoRepository,
+                               UsuarioRepository usuarioRepository,
+                               CursoRepository cursoRepository,
+                               JwtUtil jwtUtil) {
+        this.documentoRepository = documentoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.cursoRepository = cursoRepository;
+        this.jwtUtil = jwtUtil;
+    }
 
     @Value("${app.upload.dir}")
     private String uploadDir;

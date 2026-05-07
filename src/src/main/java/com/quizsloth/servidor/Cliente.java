@@ -2,7 +2,6 @@ package com.quizsloth.servidor;
 
 import com.quizsloth.model.*;
 import com.quizsloth.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +11,6 @@ import java.util.Map;
 
 @Service
 @Transactional
-@RequiredArgsConstructor
 public class Cliente {
 
     private final SalaParticipanteRepository participanteRepository;
@@ -20,6 +18,18 @@ public class Cliente {
     private final PreguntaRepository preguntaRepository;
     private final SimpMessagingTemplate broker;
     private final Servidor servidor;
+
+    public Cliente(SalaParticipanteRepository participanteRepository,
+                   UsuarioRepository usuarioRepository,
+                   PreguntaRepository preguntaRepository,
+                   SimpMessagingTemplate broker,
+                   Servidor servidor) {
+        this.participanteRepository = participanteRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.preguntaRepository = preguntaRepository;
+        this.broker = broker;
+        this.servidor = servidor;
+    }
 
     public Servidor.UnirseResponseDTO unirse(String codigo, String nickname, String email) {
         Sala sala = servidor.getSala(codigo);

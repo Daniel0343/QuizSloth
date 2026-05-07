@@ -7,18 +7,24 @@ import com.quizsloth.dto.SubscripcionDTO;
 import com.quizsloth.model.Usuario;
 import com.quizsloth.repository.UsuarioRepository;
 import com.quizsloth.security.JwtUtil;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UsuarioRepository usuarioRepository;
     private final JwtUtil jwtUtil;
     private final OdooService odooService;
+
+    public AuthService(UsuarioRepository usuarioRepository, JwtUtil jwtUtil, OdooService odooService) {
+        this.usuarioRepository = usuarioRepository;
+        this.jwtUtil = jwtUtil;
+        this.odooService = odooService;
+    }
 
     public AuthResponse login(LoginRequest request) {
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())

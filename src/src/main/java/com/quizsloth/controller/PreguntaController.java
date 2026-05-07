@@ -2,17 +2,18 @@ package com.quizsloth.controller;
 
 import com.quizsloth.model.Pregunta;
 import com.quizsloth.service.QuizService;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/preguntas")
-@RequiredArgsConstructor
 public class PreguntaController {
 
     private final QuizService quizService;
+
+    public PreguntaController(QuizService quizService) {
+        this.quizService = quizService;
+    }
 
     @PostMapping
     public ResponseEntity<Pregunta> crear(@RequestBody CrearPreguntaRequest req) {
@@ -32,9 +33,13 @@ public class PreguntaController {
         return ResponseEntity.noContent().build();
     }
 
-    @Data
     static class CrearPreguntaRequest {
         private Integer quizId;
         private Integer orden;
+
+        public Integer getQuizId() { return quizId; }
+        public void setQuizId(Integer quizId) { this.quizId = quizId; }
+        public Integer getOrden() { return orden; }
+        public void setOrden(Integer orden) { this.orden = orden; }
     }
 }

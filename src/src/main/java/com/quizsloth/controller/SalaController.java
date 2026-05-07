@@ -4,7 +4,6 @@ import com.quizsloth.security.JwtUtil;
 import com.quizsloth.servidor.Cliente;
 import com.quizsloth.servidor.Servidor;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -15,12 +14,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @Controller
-@RequiredArgsConstructor
 public class SalaController {
 
     private final Servidor servidor;
     private final Cliente cliente;
     private final JwtUtil jwtUtil;
+
+    public SalaController(Servidor servidor, Cliente cliente, JwtUtil jwtUtil) {
+        this.servidor = servidor;
+        this.cliente = cliente;
+        this.jwtUtil = jwtUtil;
+    }
 
     private String emailFromRequest(HttpServletRequest req) {
         String h = req.getHeader("Authorization");
@@ -36,7 +40,6 @@ public class SalaController {
         catch (Exception e) { return null; }
     }
 
-    // ── REST ──────────────────────────────────────────────────────────────────
 
     @PostMapping("/salas")
     @ResponseBody
@@ -92,7 +95,6 @@ public class SalaController {
         }
     }
 
-    // ── WebSocket / STOMP ─────────────────────────────────────────────────────
 
     @MessageMapping("/sala/{codigo}/iniciar")
     public void iniciar(@DestinationVariable String codigo, @Payload Map<String, String> payload) {

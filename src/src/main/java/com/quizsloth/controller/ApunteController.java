@@ -4,8 +4,8 @@ import com.quizsloth.model.Apunte;
 import com.quizsloth.security.JwtUtil;
 import com.quizsloth.service.ApunteService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,14 +13,19 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @RestController
 @RequestMapping("/apuntes")
-@RequiredArgsConstructor
 public class ApunteController {
+
+    private static final Logger log = LoggerFactory.getLogger(ApunteController.class);
 
     private final ApunteService apunteService;
     private final JwtUtil jwtUtil;
+
+    public ApunteController(ApunteService apunteService, JwtUtil jwtUtil) {
+        this.apunteService = apunteService;
+        this.jwtUtil = jwtUtil;
+    }
 
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");

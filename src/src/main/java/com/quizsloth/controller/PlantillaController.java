@@ -5,7 +5,6 @@ import com.quizsloth.security.JwtUtil;
 import com.quizsloth.service.PlantillaService;
 import com.quizsloth.service.QuizService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,11 +12,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/plantillas")
-@RequiredArgsConstructor
 public class PlantillaController {
 
     private final PlantillaService plantillaService;
     private final JwtUtil jwtUtil;
+
+    public PlantillaController(PlantillaService plantillaService, JwtUtil jwtUtil) {
+        this.plantillaService = plantillaService;
+        this.jwtUtil = jwtUtil;
+    }
 
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");

@@ -1,18 +1,12 @@
 package com.quizsloth.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "calificaciones")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Calificacion {
 
     @Id
@@ -33,8 +27,33 @@ public class Calificacion {
     @Column(name = "fecha_completado", updatable = false)
     private LocalDateTime fechaCompletado;
 
+    public Calificacion() {}
+
+    public Calificacion(Integer id, Usuario usuario, Quiz quiz, BigDecimal puntuacion, LocalDateTime fechaCompletado) {
+        this.id = id;
+        this.usuario = usuario;
+        this.quiz = quiz;
+        this.puntuacion = puntuacion;
+        this.fechaCompletado = fechaCompletado;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.fechaCompletado = LocalDateTime.now();
     }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public Quiz getQuiz() { return quiz; }
+    public void setQuiz(Quiz quiz) { this.quiz = quiz; }
+
+    public BigDecimal getPuntuacion() { return puntuacion; }
+    public void setPuntuacion(BigDecimal puntuacion) { this.puntuacion = puntuacion; }
+
+    public LocalDateTime getFechaCompletado() { return fechaCompletado; }
+    public void setFechaCompletado(LocalDateTime fechaCompletado) { this.fechaCompletado = fechaCompletado; }
 }

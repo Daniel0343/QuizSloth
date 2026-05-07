@@ -2,13 +2,9 @@ package com.quizsloth.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "elementos_curso")
-@Data
-@NoArgsConstructor
 public class ElementoCurso {
 
     @Id
@@ -32,6 +28,26 @@ public class ElementoCurso {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_seccion", nullable = false)
     private SeccionCurso seccion;
+
+    public ElementoCurso() {}
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public Tipo getTipo() { return tipo; }
+    public void setTipo(Tipo tipo) { this.tipo = tipo; }
+
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public String getContenido() { return contenido; }
+    public void setContenido(String contenido) { this.contenido = contenido; }
+
+    public Integer getOrden() { return orden; }
+    public void setOrden(Integer orden) { this.orden = orden; }
+
+    public SeccionCurso getSeccion() { return seccion; }
+    public void setSeccion(SeccionCurso seccion) { this.seccion = seccion; }
 
     public enum Tipo { TEXTO, ENLACE, PDF, QUIZ, APUNTE }
 }

@@ -1,8 +1,6 @@
 package com.quizsloth.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,8 +8,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "salas")
-@Data
-@NoArgsConstructor
 public class Sala {
 
     @Id
@@ -42,8 +38,34 @@ public class Sala {
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
+    public Sala() {}
+
     @PrePersist
     void onCreate() { fechaCreacion = LocalDateTime.now(); }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getCodigo() { return codigo; }
+    public void setCodigo(String codigo) { this.codigo = codigo; }
+
+    public Estado getEstado() { return estado; }
+    public void setEstado(Estado estado) { this.estado = estado; }
+
+    public int getPreguntaActualIdx() { return preguntaActualIdx; }
+    public void setPreguntaActualIdx(int preguntaActualIdx) { this.preguntaActualIdx = preguntaActualIdx; }
+
+    public Quiz getQuiz() { return quiz; }
+    public void setQuiz(Quiz quiz) { this.quiz = quiz; }
+
+    public Usuario getHost() { return host; }
+    public void setHost(Usuario host) { this.host = host; }
+
+    public List<SalaParticipante> getParticipantes() { return participantes; }
+    public void setParticipantes(List<SalaParticipante> participantes) { this.participantes = participantes; }
+
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 
     public enum Estado { ESPERANDO, JUGANDO, TERMINADA }
 }

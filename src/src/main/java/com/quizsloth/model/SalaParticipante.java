@@ -2,13 +2,9 @@ package com.quizsloth.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "sala_participantes")
-@Data
-@NoArgsConstructor
 public class SalaParticipante {
 
     @Id
@@ -35,4 +31,27 @@ public class SalaParticipante {
 
     @Column(name = "respuesta_actual", length = 1)
     private String respuestaActual;
+
+    public SalaParticipante() {}
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Sala getSala() { return sala; }
+    public void setSala(Sala sala) { this.sala = sala; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public String getNickname() { return nickname; }
+    public void setNickname(String nickname) { this.nickname = nickname; }
+
+    public int getPuntos() { return puntos; }
+    public void setPuntos(int puntos) { this.puntos = puntos; }
+
+    public boolean isRespondioActual() { return respondioActual; }
+    public void setRespondioActual(boolean respondioActual) { this.respondioActual = respondioActual; }
+
+    public String getRespuestaActual() { return respuestaActual; }
+    public void setRespuestaActual(String respuestaActual) { this.respuestaActual = respuestaActual; }
 }

@@ -2,7 +2,6 @@ package com.quizsloth.servidor;
 
 import com.quizsloth.model.*;
 import com.quizsloth.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +11,6 @@ import java.util.*;
 
 @Service
 @Transactional
-@RequiredArgsConstructor
 public class Servidor {
 
     private final SalaRepository salaRepository;
@@ -23,7 +21,22 @@ public class Servidor {
     private final CalificacionRepository calificacionRepository;
     private final SimpMessagingTemplate broker;
 
-    // ── DTOs ─────────────────────────────────────────────────────────────────
+    public Servidor(SalaRepository salaRepository,
+                    SalaParticipanteRepository participanteRepository,
+                    QuizRepository quizRepository,
+                    PreguntaRepository preguntaRepository,
+                    UsuarioRepository usuarioRepository,
+                    CalificacionRepository calificacionRepository,
+                    SimpMessagingTemplate broker) {
+        this.salaRepository = salaRepository;
+        this.participanteRepository = participanteRepository;
+        this.quizRepository = quizRepository;
+        this.preguntaRepository = preguntaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.calificacionRepository = calificacionRepository;
+        this.broker = broker;
+    }
+
 
     public record JugadorDTO(Long id, String nickname, int puntos, boolean respondio) {}
     public record SalaInfoDTO(String codigo, String estado, int preguntaActualIdx,
@@ -36,7 +49,6 @@ public class Servidor {
     public record PodioDTO(List<JugadorDTO> podio, List<JugadorDTO> todos) {}
     public record UnirseResponseDTO(Long participanteId, SalaInfoDTO sala) {}
 
-    // ── Acciones del servidor (host) ──────────────────────────────────────────
 
     public SalaInfoDTO crearSala(Integer quizId, String hostEmail, boolean participar) {
         Quiz quiz = quizRepository.findById(quizId)

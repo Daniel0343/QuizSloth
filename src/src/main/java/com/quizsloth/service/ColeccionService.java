@@ -8,19 +8,27 @@ import com.quizsloth.repository.ApunteRepository;
 import com.quizsloth.repository.ColeccionRepository;
 import com.quizsloth.repository.QuizRepository;
 import com.quizsloth.repository.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ColeccionService {
 
     private final ColeccionRepository coleccionRepository;
     private final UsuarioRepository usuarioRepository;
     private final QuizRepository quizRepository;
     private final ApunteRepository apunteRepository;
+
+    public ColeccionService(ColeccionRepository coleccionRepository,
+                            UsuarioRepository usuarioRepository,
+                            QuizRepository quizRepository,
+                            ApunteRepository apunteRepository) {
+        this.coleccionRepository = coleccionRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.quizRepository = quizRepository;
+        this.apunteRepository = apunteRepository;
+    }
 
     public record ColeccionDTO(Integer id, String nombre, int cantidad) {}
 

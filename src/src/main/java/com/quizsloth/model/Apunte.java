@@ -3,17 +3,11 @@ package com.quizsloth.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "apuntes")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Apunte {
 
@@ -35,8 +29,33 @@ public class Apunte {
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
+    public Apunte() {}
+
+    public Apunte(Integer id, String titulo, String contenidoJson, Usuario usuario, LocalDateTime fechaCreacion) {
+        this.id = id;
+        this.titulo = titulo;
+        this.contenidoJson = contenidoJson;
+        this.usuario = usuario;
+        this.fechaCreacion = fechaCreacion;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.fechaCreacion = LocalDateTime.now();
     }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public String getContenidoJson() { return contenidoJson; }
+    public void setContenidoJson(String contenidoJson) { this.contenidoJson = contenidoJson; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 }

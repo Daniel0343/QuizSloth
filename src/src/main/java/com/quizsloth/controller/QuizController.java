@@ -6,8 +6,6 @@ import com.quizsloth.security.JwtUtil;
 import com.quizsloth.service.IAService;
 import com.quizsloth.service.QuizService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,12 +14,17 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/quizzes")
-@RequiredArgsConstructor
 public class QuizController {
 
     private final QuizService quizService;
     private final IAService iaService;
     private final JwtUtil jwtUtil;
+
+    public QuizController(QuizService quizService, IAService iaService, JwtUtil jwtUtil) {
+        this.quizService = quizService;
+        this.iaService = iaService;
+        this.jwtUtil = jwtUtil;
+    }
 
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -44,10 +47,14 @@ public class QuizController {
         return ResponseEntity.ok(quiz);
     }
 
-    @Data
     static class CrearQuizRequest {
         private String titulo;
         private Integer categoriaId;
+
+        public String getTitulo() { return titulo; }
+        public void setTitulo(String titulo) { this.titulo = titulo; }
+        public Integer getCategoriaId() { return categoriaId; }
+        public void setCategoriaId(Integer categoriaId) { this.categoriaId = categoriaId; }
     }
 
     @GetMapping("/mis-quizzes")
@@ -134,27 +141,51 @@ public class QuizController {
         return ResponseEntity.ok(quiz);
     }
 
-    @Data
     static class GenerarQuizRequest {
         private Integer documentoId;
         private String titulo;
         private int numPreguntas = 5;
+
+        public Integer getDocumentoId() { return documentoId; }
+        public void setDocumentoId(Integer documentoId) { this.documentoId = documentoId; }
+        public String getTitulo() { return titulo; }
+        public void setTitulo(String titulo) { this.titulo = titulo; }
+        public int getNumPreguntas() { return numPreguntas; }
+        public void setNumPreguntas(int numPreguntas) { this.numPreguntas = numPreguntas; }
     }
 
-    @Data
     static class GenerarDesdeTextoRequest {
         private String titulo;
         private String texto;
         private int numPreguntas = 5;
         private String dificultad = "normal";
         private Integer categoriaId;
+
+        public String getTitulo() { return titulo; }
+        public void setTitulo(String titulo) { this.titulo = titulo; }
+        public String getTexto() { return texto; }
+        public void setTexto(String texto) { this.texto = texto; }
+        public int getNumPreguntas() { return numPreguntas; }
+        public void setNumPreguntas(int numPreguntas) { this.numPreguntas = numPreguntas; }
+        public String getDificultad() { return dificultad; }
+        public void setDificultad(String dificultad) { this.dificultad = dificultad; }
+        public Integer getCategoriaId() { return categoriaId; }
+        public void setCategoriaId(Integer categoriaId) { this.categoriaId = categoriaId; }
     }
 
-    @Data
     static class ActualizarQuizRequest {
         private String titulo;
         private String dificultad;
         private Integer categoriaId;
         private String color;
+
+        public String getTitulo() { return titulo; }
+        public void setTitulo(String titulo) { this.titulo = titulo; }
+        public String getDificultad() { return dificultad; }
+        public void setDificultad(String dificultad) { this.dificultad = dificultad; }
+        public Integer getCategoriaId() { return categoriaId; }
+        public void setCategoriaId(Integer categoriaId) { this.categoriaId = categoriaId; }
+        public String getColor() { return color; }
+        public void setColor(String color) { this.color = color; }
     }
 }

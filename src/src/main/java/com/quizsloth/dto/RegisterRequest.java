@@ -1,24 +1,25 @@
 package com.quizsloth.dto;
 
 import com.quizsloth.model.Usuario;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 
-@Data
 public class RegisterRequest {
 
-    @NotBlank
     private String nombre;
-
-    @Email
-    @NotBlank
     private String email;
-
-    @NotBlank
     private String password;
-
-    @NotNull
     private Usuario.Rol rol;
+
+    public RegisterRequest() {}
+
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public Usuario.Rol getRol() { return rol; }
+    public void setRol(Usuario.Rol rol) { this.rol = rol; }
 }

@@ -9,7 +9,6 @@ import com.quizsloth.repository.DocumentoRepository;
 import com.quizsloth.repository.PreguntaRepository;
 import com.quizsloth.repository.QuizRepository;
 import com.quizsloth.repository.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +16,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class QuizService {
 
     private final QuizRepository quizRepository;
@@ -26,6 +24,20 @@ public class QuizService {
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
     private final IAService iaService;
+
+    public QuizService(QuizRepository quizRepository,
+                       PreguntaRepository preguntaRepository,
+                       DocumentoRepository documentoRepository,
+                       CategoriaRepository categoriaRepository,
+                       UsuarioRepository usuarioRepository,
+                       IAService iaService) {
+        this.quizRepository = quizRepository;
+        this.preguntaRepository = preguntaRepository;
+        this.documentoRepository = documentoRepository;
+        this.categoriaRepository = categoriaRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.iaService = iaService;
+    }
 
     public List<Quiz> listarTodos() {
         return quizRepository.findAll();

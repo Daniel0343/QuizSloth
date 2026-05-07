@@ -2,7 +2,6 @@ package com.quizsloth.service;
 
 import com.quizsloth.model.*;
 import com.quizsloth.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +13,6 @@ import java.util.List;
 
 @Service
 @Transactional
-@RequiredArgsConstructor
 public class CursoService {
 
     private final CursoRepository cursoRepository;
@@ -23,6 +21,20 @@ public class CursoService {
     private final ElementoCursoRepository elementoRepository;
     private final CalificacionRepository calificacionRepository;
     private final QuizRepository quizRepository;
+
+    public CursoService(CursoRepository cursoRepository,
+                        UsuarioRepository usuarioRepository,
+                        SeccionCursoRepository seccionRepository,
+                        ElementoCursoRepository elementoRepository,
+                        CalificacionRepository calificacionRepository,
+                        QuizRepository quizRepository) {
+        this.cursoRepository = cursoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.seccionRepository = seccionRepository;
+        this.elementoRepository = elementoRepository;
+        this.calificacionRepository = calificacionRepository;
+        this.quizRepository = quizRepository;
+    }
 
     public record CursoDTO(Integer id, String nombre, String descripcion, String color,
                            int numAlumnos, ProfesorInfo profesor) {}

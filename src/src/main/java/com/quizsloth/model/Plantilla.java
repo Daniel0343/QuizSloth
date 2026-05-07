@@ -1,16 +1,12 @@
 package com.quizsloth.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "plantillas")
-@Data
-@NoArgsConstructor
 public class Plantilla {
 
     @Id
@@ -29,4 +25,21 @@ public class Plantilla {
 
     @OneToMany(mappedBy = "plantilla", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PreguntaPlantilla> preguntas = new ArrayList<>();
+
+    public Plantilla() {}
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public Categoria getCategoria() { return categoria; }
+    public void setCategoria(Categoria categoria) { this.categoria = categoria; }
+
+    public Quiz.Dificultad getDificultad() { return dificultad; }
+    public void setDificultad(Quiz.Dificultad dificultad) { this.dificultad = dificultad; }
+
+    public List<PreguntaPlantilla> getPreguntas() { return preguntas; }
+    public void setPreguntas(List<PreguntaPlantilla> preguntas) { this.preguntas = preguntas; }
 }

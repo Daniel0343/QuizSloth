@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quizsloth.model.Documento;
 import com.quizsloth.model.Pregunta;
 import com.quizsloth.model.Quiz;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -28,9 +29,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
 @Service
 public class IAService {
+
+    private static final Logger log = LoggerFactory.getLogger(IAService.class);
 
     @Value("${ia.openai.api-url}")
     private String apiUrl;
