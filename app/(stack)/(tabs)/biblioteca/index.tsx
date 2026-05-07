@@ -517,7 +517,6 @@ function TabBiblioteca({
         <EmptyState
           message={filtro === 'apuntes' ? 'No tienes apuntes aún' : 'No tienes nada aún en la biblioteca'}
           sub={filtro === 'apuntes' ? 'Crea tu primer apunte desde el botón central' : 'Aquí aparecerán tus quizzes y apuntes cuando los crees'}
-          showFindButton={filtro !== 'apuntes'}
         />
       ) : (
         <>
@@ -602,10 +601,9 @@ function TabColecciones({
   );
 }
 
-function EmptyState({ message, sub, showFindButton }: {
+function EmptyState({ message, sub }: {
   message: string;
   sub: string;
-  showFindButton?: boolean;
 }) {
   return (
     <View style={styles.emptyState}>
@@ -616,11 +614,6 @@ function EmptyState({ message, sub, showFindButton }: {
       />
       <Text style={styles.emptyTitle}>{message}</Text>
       <Text style={styles.emptySubtitle}>{sub}</Text>
-      {showFindButton && (
-        <Pressable style={styles.btnSecondary}>
-          <Text style={styles.btnSecondaryText}>Explorar quizzes</Text>
-        </Pressable>
-      )}
     </View>
   );
 }
