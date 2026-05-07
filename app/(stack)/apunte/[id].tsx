@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  ActivityIndicator, Linking,
+  ActivityIndicator, Linking, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
 import { getApuntePublico } from '@/core/apuntes/actions/apuntes';
 import { ApunteContenido } from '@/core/auth/interface/apunte';
 
@@ -14,6 +17,20 @@ export default function VerApunteScreen() {
   const [cargando, setCargando] = useState(true);
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState<ApunteContenido | null>(null);
+
+  const handleDescargarPDF = async () => {
+    if (!contenido) return;
+    try {
+      const html = generarHTML(titulo, contenido);
+      const { uri: pdfUri } = await Print.printToFileAsync({ html, base64: false });
+      const nombreArchivo = titulo.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').trim().replace(/\s+/g, '_') || 'apunte';
+      const destUri = `${FileSystem.documentDirectory}${nombreArchivo}.pdf`;
+      await FileSystem.copyAsync({ from: pdfUri, to: destUri });
+      await Sharing.shareAsync(destUri, { mimeType: 'application/pdf', dialogTitle: 'Guardar o compartir PDF', UTI: 'com.adobe.pdf' });
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'No se pudo generar el PDF.');
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -56,7 +73,9 @@ export default function VerApunteScreen() {
           <Ionicons name="arrow-back" size={22} color="#412E2E" />
         </Pressable>
         <Text style={styles.topTitle} numberOfLines={1}>{titulo}</Text>
-        <View style={{ width: 38 }} />
+        <Pressable style={styles.topIconBtn} onPress={handleDescargarPDF} disabled={!contenido}>
+          <Ionicons name="download-outline" size={20} color="#412E2E" />
+        </Pressable>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -122,6 +141,10 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
   topTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: '#412E2E', textAlign: 'center' },
+  topIconBtn: {
+    width: 38, height: 38, borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.4)', alignItems: 'center', justifyContent: 'center',
+  },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 40, gap: 14 },
   titulo: { fontSize: 22, fontWeight: '800', color: '#1a1a1a', lineHeight: 30 },
   resumenCard: {
@@ -157,3 +180,58 @@ const styles = StyleSheet.create({
   refDesc: { fontSize: 12, color: '#555', lineHeight: 18, marginTop: 2 },
   refUrl: { fontSize: 11, color: '#24833D', marginTop: 2 },
 });
+
+function generarHTML(titulo: string, contenido: ApunteContenido): string {
+  const seccionesHTML = contenido.secciones.map(s => `
+    <div class="seccion">
+      <h2>${s.titulo}</h2>
+      <p>${s.contenido}</p>
+      ${s.puntosClave.length > 0 ? `
+        <div class="puntos">
+          <strong>Puntos clave:</strong>
+          <ul>${s.puntosClave.map(p => `<li>${p}</li>`).join('')}</ul>
+        </div>` : ''}
+    </div>
+  `).join('');
+
+  const referenciasHTML = contenido.referencias.length > 0 ? `
+    <div class="referencias">
+      <h2>Referencias</h2>
+      ${contenido.referencias.map(r => `
+        <div class="ref">
+          <strong>${r.titulo}</strong>
+          <p>${r.descripcion}</p>
+          <a href="${r.url}">${r.url}</a>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8"/>
+      <style>
+        body { font-family: Georgia, serif; max-width: 800px; margin: 0 auto; padding: 32px; color: #1a1a1a; }
+        h1 { color: #571D11; border-bottom: 2px solid #571D11; padding-bottom: 8px; }
+        .resumen { background: #f9f3ef; border-left: 4px solid #844A31; padding: 16px; border-radius: 4px; margin: 20px 0; font-style: italic; }
+        .seccion { margin: 24px 0; }
+        h2 { color: #412E2E; }
+        .puntos { background: #f0f9f2; padding: 12px 16px; border-radius: 8px; margin-top: 12px; }
+        ul { margin: 6px 0; padding-left: 20px; }
+        li { margin: 4px 0; }
+        .referencias { border-top: 2px solid #e5e7eb; margin-top: 32px; padding-top: 16px; }
+        .ref { margin: 12px 0; }
+        a { color: #24833D; word-break: break-all; }
+      </style>
+    </head>
+    <body>
+      <h1>${titulo}</h1>
+      <div class="resumen">${contenido.resumen}</div>
+      ${seccionesHTML}
+      ${referenciasHTML}
+    </body>
+    </html>
+  `;
+}
