@@ -42,10 +42,6 @@ public class OdooService {
     private static final double PRECIO_MENSUAL = 29.99;
     private static final String PRODUCT_NAME = "Suscripcion QuizSloth";
 
-    // ----------------------------------------------------------------
-    // Autenticación
-    // ----------------------------------------------------------------
-
     private int authenticate() throws Exception {
         XmlRpcClient client = buildClient("/xmlrpc/2/common");
         Object uid = client.execute("authenticate",
@@ -56,13 +52,11 @@ public class OdooService {
         return (Integer) uid;
     }
 
-    // ----------------------------------------------------------------
-    // Crear cliente (alumno) en Odoo
-    // ----------------------------------------------------------------
+
 
     /**
      * Crea un res.partner en Odoo con los datos del alumno.
-     * @return ID del partner creado en Odoo.
+     * @return ID del partner
      */
     public Integer crearCliente(Usuario alumno) throws Exception {
         int uid = authenticate();
@@ -83,15 +77,15 @@ public class OdooService {
         int partnerId = (int) result;
         log.info("Alumno {} registrado en Odoo como partner ID={}", alumno.getEmail(), partnerId);
 
-        // Crear factura mensual automática
-        crearFacturaMensual(uid, client, partnerId);
+        try {
+            crearFacturaMensual(uid, client, partnerId);
+        } catch (Exception e) {
+            log.warn("No se pudo crear pedido en Odoo para partner {}: {}", partnerId, e.getMessage());
+        }
 
         return partnerId;
     }
 
-    // ----------------------------------------------------------------
-    // Crear factura mensual automática
-    // ----------------------------------------------------------------
 
     /**
      * Genera un sale.order para el alumno y lo confirma (flujo de ventas).
@@ -138,6 +132,7 @@ public class OdooService {
         orderLine.put("product_id", productId);
         orderLine.put("product_uom_qty", 1);
         orderLine.put("price_unit", PRECIO_MENSUAL);
+        orderLine.put("tax_id", new Object[]{});
 
         client.execute("execute_kw", List.of(
                 odooDb, uid, odooPassword,
@@ -155,9 +150,7 @@ public class OdooService {
         log.info("Factura mensual creada en Odoo para partner ID={}", partnerId);
     }
 
-    // ----------------------------------------------------------------
-    // Reactivar suscripción del alumno
-    // ----------------------------------------------------------------
+
 
     public void reactivarSubscripcion(int odooPartnerId) throws Exception {
         int uid = authenticate();
@@ -166,9 +159,7 @@ public class OdooService {
         log.info("Suscripcion reactivada en Odoo para partner ID={}", odooPartnerId);
     }
 
-    // ----------------------------------------------------------------
-    // Cancelar suscripción del alumno
-    // ----------------------------------------------------------------
+
 
     public void cancelarSubscripcion(int odooPartnerId) throws Exception {
         int uid = authenticate();
@@ -201,9 +192,7 @@ public class OdooService {
         log.info("Suscripción cancelada en Odoo para partner ID={}, orderId={}, writeResult={}", odooPartnerId, orderId, writeResult);
     }
 
-    // ----------------------------------------------------------------
-    // Actualizar odoo_id si se pierde la referencia
-    // ----------------------------------------------------------------
+
 
     public Integer buscarClientePorEmail(String email) throws Exception {
         int uid = authenticate();
@@ -219,9 +208,7 @@ public class OdooService {
         return ids.length > 0 ? (int) ids[0] : null;
     }
 
-    // ----------------------------------------------------------------
-    // Consultar suscripción del alumno
-    // ----------------------------------------------------------------
+
 
     public SubscripcionDTO getSubscripcion(int odooPartnerId) throws Exception {
         int uid = authenticate();
@@ -252,9 +239,9 @@ public class OdooService {
         log.info("getSubscripcion partnerId={} -> state='{}' dateOrder='{}'", odooPartnerId, state, dateOrder);
 
         String estado = switch (state) {
-            case "sale", "done" -> "activa";
-            case "cancel"       -> "expirada";
-            default             -> "sin_subscripcion";
+            case "sale", "done", "draft" -> "activa";
+            case "cancel"                -> "expirada";
+            default                      -> "sin_subscripcion";
         };
 
         String fechaFin = null;
@@ -266,9 +253,7 @@ public class OdooService {
         return new SubscripcionDTO(estado, PRODUCT_NAME, dateOrder, fechaFin, odooPartnerId);
     }
 
-    // ----------------------------------------------------------------
-    // Helpers
-    // ----------------------------------------------------------------
+
 
     private XmlRpcClient buildClient(String endpoint) throws Exception {
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
