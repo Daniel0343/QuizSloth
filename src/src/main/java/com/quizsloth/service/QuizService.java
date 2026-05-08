@@ -40,11 +40,11 @@ public class QuizService {
     }
 
     public List<Quiz> listarTodos() {
-        return quizRepository.findAll();
+        return quizRepository.findByCreadorRol(Usuario.Rol.profesor);
     }
 
     public List<Quiz> listarPorCategoria(Integer categoriaId) {
-        return quizRepository.findByCategoriaId(categoriaId);
+        return quizRepository.findByCategoriaIdAndCreadorRol(categoriaId, Usuario.Rol.profesor);
     }
 
     public List<Quiz> listarPorCreador(String email) {

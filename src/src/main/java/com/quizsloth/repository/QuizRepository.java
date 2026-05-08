@@ -19,5 +19,9 @@ public interface QuizRepository extends JpaRepository<Quiz, Integer> {
 
     List<Quiz> findByCreador(Usuario creador);
 
+    List<Quiz> findByCreadorRol(Usuario.Rol rol);
+
+    List<Quiz> findByCategoriaIdAndCreadorRol(Integer categoriaId, Usuario.Rol rol);
+
     List<Quiz> findByEsPlantillaTrue();
 }
