@@ -19,4 +19,6 @@ public interface CalificacionRepository extends JpaRepository<Calificacion, Inte
     Optional<Calificacion> findByUsuarioAndQuiz(Usuario usuario, Quiz quiz);
 
     List<Calificacion> findByQuizIn(List<Quiz> quizzes);
+
+    void deleteByQuiz(Quiz quiz);
 }

@@ -50,6 +50,15 @@ public class CursoController {
         return ResponseEntity.ok(cursoService.getCalificaciones(id));
     }
 
+    @DeleteMapping("/{id}/calificaciones/quiz/{quizId}")
+    public ResponseEntity<Void> eliminarCalificacionesQuiz(
+            @PathVariable Integer id, @PathVariable Integer quizId, HttpServletRequest request) {
+        String email = emailFromRequest(request);
+        if (email == null) return ResponseEntity.status(401).build();
+        cursoService.eliminarCalificacionesQuiz(id, quizId, email);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping
     public ResponseEntity<CursoService.CursoDTO> crear(@RequestBody CrearCursoRequest req, HttpServletRequest request) {
         String email = emailFromRequest(request);
