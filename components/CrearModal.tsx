@@ -2,15 +2,16 @@ import PantallaInvitado from '@/components/PantallaInvitadoPlantilla';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
-  ActivityIndicator, Animated, Image,
+  ActivityIndicator, Image,
   Modal, Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { crearQuizVacio } from '@/core/quizzes/actions/crear-quiz';
 
 type SubType = 'prediseñados' | 'texto-ia' | 'url' | 'texto-pdf' | null;
@@ -230,13 +231,17 @@ export default function CrearModal({ visible, onClose }: { visible: boolean; onC
 }
 
 function OptionCard({ opt, onPress }: { opt: typeof QUIZ_OPTIONS[number] | typeof NOTES_OPTIONS[number]; onPress: () => void }) {
-  const scale = useRef(new Animated.Value(1)).current;
-  const onPressIn = () => Animated.spring(scale, { toValue: 0.94, useNativeDriver: true, speed: 30 }).start();
-  const onPressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20 }).start();
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut} style={styles.cardWrapper}>
-      <Animated.View style={[styles.card, { backgroundColor: opt.bg, borderColor: opt.color + '30', transform: [{ scale }] }]}>
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => { scale.value = withSpring(0.94, { damping: 10 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 10 }); }}
+      style={styles.cardWrapper}
+    >
+      <Animated.View style={[styles.card, { backgroundColor: opt.bg, borderColor: opt.color + '30' }, animStyle]}>
         <View style={[styles.cardIconBox, { backgroundColor: opt.color + '18' }]}>
           <Ionicons name={opt.icon as any} size={22} color={opt.color} />
         </View>

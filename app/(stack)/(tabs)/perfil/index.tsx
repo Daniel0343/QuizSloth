@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Animated, Modal, TextInput, ActivityIndicator,
+  Pressable, Modal, TextInput, ActivityIndicator,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -112,14 +113,18 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        <Text style={[styles.sectionLabel, { color: primaryColor }]}>Cuenta</Text>
-        <View style={styles.card}>
-          <SettingRow icon="mail-outline" label="Correo electrónico" value={user?.email} primaryColor={primaryColor} />
-          <View style={styles.divider} />
-          <SettingRow icon="person-outline" label="Nombre de usuario" value={user?.nombre} primaryColor={primaryColor} />
-          <View style={styles.divider} />
-          <SettingRow icon="lock-closed-outline" label="Contraseña" value="••••••••" primaryColor={primaryColor} onPress={abrirEditar} />
-        </View>
+        {user && (
+          <>
+            <Text style={[styles.sectionLabel, { color: primaryColor }]}>Cuenta</Text>
+            <View style={styles.card}>
+              <SettingRow icon="mail-outline" label="Correo electrónico" value={user.email} primaryColor={primaryColor} />
+              <View style={styles.divider} />
+              <SettingRow icon="person-outline" label="Nombre de usuario" value={user.nombre} primaryColor={primaryColor} />
+              <View style={styles.divider} />
+              <SettingRow icon="lock-closed-outline" label="Contraseña" value="••••••••" primaryColor={primaryColor} onPress={abrirEditar} />
+            </View>
+          </>
+        )}
 
         <Text style={[styles.sectionLabel, { color: primaryColor }]}>Aplicación</Text>
         <View style={styles.card}>
@@ -450,15 +455,17 @@ export default function PerfilScreen() {
 function SettingRow({ icon, label, value, primaryColor, onPress }: {
   icon: string; label: string; value?: string; primaryColor: string; onPress?: () => void;
 }) {
-  const chevronX = useRef(new Animated.Value(0)).current;
-
-  const onPressIn = () =>
-    Animated.spring(chevronX, { toValue: 4, useNativeDriver: true, speed: 30 }).start();
-  const onPressOut = () =>
-    Animated.spring(chevronX, { toValue: 0, useNativeDriver: true, speed: 20 }).start();
+  const chevronX = useSharedValue(0);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: chevronX.value }],
+  }));
 
   return (
-    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
+    <Pressable
+      onPressIn={() => { chevronX.value = withSpring(4, { damping: 10 }); }}
+      onPressOut={() => { chevronX.value = withSpring(0, { damping: 10 }); }}
+      onPress={onPress}
+    >
       <View style={styles.settingRow}>
         <View style={styles.settingLeft}>
           <View style={[styles.settingIconBox, { backgroundColor: `${primaryColor}18` }]}>
@@ -468,9 +475,11 @@ function SettingRow({ icon, label, value, primaryColor, onPress }: {
         </View>
         <View style={styles.settingRight}>
           {value && <Text style={styles.settingValue} numberOfLines={1}>{value}</Text>}
-          <Animated.View style={{ transform: [{ translateX: chevronX }] }}>
-            <Ionicons name="chevron-forward" size={16} color="rgba(65,46,46,0.3)" />
-          </Animated.View>
+          {onPress && (
+            <Animated.View style={animStyle}>
+              <Ionicons name="chevron-forward" size={16} color="rgba(65,46,46,0.3)" />
+            </Animated.View>
+          )}
         </View>
       </View>
     </Pressable>
