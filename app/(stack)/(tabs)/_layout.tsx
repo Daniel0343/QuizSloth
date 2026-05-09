@@ -2,16 +2,19 @@ import { useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, TouchableOpacity, View, StyleSheet, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CrearModal from '@/components/CrearModal';
 import { useThemeStore } from '@/presentation/theme/useThemeStore';
 
-const TAB_BAR_HEIGHT = 84;
+const TAB_CONTENT_HEIGHT = 62;
 const BUTTON_SIZE = 78;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function TabsLayout() {
   const [modalVisible, setModalVisible] = useState(false);
   const { primaryColor } = useThemeStore();
+  const { bottom: bottomInset } = useSafeAreaInsets();
+  const tabBarHeight = TAB_CONTENT_HEIGHT + bottomInset;
 
   return (
     <View style={{ flex: 1 }}>
@@ -21,16 +24,18 @@ export default function TabsLayout() {
           tabBarStyle: {
             backgroundColor: primaryColor,
             borderTopWidth: 0,
-            height: TAB_BAR_HEIGHT,
+            height: tabBarHeight,
+            paddingBottom: bottomInset,
           },
           tabBarItemStyle: {
-            paddingVertical: 6,
+            paddingTop: 8,
+            paddingBottom: 6,
           },
           tabBarActiveTintColor: '#53b55e',
           tabBarInactiveTintColor: '#d7b59f',
           tabBarLabelStyle: {
             fontSize: 12,
-            marginBottom: 4,
+            marginBottom: 2,
           },
           tabBarAllowFontScaling: false,
         }}
@@ -73,7 +78,7 @@ export default function TabsLayout() {
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
         style={[styles.floatingBtn, {
-          bottom: TAB_BAR_HEIGHT - BUTTON_SIZE / 2 + 8,
+          bottom: tabBarHeight - BUTTON_SIZE / 2 + 8,
           left: SCREEN_WIDTH / 2 - BUTTON_SIZE / 2,
         }]}
         activeOpacity={0.85}
