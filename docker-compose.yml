@@ -4,7 +4,7 @@ services:
     image: mysql:8.0
     container_name: quizzsloth_mysql
     restart: unless-stopped
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --character-set-client-handshake=FALSE --init-connect='SET NAMES utf8mb4'
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: quizzsloth_db
