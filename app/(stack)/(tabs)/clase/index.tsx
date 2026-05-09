@@ -295,9 +295,6 @@ function VistaAlumno({ clases, onTap, onRefresh, cargando }: { clases: CursoResu
         <EmptyState mensaje="No estás en ninguna clase" sub="Tu profesor te invitará cuando cree una clase" />
       ) : (
         <>
-          <Text style={styles.listaHeader}>
-            {clases.length} {clases.length === 1 ? 'clase' : 'clases'} asignadas
-          </Text>
           <View style={styles.list}>
             {clases.map(c => (
               <TarjetaAlumno key={c.id} clase={c} onTap={() => onTap(c.id)} />
