@@ -51,9 +51,18 @@ export default function PlantillasScreen() {
     setModalAccion(true);
   };
 
-  const handleSoloUsar = () => {
-    setModalAccion(false);
-    Alert.alert('Próximamente', 'La funcionalidad de jugar quizzes estará disponible muy pronto.');
+  const handleSoloUsar = async () => {
+    if (!seleccionada) return;
+    setClonando(true);
+    try {
+      const resultado = await clonarPlantilla(seleccionada.id);
+      setModalAccion(false);
+      router.push(`/quiz/solo/${resultado.quiz.id}?temporal=true` as any);
+    } catch {
+      Alert.alert('Error', 'No se pudo cargar el quiz.');
+    } finally {
+      setClonando(false);
+    }
   };
 
   const handleGuardarBiblioteca = async () => {
