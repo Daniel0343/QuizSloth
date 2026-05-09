@@ -100,6 +100,10 @@ export const getCalificacionesCurso = async (cursoId: number): Promise<Calificac
   return data;
 };
 
+export const eliminarCalificacionesQuiz = async (cursoId: number, quizId: number): Promise<void> => {
+  await quizslothApi.delete(`/cursos/${cursoId}/calificaciones/quiz/${quizId}`);
+};
+
 export const uploadPdf = (
   uri: string,
   nombre: string,

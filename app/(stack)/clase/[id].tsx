@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  ActivityIndicator, TextInput, Modal, Linking,
+  ActivityIndicator, TextInput, Modal, Linking, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,7 @@ import {
   getCurso, getParticipantes, invitarAlumno, quitarAlumno,
   getSecciones, crearSeccion, eliminarSeccion, editarSeccion,
   crearElemento, eliminarElemento, editarElemento, uploadPdf,
-  getCalificacionesCurso, CalificacionQuiz,
+  getCalificacionesCurso, eliminarCalificacionesQuiz, CalificacionQuiz,
 } from '@/core/cursos/actions/get-cursos';
 import { quizslothApi } from '@/core/auth/api/quizslothApi';
 import * as DocumentPicker from 'expo-document-picker';
@@ -87,24 +87,25 @@ export default function ClaseDetalleScreen() {
   const [modalInvitar, setModalInvitar] = useState(false);
   const [emailInvitar, setEmailInvitar] = useState('');
   const [invitando, setInvitando] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const cargar = async () => {
-      try {
-        const [c, s, p] = await Promise.all([
-          getCurso(cursoId),
-          getSecciones(cursoId),
-          getParticipantes(cursoId),
-        ]);
-        setClase(c);
-        setSecciones(s);
-        setParticipantes(p);
-        setTienePermisosEdicion(user?.rol === 'profesor');
-      } catch { /* ignorar */ }
-      finally { setCargando(false); }
-    };
-    cargar();
-  }, [cursoId]);
+  const cargarDatos = async (initial = false) => {
+    if (initial) setCargando(true); else setRefreshing(true);
+    try {
+      const [c, s, p] = await Promise.all([
+        getCurso(cursoId),
+        getSecciones(cursoId),
+        getParticipantes(cursoId),
+      ]);
+      setClase(c);
+      setSecciones(s);
+      setParticipantes(p);
+      setTienePermisosEdicion(user?.rol === 'profesor');
+    } catch { /* ignorar */ }
+    finally { if (initial) setCargando(false); else setRefreshing(false); }
+  };
+
+  useEffect(() => { cargarDatos(true); }, [cursoId]);
 
   const abrirEditarSec = (sec: SeccionCurso) => {
     setTituloEditarSec(sec.titulo);
@@ -330,6 +331,8 @@ export default function ClaseDetalleScreen() {
             onAddElemento={secId => { setModalElemento(secId); setModoModal('TEXTO'); setTipoElemento('TEXTO'); setTituloElemento(''); setContenidoElemento(''); setPdfNombre(''); setBibSeleccionado(null); }}
             onEditElemento={abrirEditarElem}
             onDeleteElemento={handleEliminarElemento}
+            refreshing={refreshing}
+            onRefresh={() => cargarDatos(false)}
           />
         )}
         {tab === 'participantes' && (
@@ -338,9 +341,12 @@ export default function ClaseDetalleScreen() {
             tienePermisosEdicion={tienePermisosEdicion}
             onInvitar={() => setModalInvitar(true)}
             onQuitar={handleQuitarAlumno}
+            emailActual={user?.email}
+            refreshing={refreshing}
+            onRefresh={() => cargarDatos(false)}
           />
         )}
-        {tab === 'calificaciones' && <TabCalificaciones cursoId={Number(id)} />}
+        {tab === 'calificaciones' && <TabCalificaciones cursoId={Number(id)} refreshingExterno={refreshing} />}
       </View>
     </SafeAreaView>
 
@@ -639,13 +645,15 @@ export default function ClaseDetalleScreen() {
   );
 }
 
-function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion, onDeleteSeccion, onAddElemento, onEditElemento, onDeleteElemento }: {
+function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion, onDeleteSeccion, onAddElemento, onEditElemento, onDeleteElemento, refreshing, onRefresh }: {
   secciones: SeccionCurso[];
   tienePermisosEdicion: boolean;
   onAddSeccion: () => void;
   onEditSeccion: (s: SeccionCurso) => void;
   onDeleteSeccion: (s: SeccionCurso) => void;
   onAddElemento: (seccionId: number) => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
   onEditElemento: (e: ElementoCurso, seccionId: number) => void;
   onDeleteElemento: (e: ElementoCurso, seccionId: number) => void;
 }) {
@@ -703,7 +711,9 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
         )}
       </View>
 
-    <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} colors={['#571D11']} tintColor="#571D11" />}
+    >
       {secciones.length === 0 && !tienePermisosEdicion && (
         <View style={styles.emptyTab}>
           <Ionicons name="folder-open-outline" size={40} color="rgba(65,46,46,0.2)" />
@@ -798,17 +808,22 @@ function TabCurso({ secciones, tienePermisosEdicion, onAddSeccion, onEditSeccion
   );
 }
 
-function TabParticipantes({ participantes, tienePermisosEdicion, onInvitar, onQuitar }: {
+function TabParticipantes({ participantes, tienePermisosEdicion, onInvitar, onQuitar, emailActual, refreshing, onRefresh }: {
   participantes: Participante[];
   tienePermisosEdicion: boolean;
   onInvitar: () => void;
   onQuitar: (p: Participante) => void;
+  emailActual?: string;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }) {
   const profesores = participantes.filter(p => p.rol === 'profesor');
   const alumnos = participantes.filter(p => p.rol === 'alumno');
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} colors={['#571D11']} tintColor="#571D11" />}
+    >
       {tienePermisosEdicion && (
         <Pressable style={styles.invitarBtn} onPress={onInvitar}>
           <Ionicons name="person-add-outline" size={16} color="#412E2E" />
@@ -823,7 +838,7 @@ function TabParticipantes({ participantes, tienePermisosEdicion, onInvitar, onQu
             <Text style={styles.grupoLabel}>Profesores ({profesores.length})</Text>
           </View>
           {profesores.map(p => (
-            <FilaParticipante key={p.id} p={p} tienePermisosEdicion={tienePermisosEdicion} onQuitar={onQuitar} color="#571D11" />
+            <FilaParticipante key={p.id} p={p} tienePermisosEdicion={tienePermisosEdicion} onQuitar={onQuitar} color="#571D11" emailActual={emailActual} />
           ))}
         </>
       )}
@@ -835,7 +850,7 @@ function TabParticipantes({ participantes, tienePermisosEdicion, onInvitar, onQu
             <Text style={[styles.grupoLabel, { color: '#24833D' }]}>Alumnos ({alumnos.length})</Text>
           </View>
           {alumnos.map(p => (
-            <FilaParticipante key={p.id} p={p} tienePermisosEdicion={tienePermisosEdicion} onQuitar={onQuitar} color="#24833D" />
+            <FilaParticipante key={p.id} p={p} tienePermisosEdicion={tienePermisosEdicion} onQuitar={onQuitar} color="#24833D" emailActual={emailActual} />
           ))}
         </>
       )}
@@ -850,11 +865,12 @@ function TabParticipantes({ participantes, tienePermisosEdicion, onInvitar, onQu
   );
 }
 
-function FilaParticipante({ p, tienePermisosEdicion, onQuitar, color }: {
+function FilaParticipante({ p, tienePermisosEdicion, onQuitar, color, emailActual }: {
   p: Participante;
   tienePermisosEdicion: boolean;
   onQuitar: (p: Participante) => void;
   color: string;
+  emailActual?: string;
 }) {
   return (
     <View style={styles.participanteRow}>
@@ -867,7 +883,7 @@ function FilaParticipante({ p, tienePermisosEdicion, onQuitar, color }: {
         <Text style={styles.participanteNombre}>{p.nombre}</Text>
         <Text style={styles.participanteEmail}>{p.email}</Text>
       </View>
-      {tienePermisosEdicion && (
+      {tienePermisosEdicion && p.email !== emailActual && (
         <Pressable onPress={() => onQuitar(p)} hitSlop={8}>
           <Ionicons name="remove-circle-outline" size={22} color="#c0392b" />
         </Pressable>
@@ -876,16 +892,26 @@ function FilaParticipante({ p, tienePermisosEdicion, onQuitar, color }: {
   );
 }
 
-function TabCalificaciones({ cursoId }: { cursoId: number }) {
+function TabCalificaciones({ cursoId, refreshingExterno }: { cursoId: number; refreshingExterno?: boolean }) {
   const [datos, setDatos] = useState<CalificacionQuiz[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [expandido, setExpandido] = useState<number | null>(null);
 
-  useEffect(() => {
+  const cargar = (initial = false) => {
+    if (initial) setCargando(true); else setRefreshing(true);
     getCalificacionesCurso(cursoId)
       .then(setDatos)
-      .finally(() => setCargando(false));
-  }, [cursoId]);
+      .finally(() => { setCargando(false); setRefreshing(false); });
+  };
+
+  useEffect(() => { cargar(true); }, [cursoId]);
+  useEffect(() => { if (refreshingExterno) cargar(false); }, [refreshingExterno]);
+
+  const handleEliminarQuiz = async (quizId: number) => {
+    await eliminarCalificacionesQuiz(cursoId, quizId);
+    setDatos(prev => prev.filter(q => q.quizId !== quizId));
+  };
 
   if (cargando) {
     return (
@@ -905,7 +931,9 @@ function TabCalificaciones({ cursoId }: { cursoId: number }) {
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 40 }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => cargar(false)} colors={['#571D11']} tintColor="#571D11" />}
+    >
       {datos.map((q) => {
         const abierto = expandido === q.quizId;
         return (
@@ -913,8 +941,15 @@ function TabCalificaciones({ cursoId }: { cursoId: number }) {
             <Pressable style={styles.calHeader} onPress={() => setExpandido(abierto ? null : q.quizId)}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.calQuizTitulo}>{q.quizTitulo}</Text>
-                <Text style={styles.calSeccion}>{q.seccionTitulo} · {q.calificaciones.length} {q.calificaciones.length === 1 ? 'alumno' : 'alumnos'}</Text>
+                <Text style={styles.calSeccion}>{q.seccionTitulo}</Text>
               </View>
+              <Pressable
+                onPress={(e) => { e.stopPropagation(); handleEliminarQuiz(q.quizId); }}
+                hitSlop={8}
+                style={{ marginRight: 8 }}
+              >
+                <Ionicons name="trash-outline" size={18} color="#c0392b" />
+              </Pressable>
               <Ionicons name={abierto ? 'chevron-up' : 'chevron-down'} size={18} color="rgba(65,46,46,0.4)" />
             </Pressable>
 
