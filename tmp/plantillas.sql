@@ -3,10 +3,10 @@ SET CHARACTER SET utf8mb4;
 
 -- Categorías nuevas
 INSERT IGNORE INTO categorias (nombre) VALUES
-    ('Matemáticas'),
+    ('Matematicas'),
     ('Historia'),
     ('Lengua'),
-    ('Biología');
+    ('Biologia');
 
 -- Variables de categorías
 SET @cat_prog   = (SELECT id FROM categorias WHERE nombre = 'Programación' LIMIT 1);
@@ -118,3 +118,7 @@ INSERT INTO preguntas_plantilla (id_plantilla, enunciado, opcion_a, opcion_b, op
 (@p_bio, '¿Qué es la homeostasis?', 'La reproducción celular', 'La capacidad de un organismo de mantener su equilibrio interno', 'El movimiento de nutrientes', 'La síntesis de hormonas', 'B', 'dificil', 11),
 (@p_bio, '¿Qué son los ribosomas?', 'Orgánulos que producen energía', 'Orgánulos encargados de la síntesis de proteínas', 'El sistema de transporte celular', 'Orgánulos de digestión intracelular', 'B', 'normal', 12),
 (@p_bio, '¿Qué es la epigenética?', 'El estudio de la estructura del ADN', 'El estudio de cambios en la expresión génica sin alterar la secuencia de ADN', 'La herencia de caracteres adquiridos', 'El análisis de proteínas celulares', 'B', 'dificil', 13);
+
+
+--docker cp tmp/plantillas.sql quizzsloth_mysql:/tmp/plantillas.sql
+--docker exec quizzsloth_mysql mysql -u administrador -p1234 default-character-set=utf8mb4 quizzsloth_db -e "source /tmp/plantillas.sql"
