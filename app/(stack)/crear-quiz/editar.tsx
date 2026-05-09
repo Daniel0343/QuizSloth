@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  Pressable, ActivityIndicator, Modal, Alert,
+  Pressable, ActivityIndicator, Modal, Alert, BackHandler,
 } from 'react-native';
 import AppAlert from '@/components/AppAlert';
 import PreguntaCard from '@/components/Pregunta/PreguntaCard';
@@ -12,7 +12,7 @@ import {
   obtenerPreguntas, actualizarPregunta, actualizarQuiz,
   crearPregunta, eliminarPreguntaApi,
 } from '@/core/quizzes/actions/crear-quiz';
-import { getQuiz } from '@/core/quizzes/actions/get-quizzes';
+import { getQuiz, eliminarQuiz } from '@/core/quizzes/actions/get-quizzes';
 import { PreguntaDetalle, QuizDetalle } from '@/core/auth/interface/quiz';
 import {
   getMisColecciones, crearColeccion, añadirQuizAColeccion, ColeccionDTO,
@@ -41,6 +41,34 @@ export default function EditarQuizScreen() {
   const [guardandoColeccion, setGuardandoColeccion] = useState(false);
   const [alerta, setAlerta] = useState<{ visible: boolean; variante?: 'peligro'|'exito'|'info'; titulo: string; mensaje?: string; botones?: any[] }>({ visible: false, titulo: '' });
   const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
+  const guardadoRef = useRef(false);
+
+  const handleVolver = () => {
+    if (nuevo !== 'true' || guardadoRef.current) {
+      router.back();
+      return;
+    }
+    Alert.alert(
+      'Descartar quiz',
+      'Si sales ahora el quiz se eliminará porque no lo has guardado. ¿Continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Descartar', style: 'destructive', onPress: async () => {
+          try { await eliminarQuiz(quizId); } catch { /* ignorar */ }
+          router.back();
+        }},
+      ]
+    );
+  };
+
+  useEffect(() => {
+    if (nuevo !== 'true') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleVolver();
+      return true;
+    });
+    return () => sub.remove();
+  }, [nuevo, quizId, guardadoRef.current]);
 
   useEffect(() => {
     const cargar = async () => {
@@ -164,6 +192,7 @@ export default function EditarQuizScreen() {
       );
 
       setGuardando(false);
+      guardadoRef.current = true;
       if (nuevo === 'true') {
         setModalColeccion(true);
       } else {
@@ -193,7 +222,7 @@ export default function EditarQuizScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={handleVolver} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#412E2E" />
         </Pressable>
         <Text style={styles.topTitle}>Editar Quiz</Text>
