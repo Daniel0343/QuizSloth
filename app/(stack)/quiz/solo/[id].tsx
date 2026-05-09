@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { PreguntaDetalle } from '@/core/auth/interface/quiz';
-import { getQuizPreguntas } from '@/core/quizzes/actions/get-quizzes';
+import { getQuizPreguntas, eliminarQuiz } from '@/core/quizzes/actions/get-quizzes';
 import { guardarCalificacionSolo } from '@/core/salas/actions/sala';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 
@@ -15,8 +15,9 @@ const OPCION_COLORS = ['#c0392b', '#27ae60', '#d35400', '#2980b9'];
 const OPCION_BG = ['#fadbd8', '#d5f5e3', '#fdebd0', '#d6eaf8'];
 
 export default function SoloQuizScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, temporal } = useLocalSearchParams<{ id: string; temporal?: string }>();
   const quizId = Number(id);
+  const esTemporal = temporal === 'true';
   const { user } = useAuthStore();
 
   const [preguntas, setPreguntas] = useState<PreguntaDetalle[]>([]);
@@ -79,13 +80,19 @@ export default function SoloQuizScreen() {
 
   const finalizarPartida = async () => {
     setTerminado(true);
-    if (!user) return;
-    const maxPuntos = preguntas.reduce((s, p) => s + Math.round((p.peso ?? 1) * 100), 0);
+    if (!user || esTemporal) return;
     setGuardando(true);
     try {
-      await guardarCalificacionSolo(quizId, puntos, maxPuntos);
+      await guardarCalificacionSolo(quizId, puntos, preguntas.length);
     } catch { /* ignorar */ }
     setGuardando(false);
+  };
+
+  const handleSalirTemporal = async () => {
+    if (esTemporal) {
+      try { await eliminarQuiz(quizId); } catch { /* ignorar */ }
+    }
+    router.back();
   };
 
   if (cargando) {
@@ -114,7 +121,7 @@ export default function SoloQuizScreen() {
       puntos={puntos}
       acertadas={acertadas}
       guardando={guardando}
-      onSalir={() => router.back()}
+      onSalir={handleSalirTemporal}
     />;
   }
 
@@ -125,7 +132,7 @@ export default function SoloQuizScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: '#571D11' }]}>
       <View style={styles.preguntaHeader}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={handleSalirTemporal}>
           <Ionicons name="close" size={22} color="rgba(255,255,255,0.7)" />
         </Pressable>
         <Text style={styles.preguntaIdx}>{idx + 1} / {preguntas.length}</Text>
@@ -136,7 +143,12 @@ export default function SoloQuizScreen() {
 
       <View style={styles.enunciadoCard}>
         <Text style={styles.enunciado}>{pregunta.enunciado}</Text>
-        <Text style={styles.preguntaPuntos}>+{Math.round((pregunta.peso ?? 1) * 100)} pts</Text>
+        <View style={styles.enunciadoMeta}>
+          <Text style={styles.preguntaPuntos}>+{Math.round((pregunta.peso ?? 1) * 100)} pts</Text>
+          {pregunta.dificultad && (
+            <Text style={styles.preguntaDificultad}>{pregunta.dificultad}</Text>
+          )}
+        </View>
       </View>
 
       {mostrarResultado && (
@@ -297,7 +309,9 @@ const styles = StyleSheet.create({
     borderRadius: 16, padding: 20, gap: 8, marginBottom: 12,
   },
   enunciado: { color: 'white', fontSize: 17, fontWeight: '700', lineHeight: 24 },
+  enunciadoMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
   preguntaPuntos: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600' },
+  preguntaDificultad: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
   opcionesGrid: {
     flex: 1, paddingHorizontal: 16, gap: 10,
   },
@@ -319,7 +333,8 @@ const styles = StyleSheet.create({
   },
   btnPrimario: {
     height: 52, borderRadius: 16, backgroundColor: '#571D11',
-    justifyContent: 'center', alignItems: 'center', marginHorizontal: 20,
+    justifyContent: 'center', alignItems: 'center',
+    marginHorizontal: 20, paddingHorizontal: 32, alignSelf: 'stretch',
   },
   btnBlanco: { color: 'white', fontSize: 15, fontWeight: '700' },
   feedbackBanner: {
