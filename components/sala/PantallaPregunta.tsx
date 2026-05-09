@@ -58,7 +58,12 @@ export default function PantallaPregunta({ pregunta, respuestaElegida, onRespond
 
       <View style={styles.enunciadoCard}>
         <Text style={styles.enunciado}>{pregunta.enunciado}</Text>
-        <Text style={styles.preguntaPuntos}>+{pregunta.puntos} pts</Text>
+        <View style={styles.enunciadoMeta}>
+          <Text style={styles.preguntaPuntos}>+{pregunta.puntos} pts</Text>
+          {pregunta.dificultad && (
+            <Text style={styles.preguntaDificultad}>{pregunta.dificultad}</Text>
+          )}
+        </View>
       </View>
 
       <View style={styles.opcionesGrid}>
@@ -124,7 +129,9 @@ const styles = StyleSheet.create({
     borderRadius: 16, padding: 20, gap: 8, marginBottom: 12,
   },
   enunciado: { color: 'white', fontSize: 17, fontWeight: '700', lineHeight: 24 },
+  enunciadoMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
   preguntaPuntos: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600' },
+  preguntaDificultad: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', textTransform: 'capitalize' },
   opcionesGrid: {
     flex: 1, paddingHorizontal: 16, gap: 10, flexDirection: 'column',
   },

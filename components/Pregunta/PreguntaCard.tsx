@@ -42,7 +42,7 @@ export default function PreguntaCard({
               <Ionicons name="chevron-down" size={14} color={idx === total - 1 ? '#d1d5db' : '#844A31'} />
             </Pressable>
           </View>
-          <Pressable onPress={onEliminar} style={styles.deleteBtn} hitSlop={6}>
+          <Pressable onPress={e => { e.stopPropagation(); onEliminar(); }} style={styles.deleteBtn} hitSlop={6}>
             <Ionicons name="trash-outline" size={16} color="#e53935" />
           </Pressable>
           <Ionicons name={expandida ? 'chevron-up' : 'chevron-down'} size={18} color="#9ca3af" />
