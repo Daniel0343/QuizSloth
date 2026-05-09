@@ -39,6 +39,7 @@ public class PlantillaService {
         quiz.setDificultad(plantilla.getDificultad());
         quiz.setCategoria(plantilla.getCategoria());
         quiz.setEsPlantilla(false);
+        quiz.setBorrador(true);
         if (emailCreador != null) {
             usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
         }

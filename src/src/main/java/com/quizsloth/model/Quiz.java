@@ -42,6 +42,9 @@ public class Quiz {
     @Column(name = "es_plantilla", nullable = false)
     private boolean esPlantilla = false;
 
+    @Column(name = "borrador", nullable = false)
+    private boolean borrador = false;
+
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -94,6 +97,9 @@ public class Quiz {
 
     public boolean isEsPlantilla() { return esPlantilla; }
     public void setEsPlantilla(boolean esPlantilla) { this.esPlantilla = esPlantilla; }
+
+    public boolean isBorrador() { return borrador; }
+    public void setBorrador(boolean borrador) { this.borrador = borrador; }
 
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }

@@ -8,6 +8,7 @@ import com.quizsloth.repository.CategoriaRepository;
 import com.quizsloth.repository.DocumentoRepository;
 import com.quizsloth.repository.PreguntaRepository;
 import com.quizsloth.repository.QuizRepository;
+import com.quizsloth.repository.SalaRepository;
 import com.quizsloth.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class QuizService {
     private final DocumentoRepository documentoRepository;
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final SalaRepository salaRepository;
     private final IAService iaService;
 
     public QuizService(QuizRepository quizRepository,
@@ -30,27 +32,29 @@ public class QuizService {
                        DocumentoRepository documentoRepository,
                        CategoriaRepository categoriaRepository,
                        UsuarioRepository usuarioRepository,
+                       SalaRepository salaRepository,
                        IAService iaService) {
         this.quizRepository = quizRepository;
         this.preguntaRepository = preguntaRepository;
         this.documentoRepository = documentoRepository;
         this.categoriaRepository = categoriaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.salaRepository = salaRepository;
         this.iaService = iaService;
     }
 
     public List<Quiz> listarTodos() {
-        return quizRepository.findByCreadorRol(Usuario.Rol.profesor);
+        return quizRepository.findByCreadorRolAndBorradorFalse(Usuario.Rol.profesor);
     }
 
     public List<Quiz> listarPorCategoria(Integer categoriaId) {
-        return quizRepository.findByCategoriaIdAndCreadorRol(categoriaId, Usuario.Rol.profesor);
+        return quizRepository.findByCategoriaIdAndCreadorRolAndBorradorFalse(categoriaId, Usuario.Rol.profesor);
     }
 
     public List<Quiz> listarPorCreador(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        return quizRepository.findByCreador(usuario);
+        return quizRepository.findByCreadorAndBorradorFalse(usuario);
     }
 
     public List<QuizResumenDTO> listarPorCreadorDTO(String email) {
@@ -65,8 +69,10 @@ public class QuizService {
                 .toList();
     }
 
+    @Transactional
     public void eliminar(Integer id, String email) {
         Quiz quiz = obtener(id);
+        salaRepository.findByQuiz(quiz).forEach(salaRepository::delete);
         preguntaRepository.findByQuiz(quiz).forEach(p -> preguntaRepository.deleteById(p.getId()));
         quizRepository.deleteById(id);
     }
@@ -163,6 +169,7 @@ public class QuizService {
         clon.setDificultad(plantilla.getDificultad());
         clon.setCategoria(plantilla.getCategoria());
         clon.setEsPlantilla(false);
+        clon.setBorrador(true);
         if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(clon::setCreador);
         Quiz savedClon = quizRepository.save(clon);
 
@@ -206,6 +213,7 @@ public class QuizService {
             categoriaRepository.findById(categoriaId).ifPresent(quiz::setCategoria);
         }
         if (color != null && !color.isBlank()) quiz.setColor(color);
+        quiz.setBorrador(false);
         return quizRepository.save(quiz);
     }
 
