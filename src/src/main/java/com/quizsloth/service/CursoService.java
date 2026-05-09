@@ -208,7 +208,10 @@ public class CursoService {
         ElementoCurso elem = elementoRepository.findById(elementoId)
                 .orElseThrow(() -> new RuntimeException("Elemento no encontrado"));
         verificarProfesor(elem.getSeccion().getCurso(), email);
-        elementoRepository.delete(elem);
+        SeccionCurso sec = seccionRepository.findById(elem.getSeccion().getId())
+                .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
+        sec.getElementos().removeIf(e -> e.getId().equals(elementoId));
+        seccionRepository.save(sec);
     }
 
     public List<CalificacionQuizDTO> getCalificaciones(Integer cursoId) {
@@ -249,5 +252,13 @@ public class CursoService {
         }
 
         return resultado;
+    }
+
+    public void eliminarCalificacionesQuiz(Integer cursoId, Integer quizId, String email) {
+        Curso curso = getCurso(cursoId);
+        verificarProfesor(curso, email);
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz no encontrado"));
+        calificacionRepository.deleteByQuiz(quiz);
     }
 }
