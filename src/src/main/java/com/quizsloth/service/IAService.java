@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quizsloth.model.Documento;
 import com.quizsloth.model.Pregunta;
 import com.quizsloth.model.Quiz;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.pdfbox.Loader;
@@ -122,10 +125,6 @@ public class IAService {
             NIVEL DE DIFICULTAD: %s
             %s
 
-            IMPORTANTE: distribuye las respuestas correctas aleatoriamente entre A, B, C y D.
-            No pongas todas las respuestas correctas en la misma opcion.
-            Varia la posicion correcta de forma que no haya un patron predecible.
-
             Responde UNICAMENTE con un array JSON con esta estructura exacta, sin texto adicional:
             [
               {
@@ -134,12 +133,12 @@ public class IAService {
                 "opcion_b": "Segunda opcion",
                 "opcion_c": "Tercera opcion",
                 "opcion_d": "Cuarta opcion",
-                "respuesta_correcta": "B",
+                "respuesta_correcta": "A",
                 "dificultad": "%s"
               }
             ]
 
-            Los valores de "respuesta_correcta" deben ser: A, B, C o D, variando entre preguntas.
+            Los valores de "respuesta_correcta" deben ser: A, B, C o D.
 
             TEXTO:
             %s
@@ -232,6 +231,8 @@ public class IAService {
                 .trim();
     }
 
+    private static final Random RNG = new Random();
+
     private List<Pregunta> parsearPreguntas(String jsonRespuesta) throws Exception {
         String json = jsonRespuesta.trim()
                 .replaceAll("```json", "")
@@ -242,13 +243,32 @@ public class IAService {
         List<Pregunta> preguntas = new ArrayList<>();
 
         for (JsonNode node : array) {
+            String correctaOriginal = node.path("respuesta_correcta").asText("A").toUpperCase();
+            String[] opciones = {
+                node.path("opcion_a").asText(),
+                node.path("opcion_b").asText(),
+                node.path("opcion_c").asText(),
+                node.path("opcion_d").asText(),
+            };
+
+            int correctaIdx = switch (correctaOriginal) {
+                case "B" -> 1; case "C" -> 2; case "D" -> 3; default -> 0;
+            };
+            String textoCorrecta = opciones[correctaIdx];
+
+            List<String> lista = new ArrayList<>(Arrays.asList(opciones));
+            Collections.shuffle(lista, RNG);
+
+            int nuevaIdx = lista.indexOf(textoCorrecta);
+            String nuevaLetra = new String[]{"A","B","C","D"}[nuevaIdx];
+
             Pregunta pregunta = new Pregunta();
             pregunta.setEnunciado(node.path("enunciado").asText());
-            pregunta.setOpcionA(node.path("opcion_a").asText());
-            pregunta.setOpcionB(node.path("opcion_b").asText());
-            pregunta.setOpcionC(node.path("opcion_c").asText());
-            pregunta.setOpcionD(node.path("opcion_d").asText());
-            pregunta.setRespuestaCorrecta(node.path("respuesta_correcta").asText().toUpperCase());
+            pregunta.setOpcionA(lista.get(0));
+            pregunta.setOpcionB(lista.get(1));
+            pregunta.setOpcionC(lista.get(2));
+            pregunta.setOpcionD(lista.get(3));
+            pregunta.setRespuestaCorrecta(nuevaLetra);
 
             String dificultadStr = node.path("dificultad").asText("normal");
             try {
