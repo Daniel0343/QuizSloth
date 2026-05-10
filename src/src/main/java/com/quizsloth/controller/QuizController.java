@@ -115,17 +115,8 @@ public class QuizController {
             @RequestParam(value = "categoriaId", required = false) Integer categoriaId,
             HttpServletRequest request) throws Exception {
 
-        String nombre = archivo.getOriginalFilename() != null ? archivo.getOriginalFilename().toLowerCase() : "";
         byte[] bytes = archivo.getBytes();
-
-        String texto;
-        if (nombre.endsWith(".pdf")) {
-            texto = iaService.extraerTextoPDF(bytes);
-        } else if (nombre.endsWith(".pptx")) {
-            texto = iaService.extraerTextoPPTX(bytes);
-        } else {
-            texto = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-        }
+        String texto = iaService.extraerTextoPDF(bytes);
 
         QuizService.QuizConPreguntas resultado = quizService.generarDesdeTexto(
                 titulo, texto, numPreguntas, dificultad, categoriaId, emailFromRequest(request));

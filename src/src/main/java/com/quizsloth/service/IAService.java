@@ -13,14 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.poi.xslf.usermodel.XMLSlideShow;
-import org.apache.poi.xslf.usermodel.XSLFShape;
-import org.apache.poi.xslf.usermodel.XSLFSlide;
-import org.apache.poi.xslf.usermodel.XSLFTextShape;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -71,7 +66,13 @@ public class IAService {
             String nivel = (dificultad != null && !dificultad.isBlank()) ? dificultad : "normal";
             String prompt = construirPrompt(textoLimitado, numPreguntas, nivel);
             String respuestaJson = llamarOpenAI(prompt);
-            return parsearPreguntas(respuestaJson);
+            List<Pregunta> preguntas = parsearPreguntas(respuestaJson);
+            if (preguntas.size() < numPreguntas) {
+                log.warn("IA devolvió {} preguntas en lugar de {}, reintentando", preguntas.size(), numPreguntas);
+                respuestaJson = llamarOpenAI(prompt);
+                preguntas = parsearPreguntas(respuestaJson);
+            }
+            return preguntas;
         } catch (Exception e) {
             log.error("Error generando preguntas desde texto: {}", e.getMessage());
             throw new RuntimeException("Error al generar preguntas con IA: " + e.getMessage(), e);
@@ -82,20 +83,6 @@ public class IAService {
         try (PDDocument doc = Loader.loadPDF(bytes)) {
             PDFTextStripper stripper = new PDFTextStripper();
             return stripper.getText(doc);
-        }
-    }
-
-    public String extraerTextoPPTX(byte[] bytes) throws Exception {
-        try (XMLSlideShow ppt = new XMLSlideShow(new ByteArrayInputStream(bytes))) {
-            StringBuilder sb = new StringBuilder();
-            for (XSLFSlide slide : ppt.getSlides()) {
-                for (XSLFShape shape : slide.getShapes()) {
-                    if (shape instanceof XSLFTextShape textShape) {
-                        sb.append(textShape.getText()).append("\n");
-                    }
-                }
-            }
-            return sb.toString();
         }
     }
 
@@ -155,7 +142,7 @@ public class IAService {
                     }}
             ));
             put("temperature", 0.7);
-            put("max_tokens", 4096);
+            put("max_tokens", 6000);
         }});
 
         HttpRequest request = HttpRequest.newBuilder()

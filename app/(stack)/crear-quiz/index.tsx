@@ -37,7 +37,7 @@ export default function CrearQuizScreen() {
 
   const pickFile = async () => {
     const res = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+      type: ['application/pdf'],
     });
     if (!res.canceled && res.assets[0]) {
       const asset = res.assets[0];
@@ -106,7 +106,7 @@ export default function CrearQuizScreen() {
             onPress={() => setTab('archivo')}
           >
             <Ionicons name="attach-outline" size={16} color={tab === 'archivo' ? 'white' : '#844A31'} />
-            <Text style={[styles.tabText, tab === 'archivo' && styles.tabTextActive]}>PDF / PPT</Text>
+            <Text style={[styles.tabText, tab === 'archivo' && styles.tabTextActive]}>PDF</Text>
           </Pressable>
         </View>
 
@@ -132,7 +132,7 @@ export default function CrearQuizScreen() {
               <>
                 <Ionicons name="cloud-upload-outline" size={34} color="#844A31" style={{ opacity: 0.5 }} />
                 <Text style={styles.dropTitle}>Seleccionar archivo</Text>
-                <Text style={styles.dropHint}>PDF o PowerPoint (.pptx)</Text>
+                <Text style={styles.dropHint}>Selecciona un PDF desde tus archivos</Text>
               </>
             )}
           </Pressable>
