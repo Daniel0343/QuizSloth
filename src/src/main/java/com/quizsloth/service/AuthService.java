@@ -70,7 +70,13 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         if (usuario.getOdooId() == null) {
-            throw new RuntimeException("Este usuario no tiene partner en Odoo");
+            try {
+                Integer odooId = odooService.crearCliente(usuario);
+                usuario.setOdooId(odooId);
+                usuario = usuarioRepository.save(usuario);
+            } catch (Exception e) {
+                throw new RuntimeException("No se pudo sincronizar el usuario con Odoo: " + e.getMessage());
+            }
         }
 
         try {
