@@ -44,12 +44,14 @@ public class IAService {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    // Cliente HTTP reutilizable para todas las llamadas a la API
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(30))
             .build();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // Genera preguntas a partir de un documento subido por el usuario
     public List<Pregunta> generarPreguntas(Documento documento, int numPreguntas) {
         try {
             String texto = leerTextoDocumento(documento.getRutaAlmacenamiento());
@@ -60,13 +62,16 @@ public class IAService {
         }
     }
 
+    // Genera preguntas a partir de texto libre. Si la IA devuelve menos de las pedidas, reintenta una vez
     public List<Pregunta> generarPreguntasDesdeTexto(String texto, int numPreguntas, String dificultad) {
         try {
+            // Limita el texto a 9000 caracteres para no exceder el límite del modelo
             String textoLimitado = texto.length() > 9000 ? texto.substring(0, 9000) : texto;
             String nivel = (dificultad != null && !dificultad.isBlank()) ? dificultad : "normal";
             String prompt = construirPrompt(textoLimitado, numPreguntas, nivel);
             String respuestaJson = llamarOpenAI(prompt);
             List<Pregunta> preguntas = parsearPreguntas(respuestaJson);
+            // Si la IA no generó el número exacto de preguntas, se reintenta una vez
             if (preguntas.size() < numPreguntas) {
                 log.warn("IA devolvió {} preguntas en lugar de {}, reintentando", preguntas.size(), numPreguntas);
                 respuestaJson = llamarOpenAI(prompt);
@@ -79,6 +84,7 @@ public class IAService {
         }
     }
 
+    // Extrae el texto de un PDF recibido como bytes (usado al subir un archivo desde la app)
     public String extraerTextoPDF(byte[] bytes) throws Exception {
         try (PDDocument doc = Loader.loadPDF(bytes)) {
             PDFTextStripper stripper = new PDFTextStripper();
@@ -86,6 +92,7 @@ public class IAService {
         }
     }
 
+    // Lee el texto de un documento guardado en el servidor (documentos subidos previamente)
     private String leerTextoDocumento(String ruta) throws Exception {
         Path path = Path.of(uploadDir + ruta);
         if (!Files.exists(path)) {
@@ -96,6 +103,7 @@ public class IAService {
         return contenido.length() > 12000 ? contenido.substring(0, 12000) : contenido;
     }
 
+    // Construye el prompt que se envía a la IA con el texto, número de preguntas y nivel de dificultad
     private String construirPrompt(String texto, int numPreguntas, String dificultad) {
         String descripcionDificultad = switch (dificultad) {
             case "facil"   -> "FACIL: preguntas directas sobre datos concretos del texto, opciones incorrectas claramente distintas.";
@@ -132,6 +140,7 @@ public class IAService {
             """, numPreguntas, dificultad.toUpperCase(), descripcionDificultad, dificultad, texto);
     }
 
+    // Envía el prompt a la API de OpenAI y devuelve el texto de la respuesta
     private String llamarOpenAI(String prompt) throws Exception {
         String requestBody = objectMapper.writeValueAsString(new java.util.LinkedHashMap<>() {{
             put("model", model);
@@ -159,10 +168,12 @@ public class IAService {
             throw new RuntimeException("OpenAI respondió con HTTP " + response.statusCode() + ": " + response.body());
         }
 
+        // Extrae el texto del mensaje de respuesta dentro del JSON de OpenAI
         JsonNode root = objectMapper.readTree(response.body());
         return root.path("choices").get(0).path("message").path("content").asText();
     }
 
+    // Genera apuntes estructurados en JSON a partir de un texto o tema
     public String generarApuntesDesdeTexto(String texto) {
         try {
             String textoLimitado = texto.length() > 9000 ? texto.substring(0, 9000) : texto;
@@ -175,6 +186,7 @@ public class IAService {
         }
     }
 
+    // Construye el prompt para generar apuntes con secciones y referencias
     private String construirPromptApuntes(String texto) {
         return String.format("""
             Eres un asistente educativo experto. A partir del siguiente tema o texto,
@@ -211,6 +223,7 @@ public class IAService {
             """, texto);
     }
 
+    // Elimina los bloques de código markdown (```json ... ```) que la IA a veces añade en la respuesta
     private String limpiarJson(String respuesta) {
         return respuesta.trim()
                 .replaceAll("(?s)```json\\s*", "")
@@ -220,7 +233,9 @@ public class IAService {
 
     private static final Random RNG = new Random();
 
+    // Convierte el JSON devuelto por la IA en objetos Pregunta listos para guardar en la base de datos
     private List<Pregunta> parsearPreguntas(String jsonRespuesta) throws Exception {
+        // Limpia posibles bloques markdown que la IA pueda haber añadido
         String json = jsonRespuesta.trim()
                 .replaceAll("```json", "")
                 .replaceAll("```", "")
@@ -230,6 +245,7 @@ public class IAService {
         List<Pregunta> preguntas = new ArrayList<>();
 
         for (JsonNode node : array) {
+            // Guarda qué letra era la correcta antes de barajar
             String correctaOriginal = node.path("respuesta_correcta").asText("A").toUpperCase();
             String[] opciones = {
                 node.path("opcion_a").asText(),
@@ -238,14 +254,17 @@ public class IAService {
                 node.path("opcion_d").asText(),
             };
 
+            // Busca el texto de la opción correcta para poder localizarla después del barajado
             int correctaIdx = switch (correctaOriginal) {
                 case "B" -> 1; case "C" -> 2; case "D" -> 3; default -> 0;
             };
             String textoCorrecta = opciones[correctaIdx];
 
+            // Baraja las opciones aleatoriamente para que la respuesta no siempre esté en la misma posición
             List<String> lista = new ArrayList<>(Arrays.asList(opciones));
             Collections.shuffle(lista, RNG);
 
+            // Actualiza la letra correcta según la nueva posición tras el barajado
             int nuevaIdx = lista.indexOf(textoCorrecta);
             String nuevaLetra = new String[]{"A","B","C","D"}[nuevaIdx];
 
@@ -257,6 +276,7 @@ public class IAService {
             pregunta.setOpcionD(lista.get(3));
             pregunta.setRespuestaCorrecta(nuevaLetra);
 
+            // Si la dificultad devuelta no es válida, se usa "normal" por defecto
             String dificultadStr = node.path("dificultad").asText("normal");
             try {
                 pregunta.setDificultad(Quiz.Dificultad.valueOf(dificultadStr));
