@@ -222,7 +222,7 @@ export default function HomePrincipal() {
             <View style={styles.codeInputRow}>
               <TextInput
                 style={styles.codeInput}
-                placeholder="Introducir código de participación"
+                placeholder="Introduce código de sala"
                 placeholderTextColor="rgba(132,74,49,0.5)"
                 value={code}
                 onChangeText={setCode}
