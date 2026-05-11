@@ -1,4 +1,4 @@
-package com.quizsloth.repository;
+package com.quizsloth.repositoryDAO;
 
 import com.quizsloth.model.Calificacion;
 import com.quizsloth.model.Quiz;

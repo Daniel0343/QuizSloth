@@ -1,12 +1,12 @@
 package com.quizsloth.service;
 
 import com.quizsloth.model.*;
-import com.quizsloth.repository.*;
+import com.quizsloth.repositoryDAO.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.quizsloth.repository.CalificacionRepository;
-import com.quizsloth.repository.QuizRepository;
+import com.quizsloth.repositoryDAO.CalificacionRepository;
+import com.quizsloth.repositoryDAO.QuizRepository;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -2,8 +2,8 @@ package com.quizsloth.service;
 
 import com.quizsloth.model.Apunte;
 import com.quizsloth.model.Usuario;
-import com.quizsloth.repository.ApunteRepository;
-import com.quizsloth.repository.UsuarioRepository;
+import com.quizsloth.repositoryDAO.ApunteRepository;
+import com.quizsloth.repositoryDAO.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

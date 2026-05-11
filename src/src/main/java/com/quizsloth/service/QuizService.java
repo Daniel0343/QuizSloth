@@ -4,12 +4,12 @@ import com.quizsloth.model.Documento;
 import com.quizsloth.model.Pregunta;
 import com.quizsloth.model.Quiz;
 import com.quizsloth.model.Usuario;
-import com.quizsloth.repository.CategoriaRepository;
-import com.quizsloth.repository.DocumentoRepository;
-import com.quizsloth.repository.PreguntaRepository;
-import com.quizsloth.repository.QuizRepository;
-import com.quizsloth.repository.SalaRepository;
-import com.quizsloth.repository.UsuarioRepository;
+import com.quizsloth.repositoryDAO.CategoriaRepository;
+import com.quizsloth.repositoryDAO.DocumentoRepository;
+import com.quizsloth.repositoryDAO.PreguntaRepository;
+import com.quizsloth.repositoryDAO.QuizRepository;
+import com.quizsloth.repositoryDAO.SalaRepository;
+import com.quizsloth.repositoryDAO.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

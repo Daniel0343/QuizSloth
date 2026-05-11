@@ -1,7 +1,7 @@
 package com.quizsloth.service;
 
 import com.quizsloth.model.*;
-import com.quizsloth.repository.*;
+import com.quizsloth.repositoryDAO.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

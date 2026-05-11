@@ -2,9 +2,9 @@ package com.quizsloth.controller;
 
 import com.quizsloth.model.Documento;
 import com.quizsloth.model.Usuario;
-import com.quizsloth.repository.CursoRepository;
-import com.quizsloth.repository.DocumentoRepository;
-import com.quizsloth.repository.UsuarioRepository;
+import com.quizsloth.repositoryDAO.CursoRepository;
+import com.quizsloth.repositoryDAO.DocumentoRepository;
+import com.quizsloth.repositoryDAO.UsuarioRepository;
 import com.quizsloth.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;

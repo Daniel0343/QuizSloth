@@ -1,7 +1,7 @@
 package com.quizsloth.controller;
 
 import com.quizsloth.model.Categoria;
-import com.quizsloth.repository.CategoriaRepository;
+import com.quizsloth.repositoryDAO.CategoriaRepository;
 import com.quizsloth.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;

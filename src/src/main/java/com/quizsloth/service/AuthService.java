@@ -5,7 +5,7 @@ import com.quizsloth.dto.LoginRequest;
 import com.quizsloth.dto.RegisterRequest;
 import com.quizsloth.dto.SubscripcionDTO;
 import com.quizsloth.model.Usuario;
-import com.quizsloth.repository.UsuarioRepository;
+import com.quizsloth.repositoryDAO.UsuarioRepository;
 import com.quizsloth.security.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
