@@ -123,6 +123,16 @@ public class QuizController {
         return ResponseEntity.ok(resultado);
     }
 
+    @PostMapping("/{id}/publicar")
+    public ResponseEntity<Quiz> publicar(@PathVariable Integer id) {
+        return ResponseEntity.ok(quizService.publicar(id));
+    }
+
+    @PostMapping("/{id}/despublicar")
+    public ResponseEntity<Quiz> despublicar(@PathVariable Integer id) {
+        return ResponseEntity.ok(quizService.despublicar(id));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Quiz> actualizarQuiz(
             @PathVariable Integer id,

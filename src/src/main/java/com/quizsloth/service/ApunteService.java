@@ -42,12 +42,10 @@ public class ApunteService {
     }
 
     public Apunte generarDesdeArchivo(byte[] bytes, String tipoArchivo, String email) throws Exception {
-        String texto;
-        if (tipoArchivo.contains("pdf")) {
-            texto = iaService.extraerTextoPDF(bytes);
-        } else {
-            texto = iaService.extraerTextoPPTX(bytes);
+        if (!tipoArchivo.contains("pdf")) {
+            throw new RuntimeException("Solo se admiten archivos PDF");
         }
+        String texto = iaService.extraerTextoPDF(bytes);
         return generarDesdeTexto(texto, email);
     }
 

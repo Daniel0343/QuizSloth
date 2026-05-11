@@ -57,8 +57,27 @@ public class QuizService {
         return quizRepository.findByCreadorAndBorradorFalse(usuario);
     }
 
+    // Devuelve todos los quizzes del creador, incluyendo borradores
+    public List<Quiz> listarTodosPorCreador(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return quizRepository.findByCreador(usuario);
+    }
+
+    public Quiz publicar(Integer id) {
+        Quiz quiz = obtener(id);
+        quiz.setBorrador(false);
+        return quizRepository.save(quiz);
+    }
+
+    public Quiz despublicar(Integer id) {
+        Quiz quiz = obtener(id);
+        quiz.setBorrador(true);
+        return quizRepository.save(quiz);
+    }
+
     public List<QuizResumenDTO> listarPorCreadorDTO(String email) {
-        return listarPorCreador(email).stream()
+        return listarTodosPorCreador(email).stream()
                 .map(q -> new QuizResumenDTO(
                         q.getId(),
                         q.getTitulo(),
@@ -115,6 +134,7 @@ public class QuizService {
         quiz.setTitulo(titulo);
         quiz.setDocumento(documento);
         quiz.setDificultad(Quiz.Dificultad.normal);
+        quiz.setBorrador(true);
         if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
         Quiz saved = quizRepository.save(quiz);
 
@@ -139,6 +159,7 @@ public class QuizService {
         Quiz quiz = new Quiz();
         quiz.setTitulo(titulo);
         quiz.setDificultad(nivel);
+        quiz.setBorrador(true);
         categoriaRepository.findById(categoriaId != null ? categoriaId : -1)
                 .ifPresent(quiz::setCategoria);
         if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
@@ -196,6 +217,7 @@ public class QuizService {
         Quiz quiz = new Quiz();
         quiz.setTitulo(titulo != null && !titulo.isBlank() ? titulo : "Nuevo Quiz");
         quiz.setDificultad(Quiz.Dificultad.normal);
+        quiz.setBorrador(true);
         if (categoriaId != null) categoriaRepository.findById(categoriaId).ifPresent(quiz::setCategoria);
         if (emailCreador != null) usuarioRepository.findByEmail(emailCreador).ifPresent(quiz::setCreador);
         return quizRepository.save(quiz);
@@ -213,7 +235,6 @@ public class QuizService {
             categoriaRepository.findById(categoriaId).ifPresent(quiz::setCategoria);
         }
         if (color != null && !color.isBlank()) quiz.setColor(color);
-        quiz.setBorrador(false);
         return quizRepository.save(quiz);
     }
 
