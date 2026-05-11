@@ -14,6 +14,7 @@ export interface QuizDetalle {
   categoria?: { id: number; nombre: string };
   fechaCreacion?: string;
   color?: string;
+  borrador?: boolean;
 }
 
 export interface PreguntaDetalle {

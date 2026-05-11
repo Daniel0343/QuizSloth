@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  Pressable, ActivityIndicator, Modal, Alert, BackHandler,
+  Pressable, ActivityIndicator, Modal, BackHandler,
 } from 'react-native';
 import AppAlert from '@/components/AppAlert';
 import PreguntaCard from '@/components/Pregunta/PreguntaCard';
@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   obtenerPreguntas, actualizarPregunta, actualizarQuiz,
-  crearPregunta, eliminarPreguntaApi,
+  crearPregunta, eliminarPreguntaApi, publicarQuiz, despublicarQuiz,
 } from '@/core/quizzes/actions/crear-quiz';
 import { getQuiz, eliminarQuiz } from '@/core/quizzes/actions/get-quizzes';
 import { PreguntaDetalle, QuizDetalle } from '@/core/auth/interface/quiz';
@@ -31,6 +31,8 @@ export default function EditarQuizScreen() {
   const [quiz, setQuiz] = useState<QuizDetalle | null>(null);
   const [preguntas, setPreguntas] = useState<PreguntaDetalle[]>([]);
   const [guardando, setGuardando] = useState(false);
+  const [publicando, setPublicando] = useState(false);
+  const [hayCambios, setHayCambios] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [expandida, setExpandida] = useState<number | null>(null);
 
@@ -48,17 +50,18 @@ export default function EditarQuizScreen() {
       router.back();
       return;
     }
-    Alert.alert(
-      'Descartar quiz',
-      'Si sales ahora el quiz se eliminará porque no lo has guardado. ¿Continuar?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Descartar', style: 'destructive', onPress: async () => {
+    setAlerta({
+      visible: true, variante: 'peligro',
+      titulo: 'Descartar quiz',
+      mensaje: 'Si sales ahora el quiz se eliminará porque no lo has guardado. ¿Continuar?',
+      botones: [
+        { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrar },
+        { texto: 'Descartar', estilo: 'destructivo', onPress: async () => {
           try { await eliminarQuiz(quizId); } catch { /* ignorar */ }
           router.back();
         }},
-      ]
-    );
+      ],
+    });
   };
 
   useEffect(() => {
@@ -87,6 +90,7 @@ export default function EditarQuizScreen() {
 
   const updatePregunta = (idx: number, campos: Partial<PreguntaDetalle>) => {
     setPreguntas(prev => prev.map((p, i) => i === idx ? { ...p, ...campos } : p));
+    setHayCambios(true);
   };
 
   const moverPregunta = (idx: number, dir: -1 | 1) => {
@@ -192,19 +196,63 @@ export default function EditarQuizScreen() {
       );
 
       setGuardando(false);
+      setHayCambios(false);
+      const esPrimeraVez = !guardadoRef.current;
       guardadoRef.current = true;
-      if (nuevo === 'true') {
+      if (nuevo === 'true' && esPrimeraVez) {
         setModalColeccion(true);
       } else {
-        Alert.alert('¡Listo!', 'Quiz guardado correctamente.', [
-          { text: 'OK', onPress: () => router.replace('/(stack)/(tabs)/home') },
-        ]);
+        router.back();
       }
     } catch (e: any) {
       setGuardando(false);
       const status = e?.response?.status;
       const msg = e?.response?.data?.message ?? e?.message ?? 'Error desconocido';
-      Alert.alert(`Error ${status ?? ''}`.trim(), msg);
+      setAlerta({ visible: true, variante: 'peligro', titulo: `Error ${status ?? ''}`.trim(), mensaje: msg });
+    }
+  };
+
+  const handlePublicar = async () => {
+    if (!quiz) return;
+    setPublicando(true);
+    try {
+      // Guarda los cambios antes de publicar
+      await actualizarQuiz(quizId, {
+        titulo: quiz.titulo,
+        dificultad: quiz.dificultad,
+        categoriaId: quiz.categoria?.id,
+        color: quiz.color,
+      });
+      await Promise.all(
+        preguntas.map(p => actualizarPregunta(p.id, {
+          enunciado: p.enunciado, opcionA: p.opcionA, opcionB: p.opcionB,
+          opcionC: p.opcionC, opcionD: p.opcionD,
+          respuestaCorrecta: p.respuestaCorrecta, dificultad: p.dificultad,
+          orden: p.orden, peso: p.peso, segundos: p.segundos ?? 30,
+        }))
+      );
+      setHayCambios(false);
+      guardadoRef.current = true;
+      const actualizado = await publicarQuiz(quizId);
+      setQuiz(q => q ? { ...q, borrador: actualizado.borrador } : q);
+      setAlerta({ visible: true, variante: 'exito', titulo: '¡Publicado!', mensaje: 'El quiz ya es visible en las categorías.' });
+    } catch {
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo publicar el quiz.' });
+    } finally {
+      setPublicando(false);
+    }
+  };
+
+  const handleDespublicar = async () => {
+    setPublicando(true);
+    try {
+      const actualizado = await despublicarQuiz(quizId);
+      setQuiz(q => q ? { ...q, borrador: actualizado.borrador } : q);
+      setAlerta({ visible: true, variante: 'info', titulo: 'Quitado de público', mensaje: 'El quiz ya no es visible en las categorías.' });
+    } catch {
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo quitar de público.' });
+    } finally {
+      setPublicando(false);
     }
   };
 
@@ -245,7 +293,7 @@ export default function EditarQuizScreen() {
             <TextInput
               style={styles.inputTitulo}
               value={quiz.titulo}
-              onChangeText={v => setQuiz(q => q ? { ...q, titulo: v } : q)}
+              onChangeText={v => { setQuiz(q => q ? { ...q, titulo: v } : q); setHayCambios(true); }}
               placeholder="Título del quiz"
               placeholderTextColor="#9ca3af"
             />
@@ -301,6 +349,38 @@ export default function EditarQuizScreen() {
           <Ionicons name="add-circle-outline" size={20} color="#844A31" />
           <Text style={styles.addBtnText}>Añadir pregunta manualmente</Text>
         </Pressable>
+
+        {quiz?.borrador !== false ? (
+          <Pressable
+            style={[styles.publishBtn, (publicando || hayCambios) && { opacity: 0.6 }]}
+            onPress={handlePublicar}
+            disabled={publicando}
+          >
+            {publicando
+              ? <ActivityIndicator color="white" size="small" />
+              : <>
+                  <Ionicons name="checkmark-circle-outline" size={18} color="white" />
+                  <Text style={styles.publishBtnText}>
+                    {hayCambios ? 'Guardar y publicar' : 'Publicar quiz'}
+                  </Text>
+                </>
+            }
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[styles.unpublishBtn, publicando && { opacity: 0.6 }]}
+            onPress={handleDespublicar}
+            disabled={publicando}
+          >
+            {publicando
+              ? <ActivityIndicator color="#844A31" size="small" />
+              : <>
+                  <Ionicons name="eye-off-outline" size={18} color="#844A31" />
+                  <Text style={styles.unpublishBtnText}>Quitar de público</Text>
+                </>
+            }
+          </Pressable>
+        )}
       </ScrollView>
 
       <Modal
@@ -363,6 +443,15 @@ export default function EditarQuizScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <AppAlert
+        visible={alerta.visible}
+        variante={alerta.variante}
+        titulo={alerta.titulo}
+        mensaje={alerta.mensaje}
+        botones={alerta.botones}
+        onClose={cerrar}
+      />
     </SafeAreaView>
   );
 }
@@ -510,6 +599,40 @@ const styles = StyleSheet.create({
     color: '#844A31',
     fontSize: 14,
     fontWeight: '600',
+  },
+  publishBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 24,
+    paddingVertical: 15,
+    borderRadius: 14,
+    backgroundColor: '#53b55e',
+  },
+  publishBtnText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  unpublishBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 24,
+    paddingVertical: 15,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(132,74,49,0.3)',
+    backgroundColor: 'transparent',
+  },
+  unpublishBtnText: {
+    color: '#844A31',
+    fontSize: 15,
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,

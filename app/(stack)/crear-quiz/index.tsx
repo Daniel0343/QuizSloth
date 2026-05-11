@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  Pressable, ActivityIndicator,
+  Pressable, ActivityIndicator, Modal,
 } from 'react-native';
 import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,9 +9,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { generarQuizDesdeTexto, generarQuizDesdeArchivo } from '@/core/quizzes/actions/crear-quiz';
-import { getCategorias } from '@/core/categorias/actions/get-categorias';
+import { getCategorias, crearCategoria } from '@/core/categorias/actions/get-categorias';
 import { Categoria } from '@/core/auth/interface/categoria';
-import { useEffect } from 'react';
+import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 
 const DIFICULTADES = ['facil', 'normal', 'dificil', 'extremo'] as const;
 
@@ -28,12 +28,32 @@ export default function CrearQuizScreen() {
   const [categoriaId, setCategoriaId] = useState<number | undefined>();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [generando, setGenerando] = useState(false);
-  const [alerta, setAlerta] = useState({ visible: false, titulo: '', mensaje: '' });
+  const [alerta, setAlerta] = useState<{ visible: boolean; variante?: 'peligro'|'exito'|'info'; titulo: string; mensaje?: string }>({ visible: false, titulo: '' });
   const cerrar = () => setAlerta(p => ({ ...p, visible: false }));
+  const [modalCat, setModalCat] = useState(false);
+  const [nuevaCat, setNuevaCat] = useState('');
+  const [guardandoCat, setGuardandoCat] = useState(false);
+  const { user } = useAuthStore();
+  const esProfesor = user?.rol === 'profesor';
 
   useEffect(() => {
     getCategorias().then(setCategorias);
   }, []);
+
+  const handleCrearCategoria = async () => {
+    if (!nuevaCat.trim()) return;
+    setGuardandoCat(true);
+    const cat = await crearCategoria(nuevaCat.trim());
+    setGuardandoCat(false);
+    if (cat) {
+      setCategorias(prev => [...prev, cat]);
+      setCategoriaId(cat.id);
+      setNuevaCat('');
+      setModalCat(false);
+    } else {
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo crear la categoría. Puede que ya exista.' });
+    }
+  };
 
   const pickFile = async () => {
     const res = await DocumentPicker.getDocumentAsync({
@@ -173,21 +193,27 @@ export default function CrearQuizScreen() {
           ))}
         </View>
 
+        <View style={styles.labelRow}>
+          <Text style={[styles.label, { marginTop: 0, marginBottom: 0 }]}>Categoría (opcional)</Text>
+          {esProfesor && (
+            <Pressable onPress={() => setModalCat(true)} style={styles.addCatBtn}>
+              <Ionicons name="add-circle-outline" size={16} color="#844A31" />
+              <Text style={styles.addCatText}>Añadir categoría</Text>
+            </Pressable>
+          )}
+        </View>
         {categorias.length > 0 && (
-          <>
-            <Text style={styles.label}>Categoría (opcional)</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
-              {categorias.map(c => (
-                <Pressable
-                  key={c.id}
-                  style={[styles.chip, categoriaId === c.id && styles.chipActive]}
-                  onPress={() => setCategoriaId(categoriaId === c.id ? undefined : c.id)}
-                >
-                  <Text style={[styles.chipText, categoriaId === c.id && styles.chipTextActive]}>{c.nombre}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </>
+          <View style={styles.chips}>
+            {categorias.map(c => (
+              <Pressable
+                key={c.id}
+                style={[styles.chip, categoriaId === c.id && styles.chipActive]}
+                onPress={() => setCategoriaId(categoriaId === c.id ? undefined : c.id)}
+              >
+                <Text style={[styles.chipText, categoriaId === c.id && styles.chipTextActive]}>{c.nombre}</Text>
+              </Pressable>
+            ))}
+          </View>
         )}
 
         <Pressable
@@ -212,9 +238,37 @@ export default function CrearQuizScreen() {
         )}
       </ScrollView>
 
+      <Modal visible={modalCat} transparent animationType="fade" onRequestClose={() => setModalCat(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setModalCat(false)}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <Text style={styles.modalTitle}>Nueva categoría</Text>
+            <View style={styles.newCatRow}>
+              <TextInput
+                style={styles.newCatInput}
+                placeholder="Nombre de la categoría..."
+                placeholderTextColor="#9ca3af"
+                value={nuevaCat}
+                onChangeText={setNuevaCat}
+                autoFocus
+              />
+              <Pressable
+                style={[styles.newCatBtn, !nuevaCat.trim() && { opacity: 0.45 }]}
+                onPress={handleCrearCategoria}
+                disabled={guardandoCat || !nuevaCat.trim()}
+              >
+                {guardandoCat
+                  ? <ActivityIndicator size="small" color="white" />
+                  : <Ionicons name="add" size={20} color="white" />
+                }
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <AppAlert
         visible={alerta.visible}
-        variante="peligro"
+        variante={alerta.variante}
         titulo={alerta.titulo}
         mensaje={alerta.mensaje}
         onClose={cerrar}
@@ -365,8 +419,63 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: 'white',
   },
-  catScroll: {
+  labelRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  addCatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  addCatText: {
+    color: '#844A31',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    gap: 16,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#412E2E',
+    textAlign: 'center',
+  },
+  newCatRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  newCatInput: {
+    flex: 1,
+    backgroundColor: '#f5f0eb',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: '#412E2E',
+  },
+  newCatBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#844A31',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   generateBtn: {
     flexDirection: 'row',

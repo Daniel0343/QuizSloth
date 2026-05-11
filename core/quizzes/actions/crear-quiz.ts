@@ -102,3 +102,13 @@ export const clonarPlantilla = async (id: number): Promise<QuizConPreguntas> => 
   const { data } = await quizslothApi.post<QuizConPreguntas>(`/plantillas/${id}/clonar`);
   return data;
 };
+
+export const publicarQuiz = async (id: number): Promise<QuizDetalle> => {
+  const { data } = await quizslothApi.post<QuizDetalle>(`/quizzes/${id}/publicar`);
+  return data;
+};
+
+export const despublicarQuiz = async (id: number): Promise<QuizDetalle> => {
+  const { data } = await quizslothApi.post<QuizDetalle>(`/quizzes/${id}/despublicar`);
+  return data;
+};
