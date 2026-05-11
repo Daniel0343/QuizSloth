@@ -17,7 +17,6 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   Pressable,
@@ -51,7 +50,7 @@ export default function BibliotecaScreen() {
   const [menuColeccion, setMenuColeccion] = useState<ColeccionDTO | null>(null);
   const [modalRenombrar, setModalRenombrar] = useState(false);
   const [nuevoNombreCol, setNuevoNombreCol] = useState('');
-  const [alerta, setAlerta] = useState<{ visible: boolean; titulo: string; mensaje?: string; botones?: any[] }>({ visible: false, titulo: '' });
+  const [alerta, setAlerta] = useState<{ visible: boolean; variante?: 'peligro'|'exito'|'info'; titulo: string; mensaje?: string; botones?: any[] }>({ visible: false, titulo: '' });
   const cerrarAlerta = () => setAlerta(p => ({ ...p, visible: false }));
 
   const cargarQuizzes = useCallback(() => {
@@ -71,13 +70,10 @@ export default function BibliotecaScreen() {
     getMisColecciones().then(setColecciones).catch(() => { });
   }, [user]);
 
-  useEffect(() => {
-    cargarQuizzes();
-  }, [cargarQuizzes]);
-
   useFocusEffect(useCallback(() => {
+    cargarQuizzes();
     cargarColecciones();
-  }, [cargarColecciones]));
+  }, [cargarQuizzes, cargarColecciones]));
 
   const handleCrearColeccion = async () => {
     if (!nombreNuevaCol.trim()) return;
@@ -88,7 +84,7 @@ export default function BibliotecaScreen() {
       setNombreNuevaCol('');
       setModalNuevaCol(false);
     } catch {
-      Alert.alert('Error', 'No se pudo crear la colección.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo crear la colección.' });
     } finally {
       setCreandoCol(false);
     }
@@ -112,9 +108,9 @@ export default function BibliotecaScreen() {
       ));
       setModalAgregarCol(false);
       setMenuQuiz(null);
-      Alert.alert('¡Listo!', 'Quiz añadido a la colección.');
+      setAlerta({ visible: true, variante: 'exito', titulo: '¡Listo!', mensaje: 'Quiz añadido a la colección.' });
     } catch {
-      Alert.alert('Error', 'No se pudo añadir el quiz a la colección.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo añadir el quiz a la colección.' });
     }
   };
 
@@ -122,22 +118,18 @@ export default function BibliotecaScreen() {
     if (!menuQuiz) return;
     const quiz = menuQuiz;
     setMenuQuiz(null);
-    Alert.alert(
-      'Eliminar quiz',
-      `¿Seguro que quieres eliminar "${quiz.titulo}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive',
-          onPress: async () => {
-            try {
-              await eliminarQuiz(quiz.id);
-            } catch { /* si ya no existe en el servidor, ignorar */ }
-            setQuizzes(prev => prev.filter(q => q.id !== quiz.id));
-          },
-        },
-      ]
-    );
+    setAlerta({
+      visible: true, variante: 'peligro',
+      titulo: 'Eliminar quiz',
+      mensaje: `¿Seguro que quieres eliminar "${quiz.titulo}"?`,
+      botones: [
+        { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrarAlerta },
+        { texto: 'Eliminar', estilo: 'destructivo', onPress: async () => {
+          try { await eliminarQuiz(quiz.id); } catch { /* si ya no existe en el servidor, ignorar */ }
+          setQuizzes(prev => prev.filter(q => q.id !== quiz.id));
+        }},
+      ],
+    });
   };
 
   const handleLongPressColeccion = (col: ColeccionDTO) => {
@@ -174,25 +166,23 @@ export default function BibliotecaScreen() {
       setMenuColeccion(null);
       setNuevoNombreCol('');
     } catch {
-      Alert.alert('Error', 'No se pudo renombrar la colección.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo renombrar la colección.' });
     }
   };
 
   const handleEliminarApunte = (apunte: ApunteResumen) => {
-    Alert.alert(
-      'Eliminar apunte',
-      `¿Seguro que quieres eliminar "${apunte.titulo}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive',
-          onPress: async () => {
-            try { await eliminarApunte(apunte.id); } catch { /* ignorar */ }
-            setApuntes(prev => prev.filter(a => a.id !== apunte.id));
-          },
-        },
-      ]
-    );
+    setAlerta({
+      visible: true, variante: 'peligro',
+      titulo: 'Eliminar apunte',
+      mensaje: `¿Seguro que quieres eliminar "${apunte.titulo}"?`,
+      botones: [
+        { texto: 'Cancelar', estilo: 'cancelar', onPress: cerrarAlerta },
+        { texto: 'Eliminar', estilo: 'destructivo', onPress: async () => {
+          try { await eliminarApunte(apunte.id); } catch { /* ignorar */ }
+          setApuntes(prev => prev.filter(a => a.id !== apunte.id));
+        }},
+      ],
+    });
   };
 
   const quizzesFiltrados = quizzes.filter(q =>

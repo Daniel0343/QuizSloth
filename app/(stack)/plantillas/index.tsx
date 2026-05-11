@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  ActivityIndicator, Modal, Alert, TextInput, Image,
+  ActivityIndicator, Modal, TextInput, Image,
 } from 'react-native';
+import AppAlert from '@/components/AppAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -34,6 +35,8 @@ export default function PlantillasScreen() {
   const [clonando, setClonando] = useState(false);
   const [creandoCol, setCreandoCol] = useState(false);
   const [quizClonado, setQuizClonado] = useState<{ id: number } | null>(null);
+  const [alerta, setAlerta] = useState<{ visible: boolean; variante?: 'peligro'|'exito'|'info'; titulo: string; mensaje?: string }>({ visible: false, titulo: '' });
+  const cerrarAlerta = () => setAlerta(p => ({ ...p, visible: false }));
 
   useEffect(() => {
     Promise.all([
@@ -59,7 +62,7 @@ export default function PlantillasScreen() {
       setModalAccion(false);
       router.push(`/quiz/solo/${resultado.quiz.id}?temporal=true` as any);
     } catch {
-      Alert.alert('Error', 'No se pudo cargar el quiz.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo cargar el quiz.' });
     } finally {
       setClonando(false);
     }
@@ -73,7 +76,7 @@ export default function PlantillasScreen() {
       setModalAccion(false);
       router.push(`/crear-quiz/editar?id=${resultado.quiz.id}&nuevo=true` as any);
     } catch {
-      Alert.alert('Error', 'No se pudo guardar el quiz en la biblioteca.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo guardar el quiz en la biblioteca.' });
     } finally {
       setClonando(false);
     }
@@ -85,9 +88,9 @@ export default function PlantillasScreen() {
       await añadirQuizAColeccion(colId, quizClonado.id);
       setModalColeccion(false);
       router.replace('/(stack)/(tabs)/biblioteca' as any);
-      Alert.alert('¡Listo!', 'Quiz guardado en tu biblioteca y colección.');
+      setAlerta({ visible: true, variante: 'exito', titulo: '¡Listo!', mensaje: 'Quiz guardado en tu biblioteca y colección.' });
     } catch {
-      Alert.alert('Error', 'No se pudo añadir a la colección.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo añadir a la colección.' });
     }
   };
 
@@ -100,9 +103,9 @@ export default function PlantillasScreen() {
       setNuevaCol('');
       setModalColeccion(false);
       router.replace('/(stack)/(tabs)/biblioteca' as any);
-      Alert.alert('¡Listo!', `Quiz guardado en "${col.nombre}".`);
+      setAlerta({ visible: true, variante: 'exito', titulo: '¡Listo!', mensaje: `Quiz guardado en "${col.nombre}".` });
     } catch {
-      Alert.alert('Error', 'No se pudo crear la colección.');
+      setAlerta({ visible: true, variante: 'peligro', titulo: 'Error', mensaje: 'No se pudo crear la colección.' });
     } finally {
       setCreandoCol(false);
     }
@@ -111,7 +114,7 @@ export default function PlantillasScreen() {
   const handleOmitirColeccion = () => {
     setModalColeccion(false);
     router.replace('/(stack)/(tabs)/biblioteca' as any);
-    Alert.alert('¡Listo!', 'Quiz guardado en tu biblioteca.');
+    setAlerta({ visible: true, variante: 'exito', titulo: '¡Listo!', mensaje: 'Quiz guardado en tu biblioteca.' });
   };
 
   return (
@@ -242,6 +245,14 @@ export default function PlantillasScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <AppAlert
+        visible={alerta.visible}
+        variante={alerta.variante}
+        titulo={alerta.titulo}
+        mensaje={alerta.mensaje}
+        onClose={cerrarAlerta}
+      />
     </SafeAreaView>
   );
 }
