@@ -369,7 +369,7 @@ export default function PerfilScreen() {
             <Text style={styles.sheetSub}>Al activar la suscripción se creará un nuevo pedido mensual.</Text>
 
             <View style={styles.beneficiosList}>
-              {['Acceso completo a todas las clases', 'Quizzes y apuntes ilimitados', 'Participa en salas en tiempo real', 'Soporte prioritario'].map(b => (
+              {['Acceso completo a todas las clases', 'Quizzes y apuntes ilimitados', 'Participa en salas en tiempo real'].map(b => (
                 <View key={b} style={styles.beneficioRow}>
                   <Ionicons name="checkmark-circle" size={17} color="#24833D" />
                   <Text style={styles.beneficioText}>{b}</Text>
