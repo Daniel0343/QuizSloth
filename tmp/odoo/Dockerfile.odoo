@@ -1,0 +1,13 @@
+FROM odoo:17
+
+USER root
+
+COPY tmp/odoo/odoo.conf /etc/odoo/odoo.conf
+COPY tmp/odoo/entrypoint.sh /entrypoint_custom.sh
+COPY sloth-texto.png /sloth-logo.png
+
+RUN chmod +x /entrypoint_custom.sh
+
+USER odoo
+
+ENTRYPOINT ["/entrypoint_custom.sh"]
