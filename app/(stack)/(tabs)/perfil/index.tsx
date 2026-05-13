@@ -128,7 +128,7 @@ export default function PerfilScreen() {
 
         <Text style={[styles.sectionLabel, { color: primaryColor }]}>Aplicación</Text>
         <View style={styles.card}>
-          {rol === 'alumno' && (
+          {rol === 'profesor' && (
             <>
               <SettingRow icon="star-outline" label="Suscripción" primaryColor={primaryColor} onPress={abrirSubscripcion} />
               <View style={styles.divider} />
@@ -216,13 +216,6 @@ export default function PerfilScreen() {
                     <Text style={[styles.subRowValue, sub.estado === 'expirada' && { color: '#c0392b' }]}>
                       {new Date(sub.fechaFin).toLocaleDateString('es-ES')}
                     </Text>
-                  </View>
-                )}
-                {sub.odooId && (
-                  <View style={styles.subRow}>
-                    <Ionicons name="finger-print-outline" size={18} color={primaryColor} />
-                    <Text style={styles.subRowLabel}>ID Odoo</Text>
-                    <Text style={styles.subRowValue}>#{sub.odooId}</Text>
                   </View>
                 )}
               </View>
@@ -361,7 +354,7 @@ export default function PerfilScreen() {
             <View style={styles.handle} />
 
             <View style={styles.precioBadge}>
-              <Text style={styles.precioAmount}>29,99€</Text>
+              <Text style={styles.precioAmount}>10,00€</Text>
               <Text style={styles.precioMes}>/ mes</Text>
             </View>
 

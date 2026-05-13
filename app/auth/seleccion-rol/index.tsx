@@ -80,13 +80,13 @@ export default function SeleccionRol() {
             image={require('@/assets/sloth-estudiante.png')}
             title="Estudiante"
             subtitle="Aprende con quizzes generados por IA"
-            onPress={() => router.push('/auth/registro?role=student')}
+            onPress={() => router.push('/auth/registro?role=alumno')}
           />
           <RoleCard
             image={require('@/assets/sloth-profesor.png')}
             title="Profesor"
             subtitle="Crea clases y genera material automático"
-            onPress={() => router.push('/auth/registro?role=teacher')}
+            onPress={() => router.push('/auth/registro?role=profesor')}
           />
         </View>
 

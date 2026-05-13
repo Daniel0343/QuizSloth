@@ -48,18 +48,14 @@ export default function Registro() {
 
   const handleRegister = async () => {
     if (!validate()) return;
-    if (role !== 'teacher') {
-      setAceptaTerminos(false);
-      setModalSub(true);
-      return;
-    }
-    await doRegister();
+    setAceptaTerminos(false);
+    setModalSub(true);
   };
 
   const doRegister = async () => {
     setIsPosting(true);
     const nombreCompleto = `${form.nombre.trim()} ${form.apellidos.trim()}`.trim();
-    const rol: Rol = role === 'teacher' ? 'profesor' : 'alumno';
+    const rol: Rol = role === 'profesor' ? 'profesor' : 'alumno';
     const ok = await register(nombreCompleto, form.email, form.password, rol);
     setIsPosting(false);
     if (ok) {
@@ -103,7 +99,7 @@ export default function Registro() {
 
           <Text className="text-[#412E2E] text-3xl font-bold mb-1">Crea tu cuenta</Text>
           <Text className="text-[#844A31] text-sm font-medium mb-5">
-            Como {role === 'teacher' ? 'profesor' : 'estudiante'}
+            Como {role === 'profesor' ? 'profesor' : 'estudiante'}
           </Text>
 
           <Text className="text-[#412E2E] text-xs font-semibold mb-1.5">Nombre</Text>
@@ -217,12 +213,12 @@ export default function Registro() {
             <View style={styles.handle} />
 
             <View style={styles.precioBadge}>
-              <Text style={styles.precioAmount}>29,99€</Text>
-              <Text style={styles.precioMes}>/ mes</Text>
+              <Text style={styles.precioAmount}>{role === 'profesor' ? '10,00€' : 'Gratis'}</Text>
+              {role === 'profesor' && <Text style={styles.precioMes}>/ mes</Text>}
             </View>
 
-            <Text style={styles.sheetTitle}>Suscripción QuizSloth</Text>
-            <Text style={styles.sheetSub}>Al registrarte como alumno se creará una suscripción mensual.</Text>
+            <Text style={styles.sheetTitle}>{role === 'profesor' ? 'Suscripción QuizSloth' : 'Matriculación QuizSloth'}</Text>
+            <Text style={styles.sheetSub}>{role === 'profesor' ? 'Al registrarte como profesor se creará una suscripción mensual de 10,00€.' : 'Al registrarte como alumno quedarás matriculado en la plataforma de forma gratuita.'}</Text>
 
             <View style={styles.beneficiosList}>
               {['Acceso completo a todas las clases', 'Quizzes y apuntes ilimitados', 'Participa en salas en tiempo real'].map(b => (
