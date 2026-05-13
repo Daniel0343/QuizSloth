@@ -39,11 +39,6 @@ public class JwtUtil {
         return getClaims(token).getSubject();
     }
 
-    // Comprueba si el token ha caducado
-    private boolean isTokenExpired(String token) {
-        return getClaims(token).getExpiration().before(new Date());
-    }
-
     // Parsea y verifica el token devolviendo sus claims
     private Claims getClaims(String token) {
         return Jwts.parser()

@@ -12,9 +12,6 @@ import java.util.Optional;
 @Repository
 public interface CalificacionRepository extends JpaRepository<Calificacion, Integer> {
 
-    // Todas las calificaciones de un usuario
-    List<Calificacion> findByUsuario(Usuario usuario);
-
     // Todas las calificaciones de un quiz concreto
     List<Calificacion> findByQuiz(Quiz quiz);
 

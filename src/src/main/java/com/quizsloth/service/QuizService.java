@@ -53,13 +53,6 @@ public class QuizService {
         return quizRepository.findByCategoriaIdAndCreadorRolAndBorradorFalse(categoriaId, Usuario.Rol.profesor);
     }
 
-    // Lista los quizzes publicados de un usuario (sin borradores)
-    public List<Quiz> listarPorCreador(String email) {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        return quizRepository.findByCreadorAndBorradorFalse(usuario);
-    }
-
     // Devuelve todos los quizzes del creador, incluyendo borradores
     public List<Quiz> listarTodosPorCreador(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)

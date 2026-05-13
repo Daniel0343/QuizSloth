@@ -27,7 +27,9 @@ public class Calificacion {
     @Column(name = "fecha_completado", updatable = false)
     private LocalDateTime fechaCompletado;
 
-    public Calificacion() {}
+    public Calificacion() {
+        
+    }
 
     public Calificacion(Integer id, Usuario usuario, Quiz quiz, BigDecimal puntuacion, LocalDateTime fechaCompletado) {
         this.id = id;

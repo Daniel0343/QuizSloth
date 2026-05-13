@@ -1,9 +1,6 @@
 SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
 
--- ============================================================
---  QuizSloth DB - DDL + Datos de prueba
--- ============================================================
 CREATE DATABASE IF NOT EXISTS quizzsloth_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -36,7 +33,7 @@ CREATE TABLE cursos (
 );
 
 -- ------------------------------------------------------------
--- 3. Matrículas (alumno ↔ curso)
+-- 3. Matrículas 
 -- ------------------------------------------------------------
 CREATE TABLE curso_alumnos (
     id_curso  INT NOT NULL,
@@ -211,7 +208,7 @@ CREATE TABLE preguntas_plantilla (
 );
 
 -- ------------------------------------------------------------
--- 13. Salas (partidas en tiempo real)
+-- 13. Salas
 -- ------------------------------------------------------------
 CREATE TABLE salas (
     id          INT AUTO_INCREMENT PRIMARY KEY,

@@ -16,12 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-  authenticate() — obtiene el uid del usuario admin en Odoo.
- crearCliente()  — crea un res.partner para el alumno y un sale.order mensual.
- crearFacturaMensual() — genera la factura mensual automática.
 
- */
 @Service
 public class OdooService {
 
@@ -93,7 +88,7 @@ public class OdooService {
 
 
     /**
-     * Genera un sale.order para el alumno y lo confirma (flujo de ventas).
+     * Genera un sale.order para el alumno y lo confirma.
      */
     private void crearFacturaMensual(int uid, XmlRpcClient client, int partnerId) throws Exception {
         // Buscar o crear el producto de suscripción
@@ -188,7 +183,7 @@ public class OdooService {
 
         int orderId = (int) orderIds[0];
 
-        // Cancelar vía write directo (action_cancel puede bloquearse si hay facturas)
+        // Cancelar vía write directo
         Map<String, Object> writeData = new HashMap<>();
         writeData.put("state", "cancel");
         Object writeResult = client.execute("execute_kw", List.of(
@@ -197,23 +192,6 @@ public class OdooService {
                 List.of(List.of(orderId), writeData)
         ));
         log.info("Suscripción cancelada en Odoo para partner ID={}, orderId={}, writeResult={}", odooPartnerId, orderId, writeResult);
-    }
-
-
-
-    // Busca un res.partner en Odoo por email y devuelve su ID, o null si no existe
-    public Integer buscarClientePorEmail(String email) throws Exception {
-        int uid = authenticate();
-        XmlRpcClient client = buildClient("/xmlrpc/2/object");
-
-        Object result = client.execute("execute_kw", List.of(
-                odooDb, uid, odooPassword,
-                "res.partner", "search",
-                List.of(List.of(List.of("email", "=", email)))
-        ));
-
-        Object[] ids = (Object[]) result;
-        return ids.length > 0 ? (int) ids[0] : null;
     }
 
 
@@ -264,7 +242,7 @@ public class OdooService {
 
 
 
-    // Crea un cliente XML-RPC apuntando al endpoint indicado con timeout de 3 segundos
+    // Crea un cliente apuntando al endpoint indicado con timeout de 3 segundos
     private XmlRpcClient buildClient(String endpoint) throws Exception {
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
         config.setServerURL(new URL(odooUrl + endpoint));
