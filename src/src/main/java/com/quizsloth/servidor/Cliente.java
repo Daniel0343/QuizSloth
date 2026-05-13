@@ -31,6 +31,7 @@ public class Cliente {
         this.servidor = servidor;
     }
 
+    // Une al jugador a la sala, le asigna nickname y notifica a los demás vía WebSocket
     public Servidor.UnirseResponseDTO unirse(String codigo, String nickname, String email) {
         Sala sala = servidor.getSala(codigo);
         if (sala.getEstado() == Sala.Estado.TERMINADA)
@@ -51,6 +52,7 @@ public class Cliente {
         return new Servidor.UnirseResponseDTO(p.getId(), info);
     }
 
+    // Registra la respuesta del jugador, actualiza puntos y envía resultado si todos respondieron
     public void responder(String codigo, Long participanteId, String respuesta) {
         Sala sala = servidor.getSala(codigo);
         if (sala.getEstado() != Sala.Estado.JUGANDO) return;

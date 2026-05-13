@@ -39,9 +39,10 @@ public class OdooService {
     @Value("${odoo.password}")
     private String odooPassword;
 
-    private static final double PRECIO_MENSUAL = 29.99;
+    private static final double PRECIO_MENSUAL = 10.00;
     private static final String PRODUCT_NAME = "Suscripcion QuizSloth";
 
+    // Obtiene el uid del administrador de Odoo mediante XML-RPC
     private int authenticate() throws Exception {
         XmlRpcClient client = buildClient("/xmlrpc/2/common");
         Object uid = client.execute("authenticate",
@@ -58,15 +59,17 @@ public class OdooService {
      * Crea un res.partner en Odoo con los datos del alumno.
      * @return ID del partner
      */
-    public Integer crearCliente(Usuario alumno) throws Exception {
+    public Integer crearCliente(Usuario usuario) throws Exception {
         int uid = authenticate();
         XmlRpcClient client = buildClient("/xmlrpc/2/object");
 
+        boolean esProfesor = usuario.getRol() == Usuario.Rol.profesor;
+
         Map<String, Object> partner = new HashMap<>();
-        partner.put("name", alumno.getNombre());
-        partner.put("email", alumno.getEmail());
+        partner.put("name", usuario.getNombre());
+        partner.put("email", usuario.getEmail());
         partner.put("customer_rank", 1);
-        partner.put("comment", "Alumno registrado desde QuizSloth");
+        partner.put("comment", esProfesor ? "Profesor registrado desde QuizSloth" : "Alumno matriculado desde QuizSloth");
 
         Object result = client.execute("execute_kw", List.of(
                 odooDb, uid, odooPassword,
@@ -75,12 +78,14 @@ public class OdooService {
         ));
 
         int partnerId = (int) result;
-        log.info("Alumno {} registrado en Odoo como partner ID={}", alumno.getEmail(), partnerId);
+        log.info("Usuario {} registrado en Odoo como partner ID={} (rol: {})", usuario.getEmail(), partnerId, usuario.getRol());
 
-        try {
-            crearFacturaMensual(uid, client, partnerId);
-        } catch (Exception e) {
-            log.warn("No se pudo crear pedido en Odoo para partner {}: {}", partnerId, e.getMessage());
+        if (esProfesor) {
+            try {
+                crearFacturaMensual(uid, client, partnerId);
+            } catch (Exception e) {
+                log.warn("No se pudo crear pedido en Odoo para partner {}: {}", partnerId, e.getMessage());
+            }
         }
 
         return partnerId;
@@ -152,6 +157,7 @@ public class OdooService {
 
 
 
+    // Reactiva la suscripción generando un nuevo pedido de venta en Odoo para el partner
     public void reactivarSubscripcion(int odooPartnerId) throws Exception {
         int uid = authenticate();
         XmlRpcClient client = buildClient("/xmlrpc/2/object");
@@ -161,6 +167,7 @@ public class OdooService {
 
 
 
+    // Busca y cancela el pedido de venta activo del partner en Odoo
     public void cancelarSubscripcion(int odooPartnerId) throws Exception {
         int uid = authenticate();
         XmlRpcClient client = buildClient("/xmlrpc/2/object");
@@ -194,6 +201,7 @@ public class OdooService {
 
 
 
+    // Busca un res.partner en Odoo por email y devuelve su ID, o null si no existe
     public Integer buscarClientePorEmail(String email) throws Exception {
         int uid = authenticate();
         XmlRpcClient client = buildClient("/xmlrpc/2/object");
@@ -210,6 +218,7 @@ public class OdooService {
 
 
 
+    // Consulta el último pedido de venta del partner y calcula el estado y fecha de fin a 30 días
     public SubscripcionDTO getSubscripcion(int odooPartnerId) throws Exception {
         int uid = authenticate();
         XmlRpcClient client = buildClient("/xmlrpc/2/object");
@@ -255,6 +264,7 @@ public class OdooService {
 
 
 
+    // Crea un cliente XML-RPC apuntando al endpoint indicado con timeout de 3 segundos
     private XmlRpcClient buildClient(String endpoint) throws Exception {
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
         config.setServerURL(new URL(odooUrl + endpoint));

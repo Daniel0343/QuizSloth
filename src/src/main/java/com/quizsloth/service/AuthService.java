@@ -26,6 +26,7 @@ public class AuthService {
         this.odooService = odooService;
     }
 
+    // Autentica al usuario con email y contraseña y devuelve un token JWT
     public AuthResponse login(LoginRequest request) {
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
@@ -38,6 +39,7 @@ public class AuthService {
         return AuthResponse.from(usuario, token);
     }
 
+    // Registra un nuevo usuario, lo sincroniza con Odoo y devuelve token JWT
     public AuthResponse register(RegisterRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("El email ya está registrado");
@@ -51,7 +53,7 @@ public class AuthService {
 
         Usuario saved = usuarioRepository.save(usuario);
 
-        if (saved.getRol() == Usuario.Rol.alumno) {
+        if (saved.getRol() == Usuario.Rol.alumno || saved.getRol() == Usuario.Rol.profesor) {
             try {
                 Integer odooId = odooService.crearCliente(saved);
                 saved.setOdooId(odooId);
@@ -65,6 +67,7 @@ public class AuthService {
         return AuthResponse.from(saved, token);
     }
 
+    // Reactiva la suscripción del profesor creando una nueva factura en Odoo
     public void reactivarSubscripcion(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -86,6 +89,7 @@ public class AuthService {
         }
     }
 
+    // Cancela el pedido activo del usuario en Odoo
     public void cancelarSubscripcion(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -101,9 +105,21 @@ public class AuthService {
         }
     }
 
+    // Consulta el estado de suscripción del usuario desde Odoo, creando el cliente si no existe
     public SubscripcionDTO getSubscripcion(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (usuario.getOdooId() == null && usuario.getRol() == Usuario.Rol.profesor) {
+            try {
+                Integer odooId = odooService.crearCliente(usuario);
+                usuario.setOdooId(odooId);
+                usuarioRepository.save(usuario);
+            } catch (Exception e) {
+                log.warn("No se pudo sincronizar profesor {} con Odoo: {}", email, e.getMessage());
+                return new SubscripcionDTO("sin_subscripcion", null, null, null, null);
+            }
+        }
 
         if (usuario.getOdooId() == null) {
             return new SubscripcionDTO("sin_subscripcion", null, null, null, null);

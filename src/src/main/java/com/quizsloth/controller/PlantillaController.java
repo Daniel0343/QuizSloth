@@ -22,6 +22,7 @@ public class PlantillaController {
         this.jwtUtil = jwtUtil;
     }
 
+    // Extrae el email del token JWT del encabezado Authorization
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
@@ -30,11 +31,13 @@ public class PlantillaController {
         return null;
     }
 
+    // GET /plantillas - Lista todas las plantillas disponibles
     @GetMapping
     public ResponseEntity<List<Plantilla>> listar() {
         return ResponseEntity.ok(plantillaService.listar());
     }
 
+    // POST /plantillas/{id}/clonar - Crea un quiz nuevo copiando la plantilla indicada
     @PostMapping("/{id}/clonar")
     public ResponseEntity<QuizService.QuizConPreguntas> clonar(
             @PathVariable Integer id, HttpServletRequest request) {

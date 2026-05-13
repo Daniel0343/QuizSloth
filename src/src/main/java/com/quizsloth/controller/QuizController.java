@@ -26,6 +26,7 @@ public class QuizController {
         this.jwtUtil = jwtUtil;
     }
 
+    // Extrae el email del token JWT del encabezado Authorization
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
@@ -34,6 +35,7 @@ public class QuizController {
         return null;
     }
 
+    // GET /quizzes - Lista quizzes públicos, filtrable por categoría
     @GetMapping
     public ResponseEntity<List<Quiz>> listar(
             @RequestParam(required = false) Integer categoriaId) {
@@ -41,6 +43,7 @@ public class QuizController {
         return ResponseEntity.ok(quizService.listarTodos());
     }
 
+    // POST /quizzes - Crea un quiz vacío en borrador
     @PostMapping
     public ResponseEntity<Quiz> crear(@RequestBody CrearQuizRequest req, HttpServletRequest request) {
         Quiz quiz = quizService.crearVacio(req.getTitulo(), req.getCategoriaId(), emailFromRequest(request));
@@ -57,38 +60,45 @@ public class QuizController {
         public void setCategoriaId(Integer categoriaId) { this.categoriaId = categoriaId; }
     }
 
+    // GET /quizzes/mis-quizzes - Lista todos los quizzes del usuario autenticado incluyendo borradores
     @GetMapping("/mis-quizzes")
     public ResponseEntity<List<QuizService.QuizResumenDTO>> misQuizzes(HttpServletRequest request) {
         return ResponseEntity.ok(quizService.listarPorCreadorDTO(emailFromRequest(request)));
     }
 
+    // GET /quizzes/plantillas - Lista los quizzes marcados como plantilla
     @GetMapping("/plantillas")
     public ResponseEntity<List<Quiz>> plantillas() {
         return ResponseEntity.ok(quizService.listarPlantillas());
     }
 
+    // POST /quizzes/{id}/clonar - Clona una plantilla de quiz
     @PostMapping("/{id}/clonar")
     public ResponseEntity<QuizService.QuizConPreguntas> clonar(
             @PathVariable Integer id, HttpServletRequest request) {
         return ResponseEntity.ok(quizService.clonarPlantilla(id, emailFromRequest(request)));
     }
 
+    // DELETE /quizzes/{id} - Elimina un quiz del usuario
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id, HttpServletRequest request) {
         quizService.eliminar(id, emailFromRequest(request));
         return ResponseEntity.noContent().build();
     }
 
+    // GET /quizzes/{id} - Devuelve el detalle de un quiz
     @GetMapping("/{id}")
     public ResponseEntity<Quiz> obtener(@PathVariable Integer id) {
         return ResponseEntity.ok(quizService.obtener(id));
     }
 
+    // GET /quizzes/{id}/preguntas - Devuelve las preguntas del quiz ordenadas
     @GetMapping("/{id}/preguntas")
     public ResponseEntity<List<Pregunta>> preguntas(@PathVariable Integer id) {
         return ResponseEntity.ok(quizService.obtenerPreguntas(id));
     }
 
+    // POST /quizzes/generar - Genera preguntas IA desde un documento subido
     @PostMapping("/generar")
     public ResponseEntity<Quiz> generarConIA(@RequestBody GenerarQuizRequest req, HttpServletRequest request) {
         Quiz quiz = quizService.generarDesdeDocumento(
@@ -97,6 +107,7 @@ public class QuizController {
         return ResponseEntity.ok(quiz);
     }
 
+    // POST /quizzes/generar-desde-texto - Genera preguntas IA desde texto libre
     @PostMapping("/generar-desde-texto")
     public ResponseEntity<QuizService.QuizConPreguntas> generarDesdeTexto(
             @RequestBody GenerarDesdeTextoRequest req, HttpServletRequest request) {
@@ -106,6 +117,7 @@ public class QuizController {
         return ResponseEntity.ok(resultado);
     }
 
+    // POST /quizzes/generar-desde-archivo - Extrae texto de un PDF y genera preguntas con IA
     @PostMapping("/generar-desde-archivo")
     public ResponseEntity<QuizService.QuizConPreguntas> generarDesdeArchivo(
             @RequestParam("archivo") MultipartFile archivo,
@@ -123,16 +135,19 @@ public class QuizController {
         return ResponseEntity.ok(resultado);
     }
 
+    // POST /quizzes/{id}/publicar - Publica el quiz haciéndolo visible en las categorías
     @PostMapping("/{id}/publicar")
     public ResponseEntity<Quiz> publicar(@PathVariable Integer id) {
         return ResponseEntity.ok(quizService.publicar(id));
     }
 
+    // POST /quizzes/{id}/despublicar - Vuelve el quiz a estado borrador
     @PostMapping("/{id}/despublicar")
     public ResponseEntity<Quiz> despublicar(@PathVariable Integer id) {
         return ResponseEntity.ok(quizService.despublicar(id));
     }
 
+    // PUT /quizzes/{id} - Actualiza los campos generales del quiz
     @PutMapping("/{id}")
     public ResponseEntity<Quiz> actualizarQuiz(
             @PathVariable Integer id,

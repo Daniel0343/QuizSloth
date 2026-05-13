@@ -15,11 +15,13 @@ public class PreguntaController {
         this.quizService = quizService;
     }
 
+    // POST /preguntas - Crea una nueva pregunta vacía en el quiz indicado
     @PostMapping
     public ResponseEntity<Pregunta> crear(@RequestBody CrearPreguntaRequest req) {
         return ResponseEntity.ok(quizService.crearPregunta(req.getQuizId(), req.getOrden()));
     }
 
+    // PUT /preguntas/{id} - Actualiza los campos informados de una pregunta
     @PutMapping("/{id}")
     public ResponseEntity<Pregunta> actualizar(
             @PathVariable Integer id,
@@ -27,6 +29,7 @@ public class PreguntaController {
         return ResponseEntity.ok(quizService.actualizarPregunta(id, req));
     }
 
+    // DELETE /preguntas/{id} - Elimina una pregunta por su ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         quizService.eliminarPregunta(id);

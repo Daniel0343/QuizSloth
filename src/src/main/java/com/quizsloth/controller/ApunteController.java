@@ -38,6 +38,7 @@ public class ApunteController {
         return null;
     }
 
+    // POST /apuntes/generar-desde-texto - Genera apuntes con IA a partir de texto libre
     @PostMapping("/generar-desde-texto")
     public ResponseEntity<?> generarDesdeTexto(
             @RequestBody Map<String, Object> body,
@@ -54,6 +55,7 @@ public class ApunteController {
         }
     }
 
+    // POST /apuntes/generar-desde-archivo - Sube un PDF y genera apuntes con IA
     @PostMapping("/generar-desde-archivo")
     public ResponseEntity<?> generarDesdeArchivo(
             @RequestParam("archivo") MultipartFile archivo,
@@ -69,6 +71,7 @@ public class ApunteController {
         }
     }
 
+    // GET /apuntes/mis-apuntes - Lista los apuntes del usuario autenticado
     @GetMapping("/mis-apuntes")
     public ResponseEntity<List<ApunteService.ApunteResumenDTO>> misApuntes(HttpServletRequest request) {
         String email = emailFromRequest(request);
@@ -76,6 +79,7 @@ public class ApunteController {
         return ResponseEntity.ok(apunteService.listarPorUsuario(email));
     }
 
+    // GET /apuntes/{id} - Devuelve un apunte del usuario autenticado
     @GetMapping("/{id}")
     public ResponseEntity<?> obtener(@PathVariable Integer id, HttpServletRequest request) {
         String email = emailFromRequest(request);
@@ -87,6 +91,7 @@ public class ApunteController {
         }
     }
 
+    // GET /apuntes/{id}/ver - Devuelve un apunte para lectura sin verificar propiedad
     @GetMapping("/{id}/ver")
     public ResponseEntity<?> ver(@PathVariable Integer id, HttpServletRequest request) {
         String email = emailFromRequest(request);
@@ -98,6 +103,7 @@ public class ApunteController {
         }
     }
 
+    // PUT /apuntes/{id} - Actualiza título y contenido de un apunte
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(
             @PathVariable Integer id,
@@ -113,6 +119,7 @@ public class ApunteController {
         }
     }
 
+    // DELETE /apuntes/{id} - Elimina un apunte del usuario autenticado
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id, HttpServletRequest request) {
         String email = emailFromRequest(request);
@@ -125,6 +132,7 @@ public class ApunteController {
         }
     }
 
+    // Convierte un Apunte en el mapa de respuesta JSON
     private Map<String, Object> toResponse(Apunte a) {
         return Map.of(
             "id", a.getId(),

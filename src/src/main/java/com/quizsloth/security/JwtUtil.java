@@ -19,10 +19,12 @@ public class JwtUtil {
     @Value("${app.jwt.expiration}")
     private long expiration;
 
+    // Construye la clave HMAC-SHA256 a partir del secreto configurado
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
+    // Genera un token JWT firmado con el email como subject y la expiración configurada
     public String generateToken(String email) {
         return Jwts.builder()
                 .subject(email)
@@ -32,14 +34,17 @@ public class JwtUtil {
                 .compact();
     }
 
+    // Extrae el email del subject del token JWT
     public String extractEmail(String token) {
         return getClaims(token).getSubject();
     }
 
+    // Comprueba si el token ha caducado
     private boolean isTokenExpired(String token) {
         return getClaims(token).getExpiration().before(new Date());
     }
 
+    // Parsea y verifica el token devolviendo sus claims
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())

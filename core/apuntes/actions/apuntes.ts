@@ -2,6 +2,7 @@ import { quizslothApi, API_URL } from '@/core/auth/api/quizslothApi';
 import { ApunteDetalle, ApunteResumen } from '@/core/auth/interface/apunte';
 import { SecureStorage } from '@/helpers/adapters/secure-storage';
 
+// Genera un apunte nuevo a partir de un texto usando IA
 export const generarApunteDesdeTexto = async (
   texto: string,
 ): Promise<ApunteDetalle> => {
@@ -13,6 +14,7 @@ export const generarApunteDesdeTexto = async (
   return data;
 };
 
+// Genera un apunte nuevo a partir de un PDF subido por el usuario usando IA
 export const generarApunteDesdeArchivo = async (
   archivo: { uri: string; name: string; type: string },
 ): Promise<ApunteDetalle> => {
@@ -35,21 +37,25 @@ export const generarApunteDesdeArchivo = async (
   return response.json();
 };
 
+// Obtiene la lista de apuntes creados por el usuario autenticado
 export const getMisApuntes = async (): Promise<ApunteResumen[]> => {
   const { data } = await quizslothApi.get<ApunteResumen[]>('/apuntes/mis-apuntes');
   return data;
 };
 
+// Obtiene el detalle completo de un apunte propio por su ID
 export const getApunte = async (id: number): Promise<ApunteDetalle> => {
   const { data } = await quizslothApi.get<ApunteDetalle>(`/apuntes/${id}`);
   return data;
 };
 
+// Obtiene el detalle de un apunte público sin necesidad de ser el autor
 export const getApuntePublico = async (id: number): Promise<ApunteDetalle> => {
   const { data } = await quizslothApi.get<ApunteDetalle>(`/apuntes/${id}/ver`);
   return data;
 };
 
+// Actualiza el título y el contenido de un apunte existente
 export const actualizarApunte = async (
   id: number,
   titulo: string,
@@ -59,10 +65,12 @@ export const actualizarApunte = async (
   return data;
 };
 
+// Elimina permanentemente un apunte por su ID
 export const eliminarApunte = async (id: number): Promise<void> => {
   await quizslothApi.delete(`/apuntes/${id}`);
 };
 
+// Añade un apunte a una colección del usuario
 export const añadirApunteAColeccion = async (colId: number, apunteId: number) => {
   const { data } = await quizslothApi.post(`/colecciones/${colId}/apuntes/${apunteId}`);
   return data;

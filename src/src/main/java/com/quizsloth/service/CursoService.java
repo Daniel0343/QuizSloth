@@ -45,6 +45,7 @@ public class CursoService {
     public record CalificacionAlumnoDTO(String alumnoNombre, String alumnoEmail, double puntuacion, int porcentaje, String fecha) {}
     public record CalificacionQuizDTO(Integer quizId, String quizTitulo, String seccionTitulo, List<CalificacionAlumnoDTO> calificaciones) {}
 
+    // Convierte la entidad Curso en su DTO para la respuesta REST
     private CursoDTO toDTO(Curso c) {
         int num = c.getAlumnos() != null ? c.getAlumnos().size() : 0;
         ProfesorInfo prof = c.getProfesor() != null
@@ -52,6 +53,7 @@ public class CursoService {
         return new CursoDTO(c.getId(), c.getNombre(), c.getDescripcion(), c.getColor(), num, prof);
     }
 
+    // Convierte una SeccionCurso en su DTO incluyendo sus elementos
     private SeccionDTO toSeccionDTO(SeccionCurso s) {
         List<ElementoDTO> elems = s.getElementos().stream()
                 .map(e -> new ElementoDTO(e.getId(), e.getTipo().name(), e.getTitulo(), e.getContenido(), e.getOrden()))
@@ -59,16 +61,19 @@ public class CursoService {
         return new SeccionDTO(s.getId(), s.getTitulo(), s.getOrden(), elems);
     }
 
+    // Recupera un usuario por email o lanza excepción si no existe
     private Usuario getUsuario(String email) {
         return usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
+    // Recupera un curso por ID o lanza excepción si no existe
     private Curso getCurso(Integer id) {
         return cursoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Clase no encontrada"));
     }
 
+    // Verifica que el usuario tiene rol de profesor en el curso, lanza excepción si no
     private void verificarProfesor(Curso curso, String email) {
         if (curso.getProfesor() != null && curso.getProfesor().getEmail().equals(email)) return;
         List<Usuario> alumnos = curso.getAlumnos();
@@ -78,6 +83,7 @@ public class CursoService {
         throw new RuntimeException("No tienes permiso");
     }
 
+    // Lista los cursos del usuario: si es profesor devuelve los suyos, si es alumno los en que está inscrito
     public List<CursoDTO> listarMisCursos(String email) {
         Usuario usuario = getUsuario(email);
         List<Curso> cursos = usuario.getRol() == Usuario.Rol.profesor
@@ -86,10 +92,12 @@ public class CursoService {
         return cursos.stream().map(this::toDTO).toList();
     }
 
+    // Devuelve el DTO de un curso por ID
     public CursoDTO obtener(Integer id) {
         return toDTO(getCurso(id));
     }
 
+    // Crea un curso nuevo asignando al usuario autenticado como profesor
     public CursoDTO crear(String nombre, String descripcion, String color, String email) {
         Usuario profesor = getUsuario(email);
         Curso curso = new Curso();
@@ -100,6 +108,7 @@ public class CursoService {
         return toDTO(cursoRepository.save(curso));
     }
 
+    // Actualiza nombre, descripción y color del curso
     public CursoDTO actualizar(Integer id, String nombre, String descripcion, String color, String email) {
         Curso curso = getCurso(id);
         verificarProfesor(curso, email);
@@ -109,12 +118,14 @@ public class CursoService {
         return toDTO(cursoRepository.save(curso));
     }
 
+    // Elimina un curso y todo su contenido
     public void eliminar(Integer id, String email) {
         Curso curso = getCurso(id);
         verificarProfesor(curso, email);
         cursoRepository.delete(curso);
     }
 
+    // Lista al profesor y alumnos de un curso como DTOs
     public List<ParticipanteDTO> listarParticipantes(Integer id, String email) {
         Curso curso = getCurso(id);
         List<ParticipanteDTO> lista = new java.util.ArrayList<>();
@@ -130,6 +141,7 @@ public class CursoService {
         return lista;
     }
 
+    // Añade un usuario como alumno al curso si no está ya inscrito
     public CursoDTO invitarAlumno(Integer id, String emailAlumno, String emailProfesor) {
         Curso curso = getCurso(id);
         verificarProfesor(curso, emailProfesor);
@@ -142,6 +154,7 @@ public class CursoService {
         return toDTO(curso);
     }
 
+    // Elimina a un alumno del curso por su ID
     public void quitarAlumno(Integer id, Integer alumnoId, String email) {
         Curso curso = getCurso(id);
         verificarProfesor(curso, email);
@@ -149,12 +162,14 @@ public class CursoService {
         cursoRepository.save(curso);
     }
 
+    // Lista las secciones de un curso ordenadas por posición
     public List<SeccionDTO> listarSecciones(Integer id, String email) {
         getCurso(id);
         return seccionRepository.findByCurso_IdOrderByOrdenAsc(id)
                 .stream().map(this::toSeccionDTO).toList();
     }
 
+    // Crea una nueva sección al final del curso
     public SeccionDTO crearSeccion(Integer cursoId, String titulo, String email) {
         Curso curso = getCurso(cursoId);
         verificarProfesor(curso, email);
@@ -165,6 +180,7 @@ public class CursoService {
         return toSeccionDTO(seccionRepository.save(sec));
     }
 
+    // Elimina una sección y todos sus elementos
     public void eliminarSeccion(Integer seccionId, String email) {
         SeccionCurso sec = seccionRepository.findById(seccionId)
                 .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
@@ -172,6 +188,7 @@ public class CursoService {
         seccionRepository.delete(sec);
     }
 
+    // Crea un nuevo elemento (texto, PDF, quiz, etc.) dentro de una sección
     public ElementoDTO crearElemento(Integer seccionId, String tipo, String titulo, String contenido, String email) {
         SeccionCurso sec = seccionRepository.findById(seccionId)
                 .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
@@ -186,6 +203,7 @@ public class CursoService {
         return new ElementoDTO(saved.getId(), saved.getTipo().name(), saved.getTitulo(), saved.getContenido(), saved.getOrden());
     }
 
+    // Actualiza el título de una sección
     public SeccionDTO editarSeccion(Integer seccionId, String titulo, String email) {
         SeccionCurso sec = seccionRepository.findById(seccionId)
                 .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
@@ -194,6 +212,7 @@ public class CursoService {
         return toSeccionDTO(seccionRepository.save(sec));
     }
 
+    // Actualiza título y contenido de un elemento
     public ElementoDTO editarElemento(Integer elementoId, String titulo, String contenido, String email) {
         ElementoCurso elem = elementoRepository.findById(elementoId)
                 .orElseThrow(() -> new RuntimeException("Elemento no encontrado"));
@@ -204,6 +223,7 @@ public class CursoService {
         return new ElementoDTO(saved.getId(), saved.getTipo().name(), saved.getTitulo(), saved.getContenido(), saved.getOrden());
     }
 
+    // Elimina un elemento de su sección
     public void eliminarElemento(Integer elementoId, String email) {
         ElementoCurso elem = elementoRepository.findById(elementoId)
                 .orElseThrow(() -> new RuntimeException("Elemento no encontrado"));
@@ -214,6 +234,7 @@ public class CursoService {
         seccionRepository.save(sec);
     }
 
+    // Devuelve las calificaciones de todos los quizzes del curso agrupadas por quiz
     public List<CalificacionQuizDTO> getCalificaciones(Integer cursoId) {
         Curso curso = cursoRepository.findById(cursoId).orElse(null);
         if (curso == null) return List.of();
@@ -254,6 +275,7 @@ public class CursoService {
         return resultado;
     }
 
+    // Borra todas las calificaciones de un quiz concreto dentro del curso
     public void eliminarCalificacionesQuiz(Integer cursoId, Integer quizId, String email) {
         Curso curso = getCurso(cursoId);
         verificarProfesor(curso, email);

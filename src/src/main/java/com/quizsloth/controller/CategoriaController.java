@@ -21,6 +21,7 @@ public class CategoriaController {
         this.jwtUtil = jwtUtil;
     }
 
+    // Extrae el email del token JWT del encabezado Authorization
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
@@ -29,11 +30,13 @@ public class CategoriaController {
         return null;
     }
 
+    // GET /categorias - Lista todas las categorías disponibles
     @GetMapping
     public ResponseEntity<List<Categoria>> getAll() {
         return ResponseEntity.ok(categoriaRepository.findAll());
     }
 
+    // POST /categorias - Crea una nueva categoría si el nombre no está ya en uso
     @PostMapping
     public ResponseEntity<Categoria> crear(@RequestBody Categoria categoria, HttpServletRequest request) {
         if (categoria.getNombre() == null || categoria.getNombre().isBlank()) {
@@ -47,6 +50,7 @@ public class CategoriaController {
         return ResponseEntity.ok(categoriaRepository.save(categoria));
     }
 
+    // DELETE /categorias/{id} - Elimina una categoría, solo la puede borrar quien la creó
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id, HttpServletRequest request) {
         String email = emailFromRequest(request);

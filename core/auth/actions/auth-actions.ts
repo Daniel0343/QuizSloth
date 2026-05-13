@@ -4,6 +4,7 @@ import { AuthResponse } from '../interface/auth';
 
 export type { AuthResponse };
 
+// Inicia sesión con email y contraseña, devuelve los datos del usuario y el token o null si falla
 export const authLogin = async (email: string, password: string) => {
   email = email.toLowerCase().trim();
   try {
@@ -14,6 +15,7 @@ export const authLogin = async (email: string, password: string) => {
   }
 };
 
+// Registra un nuevo usuario con nombre, email, contraseña y rol, devuelve los datos o null si falla
 export const authRegister = async (
   nombre: string,
   email: string,

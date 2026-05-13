@@ -31,12 +31,14 @@ public class FileController {
         this.jwtUtil = jwtUtil;
     }
 
+    // Verifica que el JWT del encabezado Authorization es válido
     private boolean isAuthenticated(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) return false;
         try { jwtUtil.extractEmail(header.substring(7)); return true; } catch (Exception e) { return false; }
     }
 
+    // POST /files/upload - Sube un PDF al servidor y devuelve su URL relativa
     @PostMapping("/files/upload")
     public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         if (!isAuthenticated(request)) return ResponseEntity.status(401).body(Map.of("error", "No autorizado"));
@@ -53,6 +55,7 @@ public class FileController {
         }
     }
 
+    // GET /files/{uuid}/{nombre} - Sirve un archivo subido por su ruta única
     @GetMapping("/files/{uuid}/{nombre}")
     public ResponseEntity<Resource> serve(@PathVariable String uuid, @PathVariable String nombre) throws MalformedURLException {
         Path path = Path.of(uploadDir + "/pdfs/" + uuid + "/" + nombre);
@@ -66,6 +69,7 @@ public class FileController {
     }
 
 
+    // GET /files/{nombre} - Compatibilidad con rutas de archivos anteriores
     @GetMapping("/files/{nombre}")
     public ResponseEntity<Resource> serveLegacy(@PathVariable String nombre) throws MalformedURLException {
         Path path = Path.of(uploadDir + "/pdfs/" + nombre);

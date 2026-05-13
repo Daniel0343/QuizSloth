@@ -11,6 +11,7 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
+    // Configura CORS permitiendo todos los orígenes, métodos y cabeceras
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

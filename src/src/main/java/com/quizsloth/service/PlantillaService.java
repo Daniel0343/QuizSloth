@@ -25,10 +25,12 @@ public class PlantillaService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    // Devuelve todas las plantillas disponibles
     public List<Plantilla> listar() {
         return plantillaRepository.findAll();
     }
 
+    // Crea un quiz en borrador copiando las preguntas de la plantilla indicada
     @Transactional
     public QuizService.QuizConPreguntas clonar(Integer plantillaId, String emailCreador) {
         Plantilla plantilla = plantillaRepository.findById(plantillaId)

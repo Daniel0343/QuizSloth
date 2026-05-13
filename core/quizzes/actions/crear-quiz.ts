@@ -7,6 +7,7 @@ export interface QuizConPreguntas {
   preguntas: PreguntaDetalle[];
 }
 
+// Genera un quiz completo con preguntas a partir de un texto usando IA
 export const generarQuizDesdeTexto = async (
   titulo: string,
   texto: string,
@@ -22,6 +23,7 @@ export const generarQuizDesdeTexto = async (
   return data;
 };
 
+// Genera un quiz completo con preguntas a partir de un PDF subido usando IA
 export const generarQuizDesdeArchivo = async (
   archivo: { uri: string; name: string; type: string },
   titulo: string,
@@ -54,11 +56,13 @@ export const generarQuizDesdeArchivo = async (
   return response.json();
 };
 
+// Crea un quiz vacío en borrador con solo el título para editarlo manualmente
 export const crearQuizVacio = async (titulo: string): Promise<QuizDetalle> => {
   const { data } = await quizslothApi.post<QuizDetalle>('/quizzes', { titulo });
   return data;
 };
 
+// Actualiza los campos generales de un quiz (título, dificultad, categoría, color)
 export const actualizarQuiz = async (
   id: number,
   campos: { titulo?: string; dificultad?: string; categoriaId?: number; color?: string },
@@ -67,6 +71,7 @@ export const actualizarQuiz = async (
   return data;
 };
 
+// Actualiza los campos de una pregunta existente
 export const actualizarPregunta = async (
   id: number,
   campos: Partial<PreguntaDetalle>,
@@ -75,6 +80,7 @@ export const actualizarPregunta = async (
   return data;
 };
 
+// Obtiene las preguntas de un quiz, devuelve array vacío si falla
 export const obtenerPreguntas = async (quizId: number): Promise<PreguntaDetalle[]> => {
   try {
     const { data } = await quizslothApi.get<PreguntaDetalle[]>(`/quizzes/${quizId}/preguntas`);
@@ -84,30 +90,36 @@ export const obtenerPreguntas = async (quizId: number): Promise<PreguntaDetalle[
   }
 };
 
+// Crea una nueva pregunta vacía en un quiz con el orden indicado
 export const crearPregunta = async (quizId: number, orden: number): Promise<PreguntaDetalle> => {
   const { data } = await quizslothApi.post<PreguntaDetalle>('/preguntas', { quizId, orden });
   return data;
 };
 
+// Elimina una pregunta por su ID
 export const eliminarPreguntaApi = async (id: number): Promise<void> => {
   await quizslothApi.delete(`/preguntas/${id}`);
 };
 
+// Obtiene las plantillas de quiz disponibles para clonar
 export const getPlantillas = async (): Promise<any[]> => {
   const { data } = await quizslothApi.get<any[]>('/plantillas');
   return data;
 };
 
+// Clona una plantilla creando un quiz nuevo con sus preguntas
 export const clonarPlantilla = async (id: number): Promise<QuizConPreguntas> => {
   const { data } = await quizslothApi.post<QuizConPreguntas>(`/plantillas/${id}/clonar`);
   return data;
 };
 
+// Publica un quiz para que aparezca en las categorías y sea visible para todos
 export const publicarQuiz = async (id: number): Promise<QuizDetalle> => {
   const { data } = await quizslothApi.post<QuizDetalle>(`/quizzes/${id}/publicar`);
   return data;
 };
 
+// Despublica un quiz volviéndolo a estado borrador y ocultándolo de las categorías
 export const despublicarQuiz = async (id: number): Promise<QuizDetalle> => {
   const { data } = await quizslothApi.post<QuizDetalle>(`/quizzes/${id}/despublicar`);
   return data;

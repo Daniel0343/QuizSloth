@@ -43,14 +43,17 @@ public class QuizService {
         this.iaService = iaService;
     }
 
+    // Lista todos los quizzes publicados creados por profesores
     public List<Quiz> listarTodos() {
         return quizRepository.findByCreadorRolAndBorradorFalse(Usuario.Rol.profesor);
     }
 
+    // Lista los quizzes publicados de una categoría concreta
     public List<Quiz> listarPorCategoria(Integer categoriaId) {
         return quizRepository.findByCategoriaIdAndCreadorRolAndBorradorFalse(categoriaId, Usuario.Rol.profesor);
     }
 
+    // Lista los quizzes publicados de un usuario (sin borradores)
     public List<Quiz> listarPorCreador(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -64,18 +67,21 @@ public class QuizService {
         return quizRepository.findByCreador(usuario);
     }
 
+    // Marca un quiz como publicado para que sea visible en las categorías
     public Quiz publicar(Integer id) {
         Quiz quiz = obtener(id);
         quiz.setBorrador(false);
         return quizRepository.save(quiz);
     }
 
+    // Vuelve un quiz al estado borrador ocultándolo de las categorías
     public Quiz despublicar(Integer id) {
         Quiz quiz = obtener(id);
         quiz.setBorrador(true);
         return quizRepository.save(quiz);
     }
 
+    // Devuelve los quizzes del usuario con el conteo de preguntas de cada uno
     public List<QuizResumenDTO> listarPorCreadorDTO(String email) {
         return listarTodosPorCreador(email).stream()
                 .map(q -> new QuizResumenDTO(
@@ -88,6 +94,7 @@ public class QuizService {
                 .toList();
     }
 
+    // Elimina un quiz junto con todas sus salas y preguntas asociadas
     @Transactional
     public void eliminar(Integer id, String email) {
         Quiz quiz = obtener(id);
@@ -96,6 +103,7 @@ public class QuizService {
         quizRepository.deleteById(id);
     }
 
+    // Crea una pregunta vacía con valores por defecto en la posición indicada
     public Pregunta crearPregunta(Integer quizId, Integer orden) {
         Quiz quiz = obtener(quizId);
         Pregunta p = new Pregunta();
@@ -111,20 +119,24 @@ public class QuizService {
         return preguntaRepository.save(p);
     }
 
+    // Elimina una pregunta por su ID
     public void eliminarPregunta(Integer id) {
         preguntaRepository.deleteById(id);
     }
 
+    // Recupera un quiz por ID o lanza excepción si no existe
     public Quiz obtener(Integer id) {
         return quizRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Quiz no encontrado"));
     }
 
+    // Devuelve las preguntas de un quiz ordenadas por su campo orden
     public List<Pregunta> obtenerPreguntas(Integer quizId) {
         Quiz quiz = obtener(quizId);
         return preguntaRepository.findByQuizOrderByOrden(quiz);
     }
 
+    // Genera un quiz con preguntas IA a partir de un documento subido al servidor
     public Quiz generarDesdeDocumento(Integer documentoId, String titulo, int numPreguntas, String emailCreador) {
         Documento documento = documentoRepository.findById(documentoId)
                 .orElseThrow(() -> new RuntimeException("Documento no encontrado"));
@@ -147,6 +159,7 @@ public class QuizService {
         return saved;
     }
 
+    // Genera un quiz con preguntas IA a partir de texto libre
     @Transactional
     public QuizConPreguntas generarDesdeTexto(
             String titulo, String texto, int numPreguntas, String dificultad, Integer categoriaId, String emailCreador) {
@@ -176,10 +189,12 @@ public class QuizService {
         return new QuizConPreguntas(saved, preguntas);
     }
 
+    // Lista todos los quizzes marcados como plantilla
     public List<Quiz> listarPlantillas() {
         return quizRepository.findByEsPlantillaTrue();
     }
 
+    // Crea un nuevo quiz copiando las preguntas de la plantilla indicada
     @Transactional
     public QuizConPreguntas clonarPlantilla(Integer plantillaId, String emailCreador) {
         Quiz plantilla = obtener(plantillaId);
@@ -213,6 +228,7 @@ public class QuizService {
         return new QuizConPreguntas(savedClon, preguntas);
     }
 
+    // Crea un quiz vacío en borrador con solo el título
     public Quiz crearVacio(String titulo, Integer categoriaId, String emailCreador) {
         Quiz quiz = new Quiz();
         quiz.setTitulo(titulo != null && !titulo.isBlank() ? titulo : "Nuevo Quiz");
@@ -223,6 +239,7 @@ public class QuizService {
         return quizRepository.save(quiz);
     }
 
+    // Actualiza título, dificultad, categoría y color de un quiz existente
     public Quiz actualizarQuiz(Integer id, String titulo, String dificultad, Integer categoriaId, String color) {
         Quiz quiz = obtener(id);
         if (titulo != null && !titulo.isBlank()) quiz.setTitulo(titulo);
@@ -238,6 +255,7 @@ public class QuizService {
         return quizRepository.save(quiz);
     }
 
+    // Actualiza los campos informados de una pregunta existente
     public Pregunta actualizarPregunta(Integer id, PreguntaUpdate req) {
         Pregunta p = preguntaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pregunta no encontrada"));

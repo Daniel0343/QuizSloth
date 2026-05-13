@@ -32,6 +32,7 @@ public class ColeccionService {
 
     public record ColeccionDTO(Integer id, String nombre, int cantidad) {}
 
+    // Lista las colecciones del usuario con el total de quizzes y apuntes en cada una
     public List<ColeccionDTO> listarPorUsuario(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -40,6 +41,7 @@ public class ColeccionService {
                 .toList();
     }
 
+    // Crea una nueva colección vacía para el usuario
     public ColeccionDTO crear(String nombre, String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -50,6 +52,7 @@ public class ColeccionService {
         return new ColeccionDTO(guardada.getId(), guardada.getNombre(), 0);
     }
 
+    // Añade un quiz a la colección si no está ya incluido
     public ColeccionDTO añadirQuiz(Integer coleccionId, Integer quizId, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
@@ -65,6 +68,7 @@ public class ColeccionService {
         return new ColeccionDTO(coleccion.getId(), coleccion.getNombre(), coleccion.getQuizzes().size());
     }
 
+    // Devuelve la lista de quizzes de una colección
     public List<Quiz> obtenerQuizzes(Integer coleccionId, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
@@ -74,6 +78,7 @@ public class ColeccionService {
         return coleccion.getQuizzes();
     }
 
+    // Devuelve la lista de apuntes de una colección
     public List<Apunte> obtenerApuntes(Integer coleccionId, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
@@ -83,6 +88,7 @@ public class ColeccionService {
         return coleccion.getApuntes();
     }
 
+    // Añade un apunte a la colección si no está ya incluido
     public ColeccionDTO añadirApunte(Integer coleccionId, Integer apunteId, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
@@ -99,6 +105,7 @@ public class ColeccionService {
                 coleccion.getQuizzes().size() + coleccion.getApuntes().size());
     }
 
+    // Elimina un apunte de la colección
     public ColeccionDTO quitarApunte(Integer coleccionId, Integer apunteId, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
@@ -111,6 +118,7 @@ public class ColeccionService {
                 coleccion.getQuizzes().size() + coleccion.getApuntes().size());
     }
 
+    // Elimina un quiz de la colección
     public ColeccionDTO quitarQuiz(Integer coleccionId, Integer quizId, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
@@ -122,6 +130,7 @@ public class ColeccionService {
         return new ColeccionDTO(coleccion.getId(), coleccion.getNombre(), coleccion.getQuizzes().size());
     }
 
+    // Elimina la colección completa del usuario
     public void eliminar(Integer coleccionId, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));
@@ -131,6 +140,7 @@ public class ColeccionService {
         coleccionRepository.delete(coleccion);
     }
 
+    // Cambia el nombre de la colección
     public ColeccionDTO renombrar(Integer coleccionId, String nuevoNombre, String email) {
         Coleccion coleccion = coleccionRepository.findById(coleccionId)
                 .orElseThrow(() -> new RuntimeException("Colección no encontrada"));

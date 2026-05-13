@@ -8,6 +8,4 @@ COPY sloth-texto.png /sloth-logo.png
 
 RUN chmod +x /entrypoint_custom.sh
 
-USER odoo
-
 ENTRYPOINT ["/entrypoint_custom.sh"]

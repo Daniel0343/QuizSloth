@@ -41,6 +41,7 @@ public class DocumentoController {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    // Extrae el email del token JWT del encabezado Authorization
     private String emailFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
@@ -49,6 +50,7 @@ public class DocumentoController {
         return null;
     }
 
+    // GET /documentos/curso/{cursoId} - Lista los documentos subidos en un curso
     @GetMapping("/curso/{cursoId}")
     public ResponseEntity<List<Documento>> porCurso(@PathVariable Integer cursoId) {
         var curso = cursoRepository.findById(cursoId)
