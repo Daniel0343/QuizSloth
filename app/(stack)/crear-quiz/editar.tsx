@@ -17,6 +17,7 @@ import { PreguntaDetalle, QuizDetalle } from '@/core/auth/interface/quiz';
 import {
   getMisColecciones, crearColeccion, añadirQuizAColeccion, ColeccionDTO,
 } from '@/core/colecciones/actions/colecciones';
+import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 
 const DIFICULTADES = ['facil', 'normal', 'dificil', 'extremo'] as const;
 const CARD_COLORS = [
@@ -27,6 +28,8 @@ const CARD_COLORS = [
 export default function EditarQuizScreen() {
   const { id, nuevo } = useLocalSearchParams<{ id: string; nuevo?: string }>();
   const quizId = Number(id);
+  const { user } = useAuthStore();
+  const esProfesor = user?.rol === 'profesor';
 
   const [quiz, setQuiz] = useState<QuizDetalle | null>(null);
   const [preguntas, setPreguntas] = useState<PreguntaDetalle[]>([]);
@@ -350,7 +353,7 @@ export default function EditarQuizScreen() {
           <Text style={styles.addBtnText}>Añadir pregunta manualmente</Text>
         </Pressable>
 
-        {quiz?.borrador !== false ? (
+        {esProfesor && (quiz?.borrador !== false ? (
           <Pressable
             style={[styles.publishBtn, (publicando || hayCambios) && { opacity: 0.6 }]}
             onPress={handlePublicar}
@@ -380,7 +383,7 @@ export default function EditarQuizScreen() {
                 </>
             }
           </Pressable>
-        )}
+        ))}
       </ScrollView>
 
       <Modal
