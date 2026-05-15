@@ -1,5 +1,6 @@
 package com.quizsloth.service;
 
+import com.quizsloth.dto.ActualizarPerfilRequest;
 import com.quizsloth.dto.AuthResponse;
 import com.quizsloth.dto.LoginRequest;
 import com.quizsloth.dto.RegisterRequest;
@@ -24,6 +25,25 @@ public class AuthService {
         this.usuarioRepository = usuarioRepository;
         this.jwtUtil = jwtUtil;
         this.odooService = odooService;
+    }
+
+    // Actualiza el nombre y/o contraseña del usuario autenticado
+    public AuthResponse.UserDTO actualizarPerfil(String email, ActualizarPerfilRequest request) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (request.getNombre() != null && !request.getNombre().isBlank()) {
+            usuario.setNombre(request.getNombre().trim());
+        }
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            usuario.setPassword(request.getPassword());
+        }
+
+        Usuario saved = usuarioRepository.save(usuario);
+        return new AuthResponse.UserDTO(
+                saved.getId(), saved.getNombre(), saved.getEmail(),
+                saved.getRol().name(), saved.getOdooId(), saved.getFechaRegistro()
+        );
     }
 
     // Autentica al usuario con email y contraseña y devuelve un token JWT

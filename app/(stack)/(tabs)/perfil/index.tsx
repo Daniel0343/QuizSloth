@@ -21,7 +21,7 @@ const ROL_LABEL: Record<string, string> = {
 };
 
 export default function PerfilScreen() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
   const { primaryColor, setColor } = useThemeStore();
   const inicial = (user?.nombre ?? 'I').charAt(0).toUpperCase();
   const [alertaLogout, setAlertaLogout] = useState(false);
@@ -70,7 +70,8 @@ export default function PerfilScreen() {
     try {
       const body: Record<string, string> = { nombre: nombre.trim() };
       if (password) body.password = password;
-      await quizslothApi.patch('/auth/me', body);
+      const { data } = await quizslothApi.patch('/auth/me', body);
+      await updateUser({ nombre: data.nombre });
       setModalEditar(false);
     } catch {
       setEditError('No se pudo guardar. Inténtalo de nuevo.');

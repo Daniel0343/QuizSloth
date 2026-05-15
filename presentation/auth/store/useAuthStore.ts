@@ -15,6 +15,7 @@ interface AuthState {
   loginAsGuest: () => void;
   checkStatus: () => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (partial: Partial<User>) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
@@ -71,5 +72,14 @@ export const useAuthStore = create<AuthState>()((set) => ({
     set({ status: 'unauthenticated', user: undefined, token: undefined });
     await SecureStorage.deleteItem('token');
     await SecureStorage.deleteItem('user');
+  },
+
+  updateUser: async (partial) => {
+    set(state => {
+      if (!state.user) return state;
+      const updated = { ...state.user, ...partial };
+      SecureStorage.setItem('user', JSON.stringify(updated));
+      return { user: updated };
+    });
   },
 }));

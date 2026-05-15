@@ -1,5 +1,6 @@
 package com.quizsloth.controller;
 
+import com.quizsloth.dto.ActualizarPerfilRequest;
 import com.quizsloth.dto.AuthResponse;
 import com.quizsloth.dto.LoginRequest;
 import com.quizsloth.dto.RegisterRequest;
@@ -41,6 +42,14 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
+    }
+
+    // PATCH /auth/me - Actualiza nombre y/o contraseña del usuario autenticado
+    @PatchMapping("/me")
+    public ResponseEntity<AuthResponse.UserDTO> actualizarPerfil(
+            @RequestBody ActualizarPerfilRequest request,
+            HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.actualizarPerfil(emailFromRequest(httpRequest), request));
     }
 
     // GET /auth/me/subscripcion - Consulta el estado de suscripción del usuario
