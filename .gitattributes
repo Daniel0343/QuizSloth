@@ -1,0 +1,2 @@
+tmp/odoo/entrypoint.sh text eol=lf
+tmp/odoo/*.sh text eol=lf
