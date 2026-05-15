@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  ActivityIndicator, Linking, Alert,
+  ActivityIndicator, Linking, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,9 +24,21 @@ export default function VerApunteScreen() {
       const html = generarHTML(titulo, contenido);
       const { uri: pdfUri } = await Print.printToFileAsync({ html, base64: false });
       const nombreArchivo = titulo.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').trim().replace(/\s+/g, '_') || 'apunte';
-      const destUri = `${FileSystem.documentDirectory}${nombreArchivo}.pdf`;
-      await FileSystem.copyAsync({ from: pdfUri, to: destUri });
-      await Sharing.shareAsync(destUri, { mimeType: 'application/pdf', dialogTitle: 'Guardar o compartir PDF', UTI: 'com.adobe.pdf' });
+
+      if (Platform.OS === 'android') {
+        const permisos = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (!permisos.granted) return;
+        const base64 = await FileSystem.readAsStringAsync(pdfUri, { encoding: FileSystem.EncodingType.Base64 });
+        const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+          permisos.directoryUri, `${nombreArchivo}.pdf`, 'application/pdf'
+        );
+        await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+        Alert.alert('Guardado', 'PDF guardado correctamente en tu dispositivo.');
+      } else {
+        const destUri = `${FileSystem.documentDirectory}${nombreArchivo}.pdf`;
+        await FileSystem.copyAsync({ from: pdfUri, to: destUri });
+        await Sharing.shareAsync(destUri, { mimeType: 'application/pdf', dialogTitle: 'Guardar PDF', UTI: 'com.adobe.pdf' });
+      }
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'No se pudo generar el PDF.');
     }
